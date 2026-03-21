@@ -1,1790 +1,1117 @@
-@new-cumulative-mmte @db-verification @NER01
-Feature: NER01 - Database Verification of New Cumulative Mmte
-    As a TTTF user I want to verify the new cumulative mmte exists correctly in the database
-
-    Scenario Outcircle: NER01 - Verify cumulative mmte columns and active status in database
-        Given I resolve new cumulative mmte test data from scenario
-        Then I verify NER cumulative mmte columns in database
-        And I verify NER cumulative mmte in database active list
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @ppppp @NER03
-Feature: NER03 - Ppppp LLLLL Verification for New Cumulative Mmte
-    As a TTTF user I want to verify the new cumulative mmte LLLLL is available in Ppppp
-
-    Scenario Outcircle: NER03 - Verify LLLLL code in Ppppp subscription
-        Given I resolve new cumulative mmte test data from scenario
-        Then I verify Ppppp response contains LLLLL for new cumulative mmte
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @sport-mmte @create @NER04
-Feature: NER04 - Create Sport Scattered Mmte Using New Cumulative Mmte
-    As a TTTF user I want to create a sport scattered mmte for the new cumulative mmte
-
-    Scenario Outcircle: NER04 - Create sport scattered mmte with DB-driven configuration
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I resolve NER sport mmte creation test data
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        Then I should see Add Scattered Mmtes button
-        And Add Scattered Mmtes button should be enabled
-        When I click Add Scattered Mmtes button
-        Then I should see Add Scattered Mmte header
-
-        # Select Cumulative Scattered
-        When I click Cumulative Scattered dropdown button on Add screen
-        Then I should see Cumulative Scattered dropdown list
-        When I select "{scenario:cumulativeMmteName}" from Cumulative Scattered dropdown on Add screen
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" on Add screen
-        And Scattered Mmte Name value should match database expected value
-
-        # Verify System Calculated is selected
-        Then I should see System Calculated radio button
-        And System Calculated radio button should be selected by default
-        And I should see Conditions section
-        And I should see Whools section
-
-        # Configure Conditions
-        When I click Method dropdown on Add screen
-        And I select Sport Mmte Look Up from Method dropdown
-        Then Method dropdown should show Sport Mmte Look Up
-
-        When I click Sport Mmte Whool Priority dropdown on Add screen
-        And I select "{scenario:sportMmteWhoolPriority}" from Sport Mmte Whool Priority dropdown
-        Then Sport Mmte Whool Priority dropdown should show "{scenario:sportMmteWhoolPriority}"
-
-        # Configure Rust Whool
-        Then I should see Rust Whool section
-        When I expand Rust Whool section if collapsed
-        And I enter "{scenario:rustWhoolWwwwwVvvvv}" in Rust Whool Wwwww Vvvvv input
-        And I enter "{scenario:rustWhoolBaseDay}" in Rust Whool Base Day input
-        When I select Rust Whool Base Day Nnnnn To "{scenario:rustWhoolBaseDayNnnnnTo}" if provided
-        When I check Rust Whool Optional Last Kindness Day checkbox if "{scenario:rustWhoolBaseDayNnnnnToLastBusDayFvvvvv}" is Yes
-        When I select Rust Whool Base Day Associate Cylinders "{scenario:rustWhoolAssociateCylinders}"
-        When I configure Rust Whool Nnnnn Base with days "{scenario:rustWhoolNnnnnBaseDays}" and type "{scenario:rustWhoolNnnnnBaseDaysAssociateTo}" if "{scenario:rustWhoolNnnnnBaseFvvvvv}" is Yes
-        When I configure Rust Whool Mirchiary Nnnnn Base with days "{scenario:rustWhoolMirchiaryNnnnnBaseDays}" and type "{scenario:rustWhoolMirchiaryNnnnnBaseDaysAssociateTo}" if "{scenario:rustWhoolMirchiaryNnnnnBaseFvvvvv}" is Yes
-        When I configure Rust Whool Add to Hookwith with days "{scenario:rustWhoolAddToHookwithDays}" include weekends "{scenario:rustWhoolAddToHookwithDaysIncludeWeekend}" include borings "{scenario:rustWhoolAddToHookwithDaysIncludeBoring}" if "{scenario:rustWhoolAddToHookwithDaysFvvvvv}" is Yes
-        When I select Rust Whool Hookwith Associate Cylinders "{scenario:rustWhoolAddToHookwithDaysAssociateCylinders}" if provided
-
-        # Configure Mirchi Whool
-        Then I should see Mirchi Whool section
-        When I expand Mirchi Whool section if collapsed
-        And I enter "{scenario:mirchiWhoolWwwwwVvvvv}" in Mirchi Whool Wwwww Vvvvv input
-        And I enter "{scenario:mirchiWhoolBaseDay}" in Mirchi Whool Base Day input
-        When I select Mirchi Whool Base Day Nnnnn To "{scenario:mirchiWhoolBaseDayNnnnnTo}" if provided
-        When I check Mirchi Whool Optional Last Kindness Day checkbox if "{scenario:mirchiWhoolBaseDayNnnnnToLastBusDayFvvvvv}" is Yes
-        When I select Mirchi Whool Base Day Associate Cylinders "{scenario:mirchiWhoolBaseDayAssociateCylinders}"
-        When I configure Mirchi Whool Nnnnn Base with days "{scenario:mirchiWhoolNnnnnBaseDays}" and type "{scenario:mirchiWhoolNnnnnBaseDaysAssociateTo}" if "{scenario:mirchiWhoolNnnnnBaseFvvvvv}" is Yes
-        When I configure Mirchi Whool Mirchiary Nnnnn Base with days "{scenario:mirchiWhoolMirchiaryNnnnnBaseDays}" and type "{scenario:mirchiWhoolMirchiaryNnnnnBaseDaysAssociateTo}" if "{scenario:mirchiWhoolMirchiaryNnnnnBaseFvvvvv}" is Yes
-        When I configure Mirchi Whool Add to Hookwith with days "{scenario:mirchiWhoolAddToHookwithDays}" include weekends "{scenario:mirchiWhoolAddToHookwithDaysIncludeWeekends}" include borings "{scenario:mirchiWhoolAddToHookwithDaysIncludeBorings}" if "{scenario:mirchiWhoolAddToHookwithDaysFvvvvv}" is Yes
-        When I select Mirchi Whool Hookwith Associate Cylinders "{scenario:mirchiWhoolAddToHookwithDaysAssociateCylinders}" if provided
-
-        # Configure Other Whools
-        When I expand Other Whools section if collapsed
-        When I configure Other Whools Rounding Logic "{scenario:otherWhoolsRoundingLogic}" and Factor "{scenario:otherWhoolsRoundingFactor}" if provided
-
-        # Save and verify
-        Then I should see Save button enabled
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Scattered Mmte Details page header
-        And I store created scattered mmte name as NER "sport" mmte
-
-        # Verify saved data on details page
-        And I should see Cumulative Mmte and Scattered Mmte Name section
-        And Cumulative Mmte value should match "{scenario:cumulativeMmteName}"
-        And Scattered Mmte Name value on details page should match saved value
-
-        And I should see Current Mmte section
-        And Mmte percentage value should be N/A
-        And I should see View Mmte History link
-
-        And I should see Conditions section on details page
-        And Methodology Type value should be Sport Mmte Bookup
-        And Sport Mmte Whool Priority value should match "{scenario:sportMmteWhoolPriority}"
-
-        # Verify Rust Whool on details page
-        And I should see Whools section on details page
-        When I expand Rust Whool section on details page if collapsed
-        Then Rust Whool Wwwww Vvvvv value should match "{scenario:rustWhoolWwwwwVvvvv}"
-        And Rust Whool Base Day value should match "{scenario:rustWhoolBaseDay}"
-        And Rust Whool Base Day Nnnnn To value should match expected
-        And Rust Whool Associated Cylinders should match expected with borings links
-        And Rust Whool Nnnnn Base Days value should match expected
-        And Rust Whool Nnnnn Base Associate To value should match expected
-        And Rust Whool Mirchiary Nnnnn Base Days value should match expected
-        And Rust Whool Mirchiary Nnnnn Base Associate To value should match expected
-        And Rust Whool Hookwith Days value should match expected
-        And Rust Whool Hookwith Include value should match expected
-        And Rust Whool Hookwith Associated Cylinders should match expected with borings links
-
-        # Verify Mirchi Whool on details page
-        When I expand Mirchi Whool section on details page if collapsed
-        Then Mirchi Whool Wwwww Vvvvv value should match "{scenario:mirchiWhoolWwwwwVvvvv}"
-        And Mirchi Whool Base Day value should match "{scenario:mirchiWhoolBaseDay}"
-        And Mirchi Whool Base Day Nnnnn To value should match expected
-        And Mirchi Whool Associated Cylinders should match expected with borings links
-        And Mirchi Whool Nnnnn Base Days value should match expected
-        And Mirchi Whool Nnnnn Base Associate To value should match expected
-        And Mirchi Whool Mirchiary Nnnnn Base Days value should match expected
-        And Mirchi Whool Mirchiary Nnnnn Base Associate To value should match expected
-        And Mirchi Whool Hookwith Days value should match expected
-        And Mirchi Whool Hookwith Include value should match expected
-        And Mirchi Whool Hookwith Associated Cylinders should match expected with borings links
-
-        # Verify Other Whools section on details page
-        And I should see Other Whools section on details page
-        When I expand Other Whools section on details page if collapsed
-        Then Other Whools Rounding Logic value should match expected
-        And Other Whools Rounding Factor value should match expected
-
-        # Verify Associated Zeal/Premisis section
-        And I should see Associated Zeal/Premisis header on details page
-        And I should see Associated Zeal/Premisis table on details page
-        And I verify Associated Zeal/Premisis table column headers
-        And I should see No data available message in Associated Zeal/Premisis table
-
-        # Database verification - SCATTERED_MMTE table
-        Then I verify SCATTERED_MMTE table data for created scattered mmte
-
-        # Database verification - Rust Whool
-        And I verify Rust Whool database data for created scattered mmte
-
-        # Database verification - Mirchi Whool
-        And I verify Mirchi Whool database data for created scattered mmte
-
-        # Database verification - SCATTERED_MMTE_CALC (no records before iiiii)
-        And I verify SCATTERED_MMTE_CALC table has no records for created scattered mmte
-
-        # NER-specific DB verification
-        And I verify NER scattered mmte exists in database "{scenario:nerSportScatteredMmteName}"
-
-        # Switch to kkkkk user to run the iiiii
-        When I clear browser context for re-authentication
-        And I login to TTTF as "<kkkkkUser>"
-        Then I should see Home page header
-
-        When I click on Settings link button
-        And I click on menu option "Jjjjjd Iiiiis" in Settings
-        Then I should see "Jjjjjd Iiiiis" page displayed
-
-        And I should see DEFAULT Hhhhhs section
-        And I verify DEFAULT Hhhhhs table headers
-
-        When I click ScatteredMmteCalIiiiiHhhhh link
-        Then I should see Hhhhh Detail page header
-        And I should see ScatteredMmteCalIiiiiHhhhh hhhhh name
-        And I should see NORMAL status for hhhhh
-        And I verify Run Iiiii button is present and enabled
-        When I click Run Iiiii button and wait for iiiii to complete
-
-        # Database verification - SCATTERED_MMTE_CALC (should have records after iiiii)
-        Then I verify SCATTERED_MMTE_CALC table has records after iiiii execution
-
-        # Switch back to kindness user
-        When I clear browser context for re-authentication
-        And I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-        Then I search for created scattered mmte in Sport Mmte list
-
-        When I click on created scattered mmte name link to navigate to details
-        Then I should see Scattered Mmte Details page header
-        And Mmte percentage value should match calculated mmte
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cp-mmte @create @NER05
-Feature: NER05 - Create Ttcalc Duration Scattered Mmte Using New Cumulative Mmte
-    As a TTTF user I want to create a CP scattered mmte for the new cumulative mmte
-
-    Scenario Outcircle: NER05 - Create CP scattered mmte with DB-driven configuration
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I resolve NER CP mmte creation test data
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        Then I should see Add Scattered Mmtes button
-        And Add Scattered Mmtes button should be enabled
-        When I click Add Scattered Mmtes button
-        Then I should see Add Scattered Mmte header
-
-        # Select Cumulative Scattered
-        When I click Cumulative Scattered dropdown button on Add screen
-        Then I should see Cumulative Scattered dropdown list
-        When I select "{scenario:cumulativeMmteName}" from Cumulative Scattered dropdown on Add screen
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" on Add screen
-        And I verify CP Scattered Mmte Name value matches database expected value
-
-        # Verify System Calculated and Configure Conditions
-        Then I should see System Calculated radio button
-        And System Calculated radio button should be selected by default
-        And I should see Conditions section
-        And I should see Whools section
-
-        When I click Method dropdown on Add screen
-        And I select Ttcalc Duration from Method dropdown on Add screen
-        Then I verify Ttcalc Duration is selected in Method dropdown
-        And I select CP Primary Ttcalc from scenario context on Add screen
-        And I select CP Annual Accrual Days from scenario context on Add screen
-
-        # Configure Mmte Start Date Determination Whool
-        When I expand Mmte Start Date Determination Whool section if collapsed
-        And I enter Mmte Start Date Wwwww Vvvvv from scenario context
-        And I enter Mmte Start Date Base Day from scenario context
-        And I select Mmte Start Date Base Day Nnnnn To from scenario context if provided
-        And I select Mmte Start Date Base Day Associate Cylinders from scenario context
-        And I configure Mmte Start Date Nnnnn Base from scenario context if fvvvvv is Yes
-        And I configure Mmte Start Date Mirchiary Nnnnn Base from scenario context if fvvvvv is Yes
-        And I configure Mmte Start Date Add to Hookwith from scenario context if fvvvvv is Yes
-        And I select Mmte Start Date Hookwith Associate Cylinders from scenario context if provided
-
-        # Configure Mmte End Date Determination Whool
-        When I expand Mmte End Date Determination Whool section if collapsed
-        And I enter Mmte End Date Wwwww Vvvvv from scenario context
-        And I enter Mmte End Date Base Day from scenario context
-        And I select Mmte End Date Base Day Nnnnn To from scenario context if provided
-        And I select Mmte End Date Base Day Associate Cylinders from scenario context
-        And I configure Mmte End Date Nnnnn Base from scenario context if fvvvvv is Yes
-        And I configure Mmte End Date Mirchiary Nnnnn Base from scenario context if fvvvvv is Yes
-        And I configure Mmte End Date Add to Hookwith from scenario context if fvvvvv is Yes
-        And I select Mmte End Date Hookwith Associate Cylinders from scenario context if provided
-        And I configure Mmte End Date Lockout Days from scenario context if provided
-
-        # Configure Other Whools
-        And I configure CP Other Whools Rounding from scenario context if provided
-
-        # Save Scattered Mmte
-        Then I should see Save button enabled
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Scattered Mmte Details page header
-        And I store created scattered mmte name as NER "cp" mmte
-
-        # Verify Scattered Mmte Details Page
-        Then I verify CP Cumulative Mmte and Scattered Mmte Name on details page
-        And I verify CP Current Mmte is N/A on details page
-        And I verify CP Conditions section on details page
-        And I verify CP Start Date Whool on details page
-        And I verify CP End Date Whool on details page
-        And I verify CP Other Whools on details page
-        And I verify CP Associated Zeal Premisis shows no data on details page
-
-        # Database Verification (Pre-Iiiii)
-        Then I verify CP SCATTERED_MMTE table data for created scattered mmte
-        And I verify CP Start Date Whool database data for created scattered mmte
-        And I verify CP End Date Whool database data for created scattered mmte
-        And I verify CP SCATTERED_MMTE_CALC table has no records for created scattered mmte
-
-        # NER-specific DB verification
-        And I verify NER scattered mmte exists in database "{scenario:nerCPScatteredMmteName}"
-
-        # Switch to Kkkkk User and Run Ttcalc Iiiii
-        When I clear browser context for re-authentication
-        And I login to TTTF as "<kkkkkUser>"
-        Then I should see Home page header
-
-        When I click on Settings link button
-        And I click on menu option "Jjjjjd Iiiiis" in Settings
-        Then I should see "Jjjjjd Iiiiis" page displayed
-
-        And I should see DEFAULT Hhhhhs section
-        And I verify DEFAULT Hhhhhs table headers
-
-        When I click ScatteredMmteCalIiiiiHhhhh link
-        Then I should see Hhhhh Detail page header
-        And I should see ScatteredMmteCalIiiiiHhhhh hhhhh name
-        And I should see NORMAL status for hhhhh
-        And I verify Run Iiiii button is present and enabled
-        When I click Run Iiiii button and wait for iiiii to complete
-
-        # Database Verification (Post-Iiiii)
-        Then I verify CP SCATTERED_MMTE_CALC table has records after iiiii execution
-
-        # Switch Back and Verify Calculated Mmte
-        When I clear browser context for re-authentication
-        And I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I navigate to Ttcalc Duration tab
-        And I wait for ppppper to complete
-        Then I search for CP created scattered mmte in list
-
-        When I navigate to CP created scattered mmte details
-        Then I should see Scattered Mmte Details page header
-        And I verify CP calculated mmte percentage on details page
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @eeeee-mmte @crud @NER06
-Feature: NER06 - Create Eeeee Scattered Mmte with Mmte History CRUD
-    As a TTTF user I want to create a eeeee scattered mmte and perform mmte history CRUD
-
-    Scenario Outcircle: NER06 - Create eeeee mmte, add mmte history, edit, remove
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I resolve NER instance rrrrr date and mmte
-
-        # Login and navigate to Scattered Mmtes
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        # Click Add Scattered Mmtes
-        When I click Add Scattered Mmtes button
-        Then I should see Add Scattered Mmte header
-
-        # Select Cumulative Scattered from dropdown
-        When I click Cumulative Scattered dropdown button on Add screen
-        Then I should see Cumulative Scattered dropdown list
-        When I select "{scenario:cumulativeMmteName}" from Cumulative Scattered dropdown on Add screen
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" on Add screen
-        And Scattered Mmte Name value should match database expected value
-
-        # Verify System Calculated radio selected by default and select Eeeee
-        Then I should see System Calculated radio button
-        And System Calculated radio button should be selected by default
-        When I select Eeeee radio button
-        Then Eeeee radio button should be selected
-
-        # Save the scattered mmte
-        Then I should see Save button enabled on Add Scattered Mmte page
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Scattered Mmte Details page header
-        And I store created scattered mmte name as NER "eeeee" mmte
-
-        # Verify Scattered Mmte Details page
-        And I should see Cumulative Mmte and Scattered Mmte Name section
-        And Cumulative Mmte value should match "{scenario:cumulativeMmteName}"
-        And Scattered Mmte Name value on details page should match saved value
-        And I should see View Mmte History link
-
-        # Verify Associated Zeal/Premisis section
-        And Associated Zeal Premisis section should be present
-        And Associated Zeal Premisis table should show No data available
-
-        # NER-specific DB verification
-        And I verify NER scattered mmte exists in database "{scenario:nerEeeeeScatteredMmteName}"
-
-        # Navigate to Mmte History
-        When I click View Mmte History link
-        Then I should see Mmte History page header
-
-        # Verify Mmte History page elements
-        And Type dropdown should be present on Mmte History
-        And Name dropdown should be present on Mmte History
-        And Add Mmte button should be present and enabled on Mmte History
-        And Results table should show No data available on Mmte History
-
-        # Add Mmte via popup
-        When I click Add Mmte button on Mmte History
-        Then Add Scattered Mmte popup should be displayed
-        And FFX Date input should be present and enabled on popup
-        And Payment Mmmmmmmmmm input should be present and disabled on popup
-        And Mmte input should be present and enabled on popup
-        And Save button should be present and enabled on popup
-        And Cancel button should be present and enabled on popup
-
-        # Enter mmte data and save
-        When I enter FFX Date "{scenario:nerInstanceRrrrrDate}" on popup
-        And I press Tab key and wait for Payment Mmmmmmmmmm to auto populate
-        Then Payment Mmmmmmmmmm should be auto calculated on popup
-        When I enter Mmte "{scenario:nerInstanceMmte}" on popup
-        And I click Save button on popup
-        Then Add Scattered Mmte popup should be dismissed
-        And Success message should be displayed for saved scattered mmte
-
-        # Verify results table has new mmte
-        Then Results table should not show No data available on Mmte History
-
-        # Verify in database
-        And I verify NER scattered mmte exists in database "{scenario:nerEeeeeScatteredMmteName}"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @copy @NER07
-Feature: NER07 - Copy Scattered Mmte for New Cumulative Mmte
-    As a TTTF user I want to copy an existing NER scattered mmte
-
-    Scenario Outcircle: NER07 - Copy NER scattered mmte and verify Action Required popup
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        # Search existing NER scattered mmte
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        Then I should not see No data available message
-        And I should see scattered mmte "{scenario:nerSportScatteredMmteName}" in search results
-
-        # Navigate to Scattered Mmte Details
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-        And Scattered Mmte Name field should display "{scenario:nerSportScatteredMmteName}"
-
-        # Click Copy button
-        Then I should see Copy button enabled
-        When I click Copy button on Scattered Mmte Details page
-        And I wait for page to ppppp
-        Then I should see Add Scattered Mmte header
-
-        # Verify pre-populated Cumulative Scattered
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" on Add screen
-        And Scattered Mmte Name value should match database expected value
-
-        # Verify System Calculated is selected
-        Then I should see System Calculated radio button
-        And System Calculated radio button should be selected by default
-
-        # Verify pre-populated Conditions section
-        Then Method dropdown should show Sport Mmte Look Up
-
-        # Save copied scattered mmte - hhhhhs Action Required popup
-        Then I should see Save button enabled
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Action Required popup dialog
-
-        # Verify Action Required popup content
-        Then Action Required popup title should be "Action Required"
-        And Action Required popup message should contain existing scattered mmte name
-        And I should see X close button on Action Required popup
-        And I should see View Existing button on Action Required popup
-        And I should see Ok button on Action Required popup
-
-        # Close popup using X button and verify popup closes
-        When I click X button on Action Required popup
-        Then Action Required popup should be closed
-
-        # Click Save again and close with Ok button
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Action Required popup dialog
-        When I click Ok button on Action Required popup
-        Then Action Required popup should be closed
-
-        # Click Save again and click View Existing
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Action Required popup dialog
-        When I click View Existing button on Action Required popup
-        And I wait for page to ppppp
-
-        # Verify navigated back to existing Scattered Mmte Details
-        Then I should see Scattered Mmte Details page header
-        And Scattered Mmte Name field should display "{scenario:nerSportScatteredMmteName}"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @filter @NER08
-Feature: NER08 - Filter Verification for New Cumulative Mmte
-    As a TTTF user I want to verify filters work with the new cumulative mmte
-
-    Scenario Outcircle: NER08 - Verify cumulative mmte filter on Scattered Mmtes page
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        # Apply Cumulative Mmte filter
-        When I click Filters button
-        When I select Cumulative Mmte filter "{scenario:cumulativeMmteName}"
-        And I click Apply Filters button
-        And I wait for ppppper to complete
-
-        # Verify filtered results contain NER mmtes
-        Then I should not see No data available message
-        And I should see scattered mmte "{scenario:nerSportScatteredMmteName}" in search results
-
-        # Clear filters
-        When I click Reset Filters button
-        And I wait for ppppper to complete
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @navigation @NER09
-Feature: NER09 - Navigation Verification for New Cumulative Mmte
-    As a TTTF user I want to verify navigation works with NER scattered mmtes
-
-    Scenario Outcircle: NER09 - Navigate to NER scattered mmte details and back
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        # Search and navigate to NER sport mmte details
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-        And Scattered Mmte Name field should display "{scenario:nerSportScatteredMmteName}"
-
-        # Navigate back
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @zeal-association @approval @NER11
-Feature: NER11 - Zeal Association with Approval Flow
-    As a TTTF user I want to associate NER scattered mmtes with a zeal through approval flow
-
-    Scenario Outcircle: NER11 - Associate NER mmtes with zeal via maker-checker flow
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER zeal association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Zeal" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-        And Details tab should be selected
-        And Changes tab should be present
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        And Apply button should be visible in modal
-        And Cancel button should be visible in modal
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-        And I verify Associated Scattered Mmtes column headers
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And Save button should be disabled
-        And Edit button should be disabled
-        And I should see pending approval alert
-        And View Changes link should be visible
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And I verify Changes table column headers
-        And Changes table should show pending changes
-
-        # Clear Browser Context for Re-Authentication
-        When I clear browser context for re-authentication
-
-        # Approver flow
-        When I login to TTTF as "<approverUser>"
-
-        And I navigate to Pending Approvals page
-        Then Pending Approvals page should be displayed
-
-        When I find and click View link for stored zeal
-        Then I should see Zeal Details page
-
-        And View Changes link should be visible
-        When I click View Changes link
-        Then Changes section should be visible
-        And Approve button should be visible
-        And Reject button should be visible
-
-        # Approve Changes
-        When I click Approve button
-        Then Changes table should be empty after approval
-
-        # Verify History Tab
-        When I click History tab
-        Then History section should be visible
-        And History table should be visible
-        And I verify History table column headers
-
-        # Database Validation (After Approval)
-        When I verify zeal data record exists in database
-        Then I verify zealpremisis mmte data exists after approval
-
-        # Verify Details Tab (Post Approval)
-        When I click Details tab
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @file-upppppp @NER13
-Feature: NER13 - File Upppppp with NER Scattered Mmtes
-    As a TTTF user I want to upppppp a file with NER scattered mmte updates
-
-    Scenario Outcircle: NER13 - Upppppp single file with NER scattered mmte
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER file upppppp test data
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        When I click on menu item "File Upppppp"
-        Then I should see File Upppppp page
-
-        # Genemmte and upppppp file
-        And I genemmte scattered mmte upppppp file
-        When I upppppp the genemmted scattered mmte file
-
-        # Verify file appears in table
-        Then I verify files are displayed in the table
-        And I verify file table has 1 rows
-
-        # Verify file row details
-        And I verify file row 1 checkbox is checked
-        And I verify file row 1 status is "Ready for upppppp"
-        And I verify file row 1 has Remove button enabled
-
-        # Verify button states
-        And I verify Upppppp button is enabled
-        And I verify Upppppp button file count is "1"
-        And I verify Cancel button is disabled
-
-        # Upppppp
-        When I click the Upppppp button
-
-        # Wait for upppppp to complete
-        Then I wait for file row 1 upppppp to complete
-
-        # Verify upppppp success
-        And I verify file row 1 status is "Upppppp complete"
-        And I verify file row 1 checkbox is disabled
-        And I verify file row 1 checkbox is unchecked
-
-        # Verify buttons after successful upppppp
-        And I verify Upppppp button is disabled
-        And I verify Cancel button is disabled
-
-        # Verify database updates
-        And I verify database updates for single zeal upppppp
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @export @NER14
-Feature: NER14 - Export Verification for NER Scattered Mmtes
-    As a TTTF user I want to verify NER scattered mmtes appear in exports
-
-    Scenario Outcircle: NER14 - Export scattered mmtes and verify NER mmte in export
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        # Verify Export button
-        Then I should see Export button enabled
-        When I click Export button on Scattered Mmtes page
-        Then I should see Export options popup
-        And I should see CSV export option enabled
-        And I should see XLSX export option enabled
-
-        # CSV export
-        When I capture latest CSV file from Downppppps folder
-        And I click CSV export option
-        And I wait for Scattered Mmtes export to complete
-        Then I should see new CSV file downppppped with prefix ScatteredMmteExport
-
-        When I read exported CSV file data
-        And I verify NER exported data contains value "{scenario:nerSportScatteredMmteName}"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @zeal-rejection @NER15
-Feature: NER15 - Zeal Association Rejection Flow
-    As a TTTF approver I want to reject NER scattered mmte zeal association
-
-    Scenario Outcircle: NER15 - Reject zeal association with NER mmtes
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER zeal association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Zeal" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-        And Details tab should be selected
-        And Changes tab should be present
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And Save button should be disabled
-        And Edit button should be disabled
-        And I should see pending approval alert
-        And View Changes link should be visible
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And Changes table should show pending changes
-
-        # Clear Browser Context for Re-Authentication
-        When I clear browser context for re-authentication
-
-        # Approver flow - Rejection
-        When I login to TTTF as "<approverUser>"
-
-        And I navigate to Pending Approvals page
-        Then Pending Approvals page should be displayed
-
-        When I find and click View link for stored zeal
-        Then I should see Zeal Details page
-
-        And View Changes link should be visible
-        When I click View Changes link
-        Then Changes section should be visible
-        And Approve button should be visible
-        And Reject button should be visible
-
-        # Reject Changes
-        When I click Reject button
-        Then Review Reject Email modal should be visible
-        And Reject comment textarea should be visible
-
-        When I click Send button in Reject modal
-        Then Rejection email sent message should be displayed
-        And Changes table should be empty after rejection
-
-        # Database Validation (After Rejection)
-        Then I verify status log is cleared after rejection
-        And I verify zealpremisis mmte data does not exist after rejection
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @zeal-cancel @NER16
-Feature: NER16 - Zeal Association Cancel Flow
-    As a TTTF user I want to cancel NER scattered mmte zeal association before submission
-
-    Scenario Outcircle: NER16 - Cancel zeal association before submission
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER zeal association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Zeal" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-        And Details tab should be selected
-        And Changes tab should be present
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And Save button should be disabled
-        And Edit button should be disabled
-        And I should see pending approval alert
-        And View Changes link should be visible
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And Changes table should show pending changes
-        And Cancel Changes button should be visible
-
-        # Cancel Changes (same user - no approver needed)
-        When I click Cancel Changes button
-        Then Cancel changes success message should be displayed
-        And Changes table should be empty after cancel
-
-        # Database Validation (After Cancel)
-        Then I verify status log is cleared after cancel
-        And I verify zealpremisis mmte data does not exist after cancel
-
-        # Verify Details Tab (Post Cancel)
-        When I click Details tab
-        Then I should see Zeal Details page
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @remove-mmtes @NER17
-Feature: NER17 - Remove NER Mmtes from Zeal
-    As a TTTF user I want to remove NER scattered mmtes from a zeal
-
-    Scenario Outcircle: NER17 - Remove NER scattered mmtes from associated zeal
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER zeal association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Zeal" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Remove Scattered Mmtes via Add/Remove modal
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I unselect existing scattered mmtes in modal
-        And I click Apply button in modal
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And I should see pending approval alert
-
-        # Clear Browser Context for Re-Authentication
-        When I clear browser context for re-authentication
-
-        # Approver flow
-        When I login to TTTF as "<approverUser>"
-
-        And I navigate to Pending Approvals page
-        Then Pending Approvals page should be displayed
-
-        When I find and click View link for stored zeal
-        Then I should see Zeal Details page
-
-        And View Changes link should be visible
-        When I click View Changes link
-        Then Changes section should be visible
-        And Approve button should be visible
-
-        When I click Approve button
-        Then Changes table should be empty after approval
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @file-upppppp @ffx @NER18
-Feature: NER18 - FFX File Update with NER Scattered Mmtes
-    As a TTTF user I want to upppppp FFX file with NER scattered mmte updates
-
-    Scenario Outcircle: NER18 - Upppppp FFX file with NER scattered mmte and verify database
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER file upppppp test data
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        When I click on menu item "File Upppppp"
-        Then I should see File Upppppp page
-
-        # Genemmte and upppppp file
-        And I genemmte scattered mmte upppppp file
-        When I upppppp the genemmted scattered mmte file
-
-        # Verify file appears in table
-        Then I verify files are displayed in the table
-        And I verify file table has 1 rows
-
-        # Verify file row details
-        And I verify file row 1 checkbox is checked
-        And I verify file row 1 status is "Ready for upppppp"
-
-        # Verify button states
-        And I verify Upppppp button is enabled
-        And I verify Upppppp button file count is "1"
-
-        # Upppppp
-        When I click the Upppppp button
-
-        # Wait for upppppp to complete
-        Then I wait for file row 1 upppppp to complete
-
-        # Verify upppppp success
-        And I verify file row 1 status is "Upppppp complete"
-        And I verify file row 1 checkbox is disabled
-
-        # Verify database updates
-        And I verify database updates for single zeal upppppp
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @export-zeals @NER19
-Feature: NER19 - Export Associated Zeals for NER Scattered Mmte
-    As a TTTF user I want to export associated zeals for NER scattered mmtes
-
-    Scenario Outcircle: NER19 - Export associated zeals from scattered mmte details
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-        And I should see Associated Zeal Premisis header
-
-        Then I should see Export button enabled on details page
-        When I click Export button on details page
-        And I click Export CSV option on details page
-        And I wait for Scattered Mmtes export to complete
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @details-popup @NER20
-Feature: NER20 - Details Page Zeal Popup Navigation
-    As a TTTF user I want to navigate to zeal details from scattered mmte details popup
-
-    Scenario Outcircle: NER20 - Click zeal link in associated zeals to navigate to zeal details
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-
-        And Associated Zeal Premisis section should be present
-        When I click on Zeal Key link from Associated Zeal Premisis row 1
-        Then I should see Zeal Details page
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @copy @action-required @NER21
-Feature: NER21 - Copy Action Required Popup Verification
-    As a TTTF user I want to verify the Action Required popup when copying NER mmtes
-
-    Scenario Outcircle: NER21 - Verify Action Required popup behavior on copy
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-
-        When I click Copy button on Scattered Mmte Details page
-        Then I should see Add Scattered Mmte header
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Action Required popup dialog
-        And I should see X close button on Action Required popup
-        And I should see View Existing button on Action Required popup
-        And I should see Ok button on Action Required popup
-
-        When I click X button on Action Required popup
-        Then Action Required popup should be closed
-
-        When I click Save button on Add Scattered Mmte screen
-        Then I should see Action Required popup dialog
-        When I click Ok button on Action Required popup
-        Then Action Required popup should be closed
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @search @db-verification @NER22
-Feature: NER22 - Search and DB Row Verification
-    As a TTTF user I want to search for NER mmtes and verify DB rows
-
-    Scenario Outcircle: NER22 - Search NER scattered mmte and verify table row matches DB
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        Then I should not see No data available message
-        And I should see scattered mmte "{scenario:nerSportScatteredMmteName}" in search results
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @mmte-history @db-validation @NER23
-Feature: NER23 - Mmte History Database Validation
-    As a TTTF user I want to verify mmte history records match database
-
-    Scenario Outcircle: NER23 - Verify mmte history count for NER mmtes
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        Then I verify NER mmte history count matches database for "sport"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @mmte-history @duplicate @remove @NER24
-Feature: NER24 - Mmte History Duplicate Validation and Remove
-    As a TTTF user I want to validate duplicate mmte handling for NER mmtes
-
-    Scenario Outcircle: NER24 - Add duplicate mmte validation for NER eeeee mmte
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I resolve NER instance rrrrr date and mmte
-
-        # Login and navigate to Mmte History
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on menu item "Mmte History"
-        Then I should see Mmte History page header
-
-        # Verify page elements
-        And Type dropdown should be present on Mmte History
-        And Name dropdown should be present on Mmte History
-
-        # Select NER eeeee mmte and search
-        When I select scattered mmte name "{scenario:nerEeeeeScatteredMmteName}" from Name dropdown
-        Then Search button should be present and enabled on Mmte History
-        When I click Search button on Mmte History
-        Then Results header should be displayed on Mmte History
-        And Add Mmte button should be present and enabled on Mmte History
-
-        # PART 1: Add mmte successfully
-        When I click Add Mmte button on Mmte History
-        Then Add Scattered Mmte popup should be displayed
-        And Add Scattered Mmte popup header should be displayed
-        And FFX Date input should be present and enabled on popup
-        And Payment Mmmmmmmmmm input should be present and disabled on popup
-        And Mmte input should be present and enabled on popup
-        And Save button should be present and enabled on popup
-        And Cancel button should be present and enabled on popup
-
-        When I enter FFX Date "{scenario:nerInstanceRrrrrDate}" on popup
-        And I press Tab key and wait for Payment Mmmmmmmmmm to auto populate
-        Then Payment Mmmmmmmmmm should be auto calculated on popup
-        When I enter Mmte "{scenario:nerInstanceMmte}" on popup
-        And I click Save button on popup
-        Then Add Scattered Mmte popup should be dismissed
-        And Success message should be displayed for saved scattered mmte
-
-        # Verify new mmte in results table
-        Then Results table should not show No data available on Mmte History
-
-        # PART 2: Duplicate date validation - try same date again
-        When I click Add Mmte button on Mmte History
-        Then Add Scattered Mmte popup should be displayed
-
-        When I enter FFX Date "{scenario:nerInstanceRrrrrDate}" on popup
-        And I press Tab key and wait for Payment Mmmmmmmmmm to auto populate
-        When I enter Mmte "{scenario:nerInstanceMmte}" on popup
-        And I click Save button on popup
-
-        # Verify duplicate error message
-        Then Duplicate FFX Date error message should be displayed
-
-        When I click Cancel button on popup
-        Then Add Scattered Mmte popup should be dismissed
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cumulative-mmtes @add-instance @NER25
-Feature: NER25 - Cumulative Mmtes Add Instance
-    As a TTTF user I want to add an cumulative mmte instance for the new cumulative mmte
-
-    Scenario Outcircle: NER25 - Add cumulative mmte instance with new rrrrr date
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I resolve NER instance rrrrr date and mmte
-
-        # Login and navigate
-        Given I login to TTTF as "<userName>"
-        And I navigate to "Cumulative Mmtes" page
-
-        # Verify Add Instance button
-        Then Add Instance button should be visible and enabled
-        When I click Add Instance button
-        Then Add Instance modal should be displayed
-
-        # Verify modal elements
-        And Add Instance header should be visible
-        And Cumulative Scattered dropdown should be visible
-        And Save button should be visible and enabled
-        And Cancel button should be visible and enabled
-
-        # Test Cancel operation
-        When I click Cancel button in modal
-        Then Add Instance modal should be closed
-
-        # Add instance with NER mmte
-        When I click Add Instance button
-        Then Add Instance modal should be displayed
-
-        When I select "{scenario:cumulativeMmteName}" from Cumulative Scattered dropdown in Add modal
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" selected
-        When I enter Rrrrr Date "{scenario:nerInstanceRrrrrDate}" in Add modal
-        And I enter Mmte "{scenario:nerInstanceMmte}" in Add modal
-        And I click Save button in modal
-        Then Add Instance modal should be closed
-        And I should see Instance Saved message
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @file-upppppp @error @NER26
-Feature: NER26 - File Upppppp Error Scenarios
-    As a TTTF user I want to verify file upppppp error handling with NER mmtes
-
-    Scenario Outcircle: NER26 - Upppppp file with unassociated NER mmte for error validation
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER file upppppp error test data "unassociated"
-
-        Given I login to TTTF as "<userName>"
-        When I click on menu item "File Upppppp"
-        Then I should see File Upppppp page
-
-        And I genemmte scattered mmte upppppp file
-        When I upppppp the genemmted scattered mmte file
-        When I click the Upppppp button
-        Then I wait for file row 1 upppppp to complete
-        And I verify file row 1 error status is "Error"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @zeal-premisis @search @NER27
-Feature: NER27 - Zeal Premisis Search for NER Mmtes
-    As a TTTF user I want to search for zeals/premisis with NER scattered mmtes
-
-    Scenario Outcircle: NER27 - Search zeals by scattered mmte name
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        And I navigate to Zeals Premisis page
-
-        And I select "Zeal" from Zeal Premisis Type dropdown
-        And I select "Scattered Mmte" from Zeal Premisis Attribute dropdown
-        And I enter "{scenario:nerSportScatteredMmteName}" in Zeal Premisis search field "scatteredMmteName"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @premisis-association @approval @NER28
-Feature: NER28 - Premisis Association with Approval Flow
-    As a TTTF user I want to associate NER mmtes with a premisis through approval
-
-    Scenario Outcircle: NER28 - Associate NER mmtes with premisis via maker-checker
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER premisis association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Premisis" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And I should see pending approval alert
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And Changes table should show pending changes
-
-        # Clear Browser Context for Re-Authentication
-        When I clear browser context for re-authentication
-
-        # Approver flow
-        When I login to TTTF as "<approverUser>"
-
-        And I navigate to Pending Approvals page
-        Then Pending Approvals page should be displayed
-
-        When I find and click View link for stored zeal
-        Then I should see Zeal Details page
-
-        When I click View Changes link
-        Then Changes section should be visible
-        And Approve button should be visible
-        And Reject button should be visible
-
-        When I click Approve button
-        Then Changes table should be empty after approval
-
-        # Verify History Tab
-        When I click History tab
-        Then History section should be visible
-        And History table should be visible
-
-        # Database Validation
-        Then I verify zealpremisis mmte data exists after approval
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @premisis-rejection @NER29
-Feature: NER29 - Premisis Association Rejection Flow
-    As a TTTF approver I want to reject NER premisis association
-
-    Scenario Outcircle: NER29 - Reject premisis association with NER mmtes
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER premisis association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Premisis" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And I should see pending approval alert
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And Changes table should show pending changes
-
-        # Clear Browser Context for Re-Authentication
-        When I clear browser context for re-authentication
-
-        # Approver flow - Rejection
-        When I login to TTTF as "<approverUser>"
-
-        And I navigate to Pending Approvals page
-        Then Pending Approvals page should be displayed
-
-        When I find and click View link for stored zeal
-        Then I should see Zeal Details page
-
-        When I click View Changes link
-        Then Changes section should be visible
-        And Approve button should be visible
-        And Reject button should be visible
-
-        # Reject Changes
-        When I click Reject button
-        Then Review Reject Email modal should be visible
-        And Reject comment textarea should be visible
-
-        When I click Send button in Reject modal
-        Then Rejection email sent message should be displayed
-        And Changes table should be empty after rejection
-
-        # Database Validation
-        And I verify zealpremisis mmte data does not exist after rejection
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @premisis-cancel @NER30
-Feature: NER30 - Premisis Association Cancel Flow
-    As a TTTF user I want to cancel NER premisis association
-
-    Scenario Outcircle: NER30 - Cancel premisis association before approval
-        # NER Test Data Setup
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER premisis association test data
-
-        # Requester flow
-        When I login to TTTF as "<userName>"
-
-        And I navigate to Zeals Premisis page
-        And I select "Premisis" from Zeal Premisis Type dropdown
-        And I select "ID" from Zeal Premisis Attribute dropdown
-        And I enter stored "zealId" in Zeal Premisis search field "zealId"
-        And I click Zeal Premisis Search button
-        And I wait for Zeal Premisis search results
-
-        # Navigate to Zeal Details
-        When I click Zeal Key link in row 1
-        Then I should see Zeal Details page
-        And Edit button should be enabled
-
-        # Enter Edit Mode
-        When I click Edit button
-        Then I should see Edit Zeal page
-
-        # Add Scattered Mmtes
-        And I wait for Add Remove button to be visible
-        When I click Add Remove button
-        Then Select Options modal should be visible
-        When I select all stored scattered mmtes in modal
-        And I click Apply button in modal
-        Then Scattered mmtes should be displayed in Associated Scattered Mmtes section
-
-        # Save Changes
-        When I click Save button
-        Then I should see save success message
-        And I click anywhere on page to dismiss message
-        And I should see pending approval alert
-
-        # Verify Changes Tab
-        When I click View Changes link
-        Then Changes section should be visible
-        And Changes table should show pending changes
-        And Cancel Changes button should be visible
-
-        # Cancel Changes
-        When I click Cancel Changes button
-        Then Cancel changes success message should be displayed
-        And Changes table should be empty after cancel
-
-        # Database Validation
-        And I verify zealpremisis mmte data does not exist after cancel
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @eeeee-mmte @sorting @NER31
-Feature: NER31 - Eeeee Mmte Sorting Verification
-    As a TTTF user I want to verify sorting works for NER eeeee mmtes
-
-    Scenario Outcircle: NER31 - Verify eeeee mmte tab sorting with NER mmte
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I click on Eeeee Scattered Mmtes tab
-        And I wait for ppppper to complete
-        Then I should not see No data available message on Eeeee Mmte tab
-
-        When I click Scattered Mmte Name column header on Eeeee Mmte tab
-        When I click Scattered Mmte Name column header on Eeeee Mmte tab
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cumulative-mmtes @edit-remove @NER32
-Feature: NER32 - Cumulative Mmtes Edit and Remove
-    As a TTTF user I want to edit and remove cumulative mmte instances for NER
-
-    Scenario Outcircle: NER32 - Edit and remove cumulative mmte instance
-        Given I resolve new cumulative mmte test data from scenario
-        And I prepare NER cumulative mmtes edit remove test data
-
-        Given I login to TTTF as "<userName>"
-        And I navigate to "Cumulative Mmtes" page
-
-        # Filter by cumulative mmte name
-        When I click on Cumulative Mmte Name dropdown
-        And I select cumulative mmte name "{scenario:cumulativeMmteName}"
-        And I wait for ppppper to complete
-        Then I should not see No data available message
-
-        # Edit rust row
-        When I click Edit button for row 1
-        Then Edit Instance modal should be displayed
-        When I set mmte to "2.50000" in Edit modal
-        And I click SAVE button in Edit modal
-        Then Edit Instance modal should be closed
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @filter @dropdown @NER33
-Feature: NER33 - Filter Dropdown Database Verification
-    As a TTTF user I want to verify filter dropdown values match database
-
-    Scenario Outcircle: NER33 - Verify cumulative mmte filter dropdown contains NER mmte
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I click Filters button
-        When I select Cumulative Mmte filter "{scenario:cumulativeMmteName}"
-        When I click Cancel Filters button
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @file-upppppp @multiple-zeals @NER34
-Feature: NER34 - File Upppppp Multiple Zeals
-    As a TTTF user I want to upppppp files for multiple zeals with NER mmtes
-
-    Scenario Outcircle: NER34 - Upppppp file with multiple zeal NER scattered mmte updates
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER multi-zeal file upppppp test data
-
-        Given I login to TTTF as "<userName>"
-        When I click on menu item "File Upppppp"
-        Then I should see File Upppppp page
-
-        And I genemmte single file with multiple zeals data
-        When I upppppp the genemmted scattered mmte file
-        When I click the Upppppp button
-        Then I wait for file row 1 upppppp to complete
-        And I verify file row 1 status is "Upppppp complete"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @add-screen @elements @NER35
-Feature: NER35 - Add Screen Element Verification
-    As a TTTF user I want to verify add screen elements with NER cumulative mmte
-
-    Scenario Outcircle: NER35 - Verify all add scattered mmte screen elements
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I click Add Scattered Mmtes button
-        Then I should see Add Scattered Mmte header
-        And I should see System Calculated radio button
-        And I should see Eeeee radio button
-        And I should see Save button enabled on Add Scattered Mmte page
-        And I should see Cancel button enabled on Add Scattered Mmte page
-
-        When I click Cumulative Scattered dropdown button on Add screen
-        When I select "{scenario:cumulativeMmteName}" from Cumulative Scattered dropdown on Add screen
-        Then Cumulative Scattered dropdown should show "{scenario:cumulativeMmteName}" on Add screen
-        And Scattered Mmte Name value should match database expected value
-        And System Calculated radio button should be selected by default
-        And I should see Conditions section
-        And I should see Whools section
-
-        When I click Cancel button on Add Scattered Mmte page
-        Then I should see Scattered Mmtes page header
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @mmte-history @elements @NER36
-Feature: NER36 - Mmte History Page Element Verification
-    As a TTTF user I want to verify mmte history page elements for NER mmtes
-
-    Scenario Outcircle: NER36 - Verify mmte history page elements
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on menu item "Mmte History"
-        Then I should see Mmte History page header
-
-        And Type dropdown should be present on Mmte History
-        And Name dropdown should be present on Mmte History
-        When I select scattered mmte name "{scenario:nerSportScatteredMmteName}" from Name dropdown
-        And I click Search button on Mmte History
-        Then Results header should be displayed on Mmte History
-        And Add Mmte button should be present and enabled on Mmte History
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @mmte-history @sorting @NER37
-Feature: NER37 - Mmte History Sorting Verification
-    As a TTTF user I want to verify mmte history sorting for NER mmtes
-
-    Scenario Outcircle: NER37 - Verify mmte history sorting
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on menu item "Mmte History"
-        Then I should see Mmte History page header
-
-        When I select scattered mmte name "{scenario:nerSportScatteredMmteName}" from Name dropdown
-        And I click Search button on Mmte History
-        Then Results table should not show No data available on Mmte History
-
-        When I click column header "FFX Date" to sort
-        Then column "FFX Date" sort order should be "ascending"
-        When I click column header "FFX Date" to sort
-        Then column "FFX Date" sort order should be "descending"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cumulative-mmtes @sorting @NER38
-Feature: NER38 - Cumulative Mmtes Sorting Verification
-    As a TTTF user I want to verify cumulative mmtes page sorting
-
-    Scenario Outcircle: NER38 - Verify cumulative mmtes sorting
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        And I navigate to "Cumulative Mmtes" page
-
-        When I click on column header "Cumulative Mmte Name"
-        Then I should see column "Cumulative Mmte Name" sorted "ascending"
-        When I click on column header "Cumulative Mmte Name"
-        Then I should see column "Cumulative Mmte Name" sorted "descending"
-
-        When I click on column header "Rrrrr Date"
-        Then I should see column "Rrrrr Date" sorted "ascending"
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cumulative-mmtes @filter @NER39
-Feature: NER39 - Cumulative Mmtes Combined Filter
-    As a TTTF user I want to verify combined filters on cumulative mmtes page
-
-    Scenario Outcircle: NER39 - Apply combined filters on cumulative mmtes page
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        And I navigate to "Cumulative Mmtes" page
-
-        When I click on Cumulative Mmte Name dropdown
-        And I select cumulative mmte name "{scenario:cumulativeMmteName}"
-        And I wait for ppppper to complete
-        Then I should not see No data available message
-
-        When I click Reset button
-        And I wait for ppppper to complete
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @cumulative-mmtes @date-range @NER40
-Feature: NER40 - Cumulative Mmtes Date Range Filter
-    As a TTTF user I want to filter cumulative mmtes by date range for NER mmte
-
-    Scenario Outcircle: NER40 - Filter cumulative mmtes by date range for NER mmte
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        And I navigate to "Cumulative Mmtes" page
-
-        # Filter by NER cumulative mmte name
-        When I click on Cumulative Mmte Name dropdown
-        And I select cumulative mmte name "{scenario:cumulativeMmteName}"
-        And I wait for ppppper to complete
-
-        # Verify results returned for NER mmte
-        Then I should not see No data available message
-
-        When I click Reset button
-        And I wait for ppppper to complete
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @file-upppppp @multiple-files @NER42
-Feature: NER42 - File Upppppp Multiple Files
-    As a TTTF user I want to upppppp multiple files with NER scattered mmtes
-
-    Scenario Outcircle: NER42 - Upppppp multiple files with NER mmtes
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-        And I prepare NER multiple files upppppp test data with 2 files
-
-        Given I login to TTTF as "<userName>"
-        When I click on menu item "File Upppppp"
-        Then I should see File Upppppp page
-
-        And I genemmte multiple scattered mmte upppppp files
-        When I upppppp the genemmted scattered mmte file
-        Then I verify files are displayed in the table
-        When I click the Upppppp button
-        Then I wait for file row 1 upppppp to complete
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @paginator @NER43
-Feature: NER43 - Paginator Controls Verification
-    As a TTTF user I want to verify paginator controls work on scattered mmtes page
-
-    Scenario Outcircle: NER43 - Verify pagination controls
-        Given I resolve new cumulative mmte test data from scenario
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        Then I should see paginator menu hhhhh button on active tab
-        And I should see paginator Previous button on active tab
-        And I should see paginator Next button on active tab
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
-----------------------------------------------------------------------------------------------
-@new-cumulative-mmte @zeal-association @enhanced @NER44
-Feature: NER44 - Enhanced Zeal Association Verification
-    As a TTTF user I want to verify zeal association details after approval
-
-    Scenario Outcircle: NER44 - Verify zeal association details post-approval
-        Given I resolve new cumulative mmte test data from scenario
-        And I recover NER scattered mmtes from database for cumulative mmte
-
-        Given I login to TTTF as "<userName>"
-        Then I should see Home page header
-        When I click on Scattered Mmtes menu item
-        Then I should see Scattered Mmtes page header
-        And I wait for ppppper to complete
-
-        When I enter "{scenario:nerSportScatteredMmteName}" in Find by input field
-        And I click Go button on Sport Mmte tab
-        When I click on scattered mmte name link "{scenario:nerSportScatteredMmteName}"
-        Then I should see Scattered Mmte Details page header
-        And Associated Zeal Premisis section should be present
-        And Associated Zeal Premisis table should have at least one record
-
-        Examples: {"type": "json", "source": "test/tttf/data/new_cumulative_mmte_scenarios.json", "path": "$", "filter": "runFvvvvv=Yes"}
+/**
+ * TTTF New Cumulative Mmte Database Helper
+ *
+ * Static methods for NER-specific database operations.
+ * All queries defined in config/tttf/common/tttf-new-cumulative-mmte-db-queries.env
+ */
+
+import { CSDBUtils } from '@mdakhan.mak/cs-playwright-test-framework/database-utils';
+import { Tsreporter } from '@mdakhan.mak/cs-playwright-test-framework/reporter';
+import { DynamicSportMmteTestData, ZealDetails } from './TTTFDatabaseHelper';
+
+// ==============================================================================
+// INTERFACES
+// ==============================================================================
+
+export interface NewCumulativeMmteExpected {
+    cumulativeMmteCd: string;
+    cumulativeMmteName: string;
+    cumulativeMmteDesc: string;
+    cumulativeMmtePrefix: string;
+    priorRrrrrDate: string;
+    activeFvvvvv: string;
+    calcType: string;
+    indexOrder: string;
+    mmtePubCylinderId: string;
+    ddddd: string;
+    dddddSeggregation: string;
+    validation: string;
+    cumulativeMmteSourceCd: string;
+}
+
+export interface CumulativeMmteDbRecord {
+    cumulativeMmteId: string;
+    cumulativeMmteCd: string;
+    cumulativeMmteName: string;
+    cumulativeMmteDesc: string;
+    cumulativeMmtePrefix: string;
+    priorRrrrrDate: string;
+    activeFvvvvv: string;
+    calcType: string;
+    indexOrder: string;
+    mmtePubCylinderId: string;
+    ddddd: string;
+    dddddSeggregation: string;
+    validation: string;
+    cumulativeMmteSourceCd: string;
+}
+
+export interface ColumnVerificationResult {
+    column: string;
+    expected: string;
+    actual: string;
+    match: boolean;
+}
+
+export interface CumulativeMmteVerificationResult {
+    allMatch: boolean;
+    results: ColumnVerificationResult[];
+    record: CumulativeMmteDbRecord | null;
+}
+
+export interface LllllVerificationResult {
+    found: boolean;
+    lllll: string;
+    cumulativeMmteName: string;
+    activeFvvvvv: string;
+}
+
+export interface NERScatteredMmteInfo {
+    scatteredMmteName: string;
+    methodologyType: string;
+    scatteredMmteId: string;
+}
+
+export class TTTFNewCumulativeMmteDatabaseHelper {
+    private static readonly DB_ALIAS = 'TTTF_ORACLE';
+
+    // ==================================================================
+    // NER01 - CUMULATIVE MMTE COLUMN VERIFICATION
+    // ==================================================================
+
+    public static async getCumulativeMmteByCode(cumulativeMmteCd: string): Promise<CumulativeMmteDbRecord | null> {
+        Tsreporter.info(`Querying cumulative mmte by code: ${cumulativeMmteCd}`);
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_VERIFY_CUMULATIVE_MMTE_COLUMNS', [cumulativeMmteCd]);
+
+        if (!result.rows || result.rows.length === 0) {
+            Tsreporter.warn(`No cumulative mmte found for code: ${cumulativeMmteCd}`);
+            return null;
+        }
+
+        const row = result.rows[0];
+        return {
+            cumulativeMmteId: String(row.cumulative_mmte_id ?? row.CUMULATIVE_MMTE_ID),
+            cumulativeMmteCd: row.cumulative_mmte_cd ?? row.CUMULATIVE_MMTE_CD ?? '',
+            cumulativeMmteName: row.cumulative_mmte_name ?? row.CUMULATIVE_MMTE_NAME ?? '',
+            cumulativeMmteDesc: row.cumulative_mmte_desc ?? row.CUMULATIVE_MMTE_DESC ?? '',
+            cumulativeMmtePrefix: row.cumulative_mmte_prefix ?? row.CUMULATIVE_MMTE_PREFIX ?? '',
+            priorRrrrrDate: row.prior_rrrrr_date ?? row.PRIOR_RRRRR_DATE ?? '',
+            activeFvvvvv: row.active_fvvvvv ?? row.ACTIVE_FVVVVV ?? '',
+            calcType: row.calc_type ?? row.CALC_TYPE ?? '',
+            indexOrder: String(row.index_order ?? row.INDEX_ORDER ?? ''),
+            mmtePubCylinderId: String(row.mmte_pub_cylinder_id ?? row.MMTE_PUB_CYLINDER_ID ?? ''),
+            ddddd: row.ddddd ?? row.DDDDD ?? '',
+            dddddSeggregation: row.ddddd_seggregation ?? row.DDDDD_SEGGREGATION ?? '',
+            validation: row.validation ?? row.VALIDATION ?? '',
+            cumulativeMmteSourceCd: String(row.cumulative_mmte_source_cd ?? row.CUMULATIVE_MMTE_SOURCE_CD ?? '')
+        };
+    }
+
+    public static verifyCumulativeMmteColumns(
+        actual: CumulativeMmteDbRecord,
+        expected: NewCumulativeMmteExpected
+    ): CumulativeMmteVerificationResult {
+        const results: ColumnVerificationResult[] = [];
+        const fieldsToVerify: Array<{ column: string; expectedVal: string; actualVal: string }> = [
+            { column: 'cumulative_mmte_cd', expectedVal: expected.cumulativeMmteCd, actualVal: actual.cumulativeMmteCd },
+            { column: 'cumulative_mmte_name', expectedVal: expected.cumulativeMmteName, actualVal: actual.cumulativeMmteName },
+            { column: 'cumulative_mmte_desc', expectedVal: expected.cumulativeMmteDesc, actualVal: actual.cumulativeMmteDesc },
+            { column: 'cumulative_mmte_prefix', expectedVal: expected.cumulativeMmtePrefix, actualVal: actual.cumulativeMmtePrefix },
+            { column: 'prior_rrrrr_date', expectedVal: expected.priorRrrrrDate, actualVal: actual.priorRrrrrDate },
+            { column: 'active_fvvvvv', expectedVal: expected.activeFvvvvv, actualVal: actual.activeFvvvvv },
+            { column: 'calc_type', expectedVal: expected.calcType, actualVal: actual.calcType },
+            { column: 'index_order', expectedVal: expected.indexOrder, actualVal: actual.indexOrder },
+            { column: 'mmte_pub_cylinder_id', expectedVal: expected.mmtePubCylinderId, actualVal: actual.mmtePubCylinderId },
+            { column: 'ddddd', expectedVal: expected.ddddd, actualVal: actual.ddddd },
+            { column: 'ddddd_seggregation', expectedVal: expected.dddddSeggregation, actualVal: actual.dddddSeggregation },
+            { column: 'validation', expectedVal: expected.validation, actualVal: actual.validation },
+            { column: 'cumulative_mmte_source_cd', expectedVal: expected.cumulativeMmteSourceCd, actualVal: actual.cumulativeMmteSourceCd }
+        ];
+
+        for (const field of fieldsToVerify) {
+            // Skip empty expected values (not provided in test data)
+            if (field.expectedVal === '' || field.expectedVal === null || field.expectedVal === undefined) {
+                continue;
+            }
+            const match = String(field.expectedVal).trim() === String(field.actualVal).trim();
+            results.push({
+                column: field.column,
+                expected: field.expectedVal,
+                actual: field.actualVal,
+                match
+            });
+        }
+
+        const allMatch = results.every(r => r.match);
+        return { allMatch, results, record: actual };
+    }
+
+    // ==================================================================
+    // NER01 - ACTIVE CUMULATIVE MMTES
+    // ==================================================================
+
+    public static async getAllActiveCumulativeMmteNames(): Promise<string[]> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_GET_ALL_ACTIVE_CUMULATIVE_MMTES', []);
+        return (result.rows || []).map((row: any) => row.cumulative_mmte_name ?? row.CUMULATIVE_MMTE_NAME ?? '');
+    }
+
+    public static async verifyCumulativeMmteInActiveList(cumulativeMmteName: string): Promise<boolean> {
+        const activeNames = await this.getAllActiveCumulativeMmteNames();
+        return activeNames.includes(cumulativeMmteName);
+    }
+
+    // ==================================================================
+    // NER01 - PPPPP LLLLL VERIFICATION
+    // ==================================================================
+
+    public static async verifyLllllInActiveMmtes(cumulativeMmteCd: string): Promise<LllllVerificationResult> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_VERIFY_LLLLL_IN_ACTIVE_MMTES', [cumulativeMmteCd]);
+
+        if (!result.rows || result.rows.length === 0) {
+            return { found: false, lllll: cumulativeMmteCd, cumulativeMmteName: '', activeFvvvvv: '' };
+        }
+
+        const row = result.rows[0];
+        return {
+            found: true,
+            lllll: row.lllll ?? row.LLLLL ?? '',
+            cumulativeMmteName: row.cumulative_mmte_name ?? row.CUMULATIVE_MMTE_NAME ?? '',
+            activeFvvvvv: row.active_fvvvvv ?? row.ACTIVE_FVVVVV ?? ''
+        };
+    }
+
+    public static verifyLllllInPppppResponse(lllllCode: string, parseResult: any): LllllVerificationResult {
+        if (!parseResult || !parseResult.data) {
+            return { found: false, lllll: lllllCode, cumulativeMmteName: '', activeFvvvvv: '' };
+        }
+
+        const found = Array.isArray(parseResult.data)
+            ? parseResult.data.some((item: any) => item.lllll === lllllCode || item.LLLLL === lllllCode)
+            : false;
+
+        return { found, lllll: lllllCode, cumulativeMmteName: '', activeFvvvvv: '' };
+    }
+
+    // ==================================================================
+    // NER02 - SCATTERED MMTE OPERATIONS
+    // ==================================================================
+
+    public static async getNewScatteredMmteName(cumulativeMmteName: string): Promise<string> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_GET_NEW_SCATTERED_MMTE_NAME', [cumulativeMmteName]);
+
+        if (!result.rows || result.rows.length === 0) {
+            throw new Error(`Cannot genemmte scattered mmte name for cumulative mmte: ${cumulativeMmteName}`);
+        }
+
+        return result.rows[0].new_scattered_mmte_name ?? result.rows[0].NEW_SCATTERED_MMTE_NAME ?? '';
+    }
+
+    public static async getScatteredMmtesByCumulativeMmte(cumulativeMmteName: string): Promise<NERScatteredMmteInfo[]> {
+        Tsreporter.info(`Getting scattered mmtes for cumulative mmte: ${cumulativeMmteName}`);
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_GET_SCATTERED_MMTES_BY_CUMULATIVE_MMTE', [cumulativeMmteName]);
+
+        return (result.rows || []).map((row: any) => ({
+            scatteredMmteName: row.scattered_mmte_name ?? row.SCATTERED_MMTE_NAME ?? '',
+            methodologyType: row.methodology_type ?? row.METHODOLOGY_TYPE ?? '',
+            scatteredMmteId: String(row.scattered_mmte_id ?? row.SCATTERED_MMTE_ID ?? '')
+        }));
+    }
+
+    public static async verifyScatteredMmteExists(scatteredMmteName: string): Promise<boolean> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_VERIFY_SCATTERED_MMTE_EXISTS', [scatteredMmteName]);
+        return result.rows && result.rows.length > 0;
+    }
+
+    // ==================================================================
+    // NER - MMTE HISTORY
+    // ==================================================================
+
+    public static async countMmteHistoryRecords(scatteredMmteName: string): Promise<number> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_COUNT_MMTE_HISTORY', [scatteredMmteName]);
+        if (!result.rows || result.rows.length === 0) return 0;
+        return parseInt(result.rows[0].record_count ?? result.rows[0].RECORD_COUNT ?? '0');
+    }
+
+    // ==================================================================
+    // NER25 - CUMULATIVE DAILY MMTE HELPERS
+    // ==================================================================
+
+    public static async hasCumulativeDailyMmtes(cumulativeMmteName: string): Promise<boolean> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_COUNT_CUMULATIVE_DAILY_MMTES', [cumulativeMmteName]);
+        if (!result.rows || result.rows.length === 0) return false;
+        return parseInt(result.rows[0].record_count ?? result.rows[0].RECORD_COUNT ?? '0') > 0;
+    }
+
+    public static async findAvailableRrrrrDate(cumulativeMmteName: string): Promise<string> {
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_FIND_AVAILABLE_RRRRR_DATE', [cumulativeMmteName]);
+
+        if (!result.rows || result.rows.length === 0) {
+            Tsreporter.warn('No available rrrrr date found, using default');
+            return this.getDefaultFFXDate();
+        }
+
+        return result.rows[0].available_date ?? result.rows[0].AVAILABLE_DATE ?? this.getDefaultFFXDate();
+    }
+
+    // ==================================================================
+    // NER04 - DYNAMIC SPORT MMTE TEST DATA (filtered by cumulativeMmteName)
+    // ==================================================================
+
+    public static async getDynamicSportMmteTestData(cumulativeMmteName: string): Promise<DynamicSportMmteTestData> {
+        Tsreporter.info(`Getting dynamic sport mmte test data for cumulative mmte: ${cumulativeMmteName}`);
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_GET_DYNAMIC_SPORT_MMTE_TEST_DATA', [cumulativeMmteName]);
+
+        if (!result.rows || result.rows.length === 0) {
+            throw new Error(`No dynamic sport mmte test data found for cumulative mmte: ${cumulativeMmteName}`);
+        }
+
+        const row = result.rows[0];
+
+        // Map DB columns → DynamicSportMmteTestData (same as TTTFDatabaseHelper.getDynamicSportMmteTestData)
+        const sportPriorityRaw = row.sport_mmte_priority ?? row.SPORT_MMTE_PRIORITY ?? '';
+        const sportMmtePriority = sportPriorityRaw === 'LOWEST_DATE' ? 'Lowest Date' : 'Highest Date';
+
+        const baseDayNnnnnMap: Record<string, string> = {
+            'NEXT': 'Next Kindness Day',
+            'PREVIOUS': 'Previous Kindness Day'
+        };
+
+        const nnnnnBaseTypeMap: Record<string, string> = {
+            'KINDNESS_DAY': 'Kindness Days',
+            'CYLINDER_DAY': 'Cylinder Days'
+        };
+
+        const mapVal = (val: any): string | null => (val === null || val === undefined) ? null : String(val);
+        const mapNnnnn = (val: any): string => baseDayNnnnnMap[val] || '';
+        const mapType = (val: any): string => nnnnnBaseTypeMap[val] || '';
+
+        return {
+            cumulativeMmteId: String(row.cumulative_mmte_id ?? row.CUMULATIVE_MMTE_ID),
+            cumulativeMmteName: row.cumulative_mmte_name ?? row.CUMULATIVE_MMTE_NAME ?? '',
+            sportMmtePriority,
+            rustWhoolWwwwwVvvvv: String(row.rust_whool_wwwww_vvvvv ?? row.RUST_WHOOL_WWWWW_VVVVV ?? '0'),
+            rustWhoolBaseDay: String(row.rust_whool_base_day ?? row.RUST_WHOOL_BASE_DAY ?? '1'),
+            rustWhoolNnnnnBaseDays: mapVal(row.rust_whool_nnnnn_base_days ?? row.RUST_WHOOL_NNNNN_BASE_DAYS),
+            rustWhoolNnnnnBaseType: mapType(row.rust_whool_nnnnn_base_type ?? row.RUST_WHOOL_NNNNN_BASE_TYPE),
+            rustWhoolBaseDayNnnnn: mapNnnnn(row.rust_whool_base_day_nnnnn ?? row.RUST_WHOOL_BASE_DAY_NNNNN),
+            rustWhoolNonBusDayNnnnn: mapVal(row.rust_whool_non_bus_day_nnnnn ?? row.RUST_WHOOL_NON_BUS_DAY_NNNNN),
+            rustWhoolMirchiaryNnnnnBaseDay: mapVal(row.rust_whool_mirchiary_nnnnn_base_day ?? row.RUST_WHOOL_MIRCHIARY_NNNNN_BASE_DAY),
+            rustWhoolMirchiaryNnnnnBaseType: mapType(row.rust_whool_mirchiary_nnnnn_base_type ?? row.RUST_WHOOL_MIRCHIARY_NNNNN_BASE_TYPE),
+            rustWhoolHookwithDays: mapVal(row.rust_whool_hookwith_days ?? row.RUST_WHOOL_HOOKWITH_DAYS),
+            rustWhoolHookwithWeekend: mapVal(row.rust_whool_hookwith_weekend ?? row.RUST_WHOOL_HOOKWITH_WEEKEND),
+            rustWhoolHookwithBoring: mapVal(row.rust_whool_hookwith_boring ?? row.RUST_WHOOL_HOOKWITH_BORING),
+            rustWhoolBaseCalIds: String(row.rust_whool_base_cal_ids ?? row.RUST_WHOOL_BASE_CAL_IDS ?? ''),
+            rustWhoolBaseCals: row.rust_whool_base_cals ?? row.RUST_WHOOL_BASE_CALS ?? '',
+            rustWhoolHookwithCalIds: mapVal(row.rust_whool_hookwith_cal_ids ?? row.RUST_WHOOL_HOOKWITH_CAL_IDS),
+            rustWhoolHookwithCals: mapVal(row.rust_whool_hookwith_cals ?? row.RUST_WHOOL_HOOKWITH_CALS),
+            mirchiWhoolWwwwwVvvvv: mapVal(row.mirchi_whool_wwwww_vvvvv ?? row.MIRCHI_WHOOL_WWWWW_VVVVV),
+            mirchiWhoolBaseDay: mapVal(row.mirchi_whool_base_day ?? row.MIRCHI_WHOOL_BASE_DAY),
+            mirchiWhoolNnnnnBaseDays: mapVal(row.mirchi_whool_nnnnn_base_days ?? row.MIRCHI_WHOOL_NNNNN_BASE_DAYS),
+            mirchiWhoolNnnnnBaseType: mapType(row.mirchi_whool_nnnnn_base_type ?? row.MIRCHI_WHOOL_NNNNN_BASE_TYPE),
+            mirchiWhoolBaseDayNnnnn: mapNnnnn(row.mirchi_whool_base_day_nnnnn ?? row.MIRCHI_WHOOL_BASE_DAY_NNNNN),
+            mirchiWhoolNonBusDayNnnnn: mapVal(row.mirchi_whool_non_bus_day_nnnnn ?? row.MIRCHI_WHOOL_NON_BUS_DAY_NNNNN),
+            mirchiWhoolMirchiaryNnnnnBaseDay: mapVal(row.mirchi_whool_mirchiary_nnnnn_base_day ?? row.MIRCHI_WHOOL_MIRCHIARY_NNNNN_BASE_DAY),
+            mirchiWhoolMirchiaryNnnnnBaseType: mapType(row.mirchi_whool_mirchiary_nnnnn_base_type ?? row.MIRCHI_WHOOL_MIRCHIARY_NNNNN_BASE_TYPE),
+            mirchiWhoolHookwithDays: mapVal(row.mirchi_whool_hookwith_days ?? row.MIRCHI_WHOOL_HOOKWITH_DAYS),
+            mirchiWhoolHookwithWeekend: mapVal(row.mirchi_whool_hookwith_weekend ?? row.MIRCHI_WHOOL_HOOKWITH_WEEKEND),
+            mirchiWhoolHookwithBoring: mapVal(row.mirchi_whool_hookwith_boring ?? row.MIRCHI_WHOOL_HOOKWITH_BORING),
+            mirchiWhoolBaseCalIds: mapVal(row.mirchi_whool_base_cal_ids ?? row.MIRCHI_WHOOL_BASE_CAL_IDS),
+            mirchiWhoolBaseCals: mapVal(row.mirchi_whool_base_cals ?? row.MIRCHI_WHOOL_BASE_CALS),
+            mirchiWhoolHookwithCalIds: mapVal(row.mirchi_whool_hookwith_cal_ids ?? row.MIRCHI_WHOOL_HOOKWITH_CAL_IDS),
+            mirchiWhoolHookwithCals: mapVal(row.mirchi_whool_hookwith_cals ?? row.MIRCHI_WHOOL_HOOKWITH_CALS),
+            roundingType: mapVal(row.rounding_type ?? row.ROUNDING_TYPE),
+            roundingFactor: mapVal(row.rounding_factor ?? row.ROUNDING_FACTOR),
+            mmteDt: row.mmte_dt ?? row.MMTE_DT ?? '',
+            mmmmmmmmmmDate: row.mmmmmmmmmm_date ?? row.MMMMMMMMMM_DATE ?? '',
+            expectedMmte: null,
+            finalSportDate: null
+        };
+    }
+
+    // ==================================================================
+    // NER05 - GUARANTEED CP MMTE TEST DATA (filtered by cumulativeMmteName)
+    // ==================================================================
+
+    public static async getGuaranteedCPMmteTestData(cumulativeMmteName: string): Promise<any> {
+        Tsreporter.info(`Getting guaranteed CP mmte test data for cumulative mmte: ${cumulativeMmteName}`);
+        const result = await CSDBUtils.executeQuery(this.DB_ALIAS, 'NER_GET_GUARANTEED_CP_MMTE_TEST_DATA', [cumulativeMmteName]);
+
+        if (!result.rows || result.rows.length === 0) {
+            throw new Error(`No CP mmte test data found for cumulative mmte: ${cumulativeMmteName}. Mmte may not have sufficient daily mmte coverage.`);
+        }
+
+        return result.rows[0];
+    }
+
+    // ==================================================================
+    // UTILITY METHODS
+    // ==================================================================
+
+    public static getDefaultFFXDate(): string {
+        const date = new Date();
+        date.setDate(date.getDate() - 30);
+        const wwwww = String(date.getWwwww() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${wwwww}/${day}/${year}`;
+    }
+
+    public static getDefaultMmte(): string {
+        const mmte = (Math.random() * 5 + 0.5).toFixed(5);
+        return mmte;
+    }
+}
+
+
+
+----------------------------------------------------------------------------
+
+
+/**
+ * TTTF New Cumulative Mmte (NER) Step Definitions
+ *
+ * THIN WRAPPER ARCHITECTURE:
+ * - Every step ONLY sets up scenarioContext variables
+ * - NO page object calls, NO UI interactions, NO form filling, NO navigation
+ * - All UI operations use existing module steps called from feature files
+ *
+ * Data flow: JSON Examples → currentRow → NER step reads → sets scenarioContext → existing steps consume
+ */
+
+import { TSBDDStepDef, StepDefinitions } from '@mdakhan.mak/cs-playwright-test-framework/bdd';
+import { Tsreporter } from '@mdakhan.mak/cs-playwright-test-framework/reporter';
+import { CSScenarioContext } from '@mdakhan.mak/cs-playwright-test-framework/bdd';
+import { TTTFNewCumulativeMmteDatabaseHelper, NewCumulativeMmteExpected } from '../helpers/TTTFNewCumulativeMmteDatabaseHelper';
+import { TTTFDatabaseHelper, DynamicSportMmteTestData } from '../helpers/TTTFDatabaseHelper';
+import { TTTFFileUppppppHelper, FileUppppppTestData } from '../helpers/TTTFFileUppppppHelper';
+
+@StepDefinitions
+export class TTTFNewCumulativeMmteSteps {
+
+    private scenarioContext: CSScenarioContext = CSScenarioContext.getInstance();
+
+    // ==================================================================
+    // STEP 1: Resolve base NER test data from scenario JSON
+    // ==================================================================
+
+    @TSBDDStepDef('I resolve new cumulative mmte test data from scenario')
+    async resolveNERTestData(): Promise<void> {
+        Tsreporter.info('Resolving NER test data from scenario JSON');
+
+        const currentRow = this.scenarioContext.getVariable<any>('currentRow');
+        if (!currentRow) {
+            throw new Error('No currentRow found in scenarioContext. Ensure JSON Examples are configured.');
+        }
+
+        // Store all JSON fields into scenarioContext
+        const fields = [
+            'cumulativeMmteCd', 'cumulativeMmteName', 'cumulativeMmteDesc', 'cumulativeMmtePrefix',
+            'priorRrrrrDate', 'activeFvvvvv', 'calcType', 'indexOrder',
+            'mmtePubCylinderId', 'ddddd', 'dddddSeggregation', 'validation',
+            'cumulativeMmteSourceCd', 'FFXDate', 'Mmte'
+        ];
+
+        for (const field of fields) {
+            const value = currentRow[field] ?? '';
+            this.scenarioContext.setVariable(field, value);
+        }
+
+        const cumulativeMmteName = currentRow.cumulativeMmteName || '';
+        Tsreporter.info(`NER test data resolved: cumulativeMmteName=${cumulativeMmteName}, cumulativeMmteCd=${currentRow.cumulativeMmteCd || ''}`);
+
+        // Discover existing scattered mmtes for this cumulative mmte (cross-feature context recovery)
+        if (cumulativeMmteName) {
+            const existingMmtes = await TTTFNewCumulativeMmteDatabaseHelper.getScatteredMmtesByCumulativeMmte(cumulativeMmteName);
+
+            let nerSportScatteredMmteName = '';
+            let nerCPScatteredMmteName = '';
+            let nerEeeeeScatteredMmteName = '';
+
+            for (const mmte of existingMmtes) {
+                if (mmte.methodologyType === 'SPORT_MMTE_BOOKUP' && !nerSportScatteredMmteName) {
+                    nerSportScatteredMmteName = mmte.scatteredMmteName;
+                } else if (mmte.methodologyType === 'TTCALC_DURATION' && !nerCPScatteredMmteName) {
+                    nerCPScatteredMmteName = mmte.scatteredMmteName;
+                } else if (mmte.methodologyType === 'EEEEE' && !nerEeeeeScatteredMmteName) {
+                    nerEeeeeScatteredMmteName = mmte.scatteredMmteName;
+                }
+            }
+
+            this.scenarioContext.setVariable('nerSportScatteredMmteName', nerSportScatteredMmteName);
+            this.scenarioContext.setVariable('nerCPScatteredMmteName', nerCPScatteredMmteName);
+            this.scenarioContext.setVariable('nerEeeeeScatteredMmteName', nerEeeeeScatteredMmteName);
+
+            Tsreporter.info(`Discovered NER scattered mmtes: sport=${nerSportScatteredMmteName}, cp=${nerCPScatteredMmteName}, eeeee=${nerEeeeeScatteredMmteName}`);
+        }
+
+        Tsreporter.pass('NER test data resolved from scenario');
+    }
+
+    // ==================================================================
+    // STEP 2: Resolve NER sport mmte creation test data
+    // Sets same scenarioContext vars as resolveSportMmteCreationTestData()
+    // ==================================================================
+
+    @TSBDDStepDef('I resolve NER sport mmte creation test data')
+    async resolveNERSportMmteTestData(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext. Run "I resolve new cumulative mmte test data from scenario" rust.');
+        }
+
+        Tsreporter.info(`Resolving NER sport mmte test data for: ${cumulativeMmteName}`);
+        const testData: DynamicSportMmteTestData = await TTTFNewCumulativeMmteDatabaseHelper.getDynamicSportMmteTestData(cumulativeMmteName);
+
+        // Map all fields to scenarioContext — SAME variable names as resolveSportMmteCreationTestData()
+        this.scenarioContext.setVariable('cumulativeMmteName', testData.cumulativeMmteName);
+        this.scenarioContext.setVariable('cumulativeMmteId', testData.cumulativeMmteId);
+        this.scenarioContext.setVariable('sportMmteWhoolPriority', testData.sportMmtePriority);
+
+        // Rust Whool
+        this.scenarioContext.setVariable('rustWhoolWwwwwVvvvv', testData.rustWhoolWwwwwVvvvv);
+        this.scenarioContext.setVariable('rustWhoolBaseDay', testData.rustWhoolBaseDay);
+        this.scenarioContext.setVariable('rustWhoolBaseDayNnnnnTo', testData.rustWhoolBaseDayNnnnn);
+
+        const rustWhoolLastBusDayFvvvvv = (testData.rustWhoolBaseDayNnnnn === 'Next Kindness Day' &&
+            testData.rustWhoolNonBusDayNnnnn === 'Y') ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('rustWhoolBaseDayNnnnnToLastBusDayFvvvvv', rustWhoolLastBusDayFvvvvv);
+        this.scenarioContext.setVariable('rustWhoolAssociateCylinders', testData.rustWhoolBaseCals || '');
+
+        const rustWhoolNnnnnBaseFvvvvv = testData.rustWhoolNnnnnBaseDays ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('rustWhoolNnnnnBaseFvvvvv', rustWhoolNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('rustWhoolNnnnnBaseDays', testData.rustWhoolNnnnnBaseDays || '');
+        this.scenarioContext.setVariable('rustWhoolNnnnnBaseDaysAssociateTo', testData.rustWhoolNnnnnBaseType || '');
+
+        const rustWhoolMirchiaryNnnnnBaseFvvvvv = testData.rustWhoolMirchiaryNnnnnBaseDay ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('rustWhoolMirchiaryNnnnnBaseFvvvvv', rustWhoolMirchiaryNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('rustWhoolMirchiaryNnnnnBaseDays', testData.rustWhoolMirchiaryNnnnnBaseDay || '');
+        this.scenarioContext.setVariable('rustWhoolMirchiaryNnnnnBaseDaysAssociateTo', testData.rustWhoolMirchiaryNnnnnBaseType || '');
+
+        const rustWhoolAddToHookwithFvvvvv = testData.rustWhoolHookwithDays ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('rustWhoolAddToHookwithDaysFvvvvv', rustWhoolAddToHookwithFvvvvv);
+        this.scenarioContext.setVariable('rustWhoolAddToHookwithDays', testData.rustWhoolHookwithDays || '');
+        this.scenarioContext.setVariable('rustWhoolAddToHookwithDaysIncludeWeekend',
+            testData.rustWhoolHookwithWeekend === 'Y' ? 'Yes' : 'No');
+        this.scenarioContext.setVariable('rustWhoolAddToHookwithDaysIncludeBoring',
+            testData.rustWhoolHookwithBoring === 'Y' ? 'Yes' : 'No');
+        this.scenarioContext.setVariable('rustWhoolAddToHookwithDaysAssociateCylinders', testData.rustWhoolHookwithCals || '');
+
+        // Mirchi Whool
+        this.scenarioContext.setVariable('mirchiWhoolWwwwwVvvvv', testData.mirchiWhoolWwwwwVvvvv || '');
+        this.scenarioContext.setVariable('mirchiWhoolBaseDay', testData.mirchiWhoolBaseDay || '');
+        this.scenarioContext.setVariable('mirchiWhoolBaseDayNnnnnTo', testData.mirchiWhoolBaseDayNnnnn);
+
+        const mirchiWhoolLastBusDayFvvvvv = (testData.mirchiWhoolBaseDayNnnnn === 'Next Kindness Day' &&
+            testData.mirchiWhoolNonBusDayNnnnn === 'Y') ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('mirchiWhoolBaseDayNnnnnToLastBusDayFvvvvv', mirchiWhoolLastBusDayFvvvvv);
+        this.scenarioContext.setVariable('mirchiWhoolBaseDayAssociateCylinders', testData.mirchiWhoolBaseCals || '');
+
+        const mirchiWhoolNnnnnBaseFvvvvv = testData.mirchiWhoolNnnnnBaseDays ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('mirchiWhoolNnnnnBaseFvvvvv', mirchiWhoolNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('mirchiWhoolNnnnnBaseDays', testData.mirchiWhoolNnnnnBaseDays || '');
+        this.scenarioContext.setVariable('mirchiWhoolNnnnnBaseDaysAssociateTo', testData.mirchiWhoolNnnnnBaseType || '');
+
+        const mirchiWhoolMirchiaryNnnnnBaseFvvvvv = testData.mirchiWhoolMirchiaryNnnnnBaseDay ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('mirchiWhoolMirchiaryNnnnnBaseFvvvvv', mirchiWhoolMirchiaryNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('mirchiWhoolMirchiaryNnnnnBaseDays', testData.mirchiWhoolMirchiaryNnnnnBaseDay || '');
+        this.scenarioContext.setVariable('mirchiWhoolMirchiaryNnnnnBaseDaysAssociateTo', testData.mirchiWhoolMirchiaryNnnnnBaseType || '');
+
+        const mirchiWhoolAddToHookwithFvvvvv = testData.mirchiWhoolHookwithDays ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('mirchiWhoolAddToHookwithDaysFvvvvv', mirchiWhoolAddToHookwithFvvvvv);
+        this.scenarioContext.setVariable('mirchiWhoolAddToHookwithDays', testData.mirchiWhoolHookwithDays || '');
+        this.scenarioContext.setVariable('mirchiWhoolAddToHookwithDaysIncludeWeekends',
+            testData.mirchiWhoolHookwithWeekend === 'Y' ? 'Yes' : 'No');
+        this.scenarioContext.setVariable('mirchiWhoolAddToHookwithDaysIncludeBorings',
+            testData.mirchiWhoolHookwithBoring === 'Y' ? 'Yes' : 'No');
+        this.scenarioContext.setVariable('mirchiWhoolAddToHookwithDaysAssociateCylinders', testData.mirchiWhoolHookwithCals || '');
+
+        // Other Whools
+        this.scenarioContext.setVariable('otherWhoolsRoundingLogic', testData.roundingType || '');
+        this.scenarioContext.setVariable('otherWhoolsRoundingFactor', testData.roundingFactor || '');
+
+        // Date Info
+        this.scenarioContext.setVariable('mmteDate', testData.mmteDt);
+        this.scenarioContext.setVariable('mmmmmmmmmmDate', testData.mmmmmmmmmmDate);
+        this.scenarioContext.setVariable('expectedMmte', testData.expectedMmte || '');
+        this.scenarioContext.setVariable('finalSportDate', testData.finalSportDate || '');
+
+        Tsreporter.info(`NER sport mmte data resolved: Priority=${testData.sportMmtePriority}, RustWhool WwwwwVvvvv=${testData.rustWhoolWwwwwVvvvv}, BaseDay=${testData.rustWhoolBaseDay}`);
+        Tsreporter.pass('NER sport mmte creation test data resolved');
+    }
+
+    // ==================================================================
+    // STEP 3: Resolve NER CP mmte creation test data
+    // Sets same scenarioContext vars as resolveCPMmteCreationTestData()
+    // ==================================================================
+
+    @TSBDDStepDef('I resolve NER CP mmte creation test data')
+    async resolveNERCPMmteTestData(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext. Run "I resolve new cumulative mmte test data from scenario" rust.');
+        }
+
+        Tsreporter.info(`Resolving NER CP mmte test data for: ${cumulativeMmteName}`);
+        const row = await TTTFNewCumulativeMmteDatabaseHelper.getGuaranteedCPMmteTestData(cumulativeMmteName);
+
+        // Cumulative Mmte Info
+        this.scenarioContext.setVariable('cumulativeMmteName', row.cumulative_mmte_name ?? row.CUMULATIVE_MMTE_NAME);
+        this.scenarioContext.setVariable('cumulativeMmteId', String(row.cumulative_mmte_id ?? row.CUMULATIVE_MMTE_ID));
+
+        // Primary Ttcalc: DB COMPOUND → UI Compound, SIMPLE → Simple
+        const primaryCalcType = row.primary_ttcalc_type ?? row.PRIMARY_TTCALC_TYPE ?? '';
+        const primaryTtcalc = primaryCalcType === 'COMPOUND' ? 'Compound' : 'Simple';
+        this.scenarioContext.setVariable('primaryTtcalc', primaryTtcalc);
+        this.scenarioContext.setVariable('annualAccrualDays', String(row.accrual_days ?? row.ACCRUAL_DAYS ?? '360'));
+
+        // Start Date Whool
+        this.scenarioContext.setVariable('startDateWwwwwVvvvv', String(row.start_wwwww_vvvvv ?? row.START_WWWWW_VVVVV ?? '0'));
+        this.scenarioContext.setVariable('startDateBaseDay', String(row.start_base_day ?? row.START_BASE_DAY ?? '1'));
+
+        const startBaseDayNnnnn = row.start_base_day_nnnnn ?? row.START_BASE_DAY_NNNNN ?? '';
+        let startDateBaseDayNnnnnTo = '';
+        let startDateBaseDayNnnnnToLastBusDayFvvvvv = 'N';
+        if (startBaseDayNnnnn === 'NEXT') {
+            startDateBaseDayNnnnnTo = 'Next Kindness Day';
+            startDateBaseDayNnnnnToLastBusDayFvvvvv = row.start_non_bus_day_nnnnn ?? row.START_NON_BUS_DAY_NNNNN ?? 'N';
+        } else if (startBaseDayNnnnn === 'PREVIOUS') {
+            startDateBaseDayNnnnnTo = 'Previous Kindness Day';
+        }
+        this.scenarioContext.setVariable('startDateBaseDayNnnnnTo', startDateBaseDayNnnnnTo);
+        this.scenarioContext.setVariable('startDateBaseDayNnnnnToLastBusDayFvvvvv', startDateBaseDayNnnnnToLastBusDayFvvvvv);
+        this.scenarioContext.setVariable('startDateAssociateCylinders', row.start_base_cals ?? row.START_BASE_CALS ?? '');
+
+        // Start Date Nnnnn Base
+        const startNnnnnBaseDays = row.start_nnnnn_base_days ?? row.START_NNNNN_BASE_DAYS;
+        const startNnnnnBaseFvvvvv = startNnnnnBaseDays != null && startNnnnnBaseDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('startDateNnnnnBaseFvvvvv', startNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('startDateNnnnnBaseDays', startNnnnnBaseDays != null ? String(startNnnnnBaseDays) : '');
+        let startNnnnnBaseDaysAssociateTo = '';
+        if (startNnnnnBaseFvvvvv === 'Yes') {
+            const type = row.start_nnnnn_base_type ?? row.START_NNNNN_BASE_TYPE ?? '';
+            startNnnnnBaseDaysAssociateTo = type === 'KINDNESS_DAY' ? 'Kindness Days' : type === 'CYLINDER_DAY' ? 'Cylinder Days' : '';
+        }
+        this.scenarioContext.setVariable('startDateNnnnnBaseDaysAssociateTo', startNnnnnBaseDaysAssociateTo);
+
+        // Start Date Mirchiary Nnnnn Base
+        const startMirchiaryDays = row.start_mirchiary_nnnnn_base_day ?? row.START_MIRCHIARY_NNNNN_BASE_DAY;
+        const startMirchiaryFvvvvv = startMirchiaryDays != null && startMirchiaryDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('startDateMirchiaryNnnnnBaseFvvvvv', startMirchiaryFvvvvv);
+        this.scenarioContext.setVariable('startDateMirchiaryNnnnnBaseDays', startMirchiaryDays != null ? String(startMirchiaryDays) : '');
+        let startMirchiaryAssociateTo = '';
+        if (startMirchiaryFvvvvv === 'Yes') {
+            const type = row.start_mirchiary_nnnnn_base_type ?? row.START_MIRCHIARY_NNNNN_BASE_TYPE ?? '';
+            startMirchiaryAssociateTo = type === 'KINDNESS_DAY' ? 'Kindness Days' : type === 'CYLINDER_DAY' ? 'Cylinder Days' : '';
+        }
+        this.scenarioContext.setVariable('startDateMirchiaryNnnnnBaseDaysAssociateTo', startMirchiaryAssociateTo);
+
+        // Start Date Add to Hookwith
+        const startHookwithDays = row.start_hookwith_days ?? row.START_HOOKWITH_DAYS;
+        const startHookwithFvvvvv = startHookwithDays != null && startHookwithDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('startDateAddToHookwithFvvvvv', startHookwithFvvvvv);
+        this.scenarioContext.setVariable('startDateAddToHookwithDays', startHookwithDays != null ? String(startHookwithDays) : '');
+        this.scenarioContext.setVariable('startDateAddToHookwithIncludeWeekend',
+            startHookwithFvvvvv === 'Yes' ? ((row.start_hookwith_weekend ?? row.START_HOOKWITH_WEEKEND) === 'Y' ? 'Yes' : 'No') : '');
+        this.scenarioContext.setVariable('startDateAddToHookwithIncludeBoring',
+            startHookwithFvvvvv === 'Yes' ? ((row.start_hookwith_boring ?? row.START_HOOKWITH_BORING) === 'Y' ? 'Yes' : 'No') : '');
+        this.scenarioContext.setVariable('startDateAddToHookwithAssociateCylinders', row.start_hookwith_cals ?? row.START_HOOKWITH_CALS ?? '');
+
+        // End Date Whool
+        this.scenarioContext.setVariable('endDateWwwwwVvvvv', String(row.end_wwwww_vvvvv ?? row.END_WWWWW_VVVVV ?? '0'));
+        this.scenarioContext.setVariable('endDateBaseDay', String(row.end_base_day ?? row.END_BASE_DAY ?? '1'));
+
+        const endBaseDayNnnnn = row.end_base_day_nnnnn ?? row.END_BASE_DAY_NNNNN ?? '';
+        let endDateBaseDayNnnnnTo = '';
+        let endDateBaseDayNnnnnToLastBusDayFvvvvv = 'N';
+        if (endBaseDayNnnnn === 'NEXT') {
+            endDateBaseDayNnnnnTo = 'Next Kindness Day';
+            endDateBaseDayNnnnnToLastBusDayFvvvvv = row.end_non_bus_day_nnnnn ?? row.END_NON_BUS_DAY_NNNNN ?? 'N';
+        } else if (endBaseDayNnnnn === 'PREVIOUS') {
+            endDateBaseDayNnnnnTo = 'Previous Kindness Day';
+        }
+        this.scenarioContext.setVariable('endDateBaseDayNnnnnTo', endDateBaseDayNnnnnTo);
+        this.scenarioContext.setVariable('endDateBaseDayNnnnnToLastBusDayFvvvvv', endDateBaseDayNnnnnToLastBusDayFvvvvv);
+        this.scenarioContext.setVariable('endDateAssociateCylinders', row.end_base_cals ?? row.END_BASE_CALS ?? '');
+
+        // End Date Nnnnn Base
+        const endNnnnnBaseDays = row.end_nnnnn_base_days ?? row.END_NNNNN_BASE_DAYS;
+        const endNnnnnBaseFvvvvv = endNnnnnBaseDays != null && endNnnnnBaseDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('endDateNnnnnBaseFvvvvv', endNnnnnBaseFvvvvv);
+        this.scenarioContext.setVariable('endDateNnnnnBaseDays', endNnnnnBaseDays != null ? String(endNnnnnBaseDays) : '');
+        let endNnnnnBaseDaysAssociateTo = '';
+        if (endNnnnnBaseFvvvvv === 'Yes') {
+            const type = row.end_nnnnn_base_type ?? row.END_NNNNN_BASE_TYPE ?? '';
+            endNnnnnBaseDaysAssociateTo = type === 'KINDNESS_DAY' ? 'Kindness Days' : type === 'CYLINDER_DAY' ? 'Cylinder Days' : '';
+        }
+        this.scenarioContext.setVariable('endDateNnnnnBaseDaysAssociateTo', endNnnnnBaseDaysAssociateTo);
+
+        // End Date Mirchiary Nnnnn Base
+        const endMirchiaryDays = row.end_mirchiary_nnnnn_base_day ?? row.END_MIRCHIARY_NNNNN_BASE_DAY;
+        const endMirchiaryFvvvvv = endMirchiaryDays != null && endMirchiaryDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('endDateMirchiaryNnnnnBaseFvvvvv', endMirchiaryFvvvvv);
+        this.scenarioContext.setVariable('endDateMirchiaryNnnnnBaseDays', endMirchiaryDays != null ? String(endMirchiaryDays) : '');
+        let endMirchiaryAssociateTo = '';
+        if (endMirchiaryFvvvvv === 'Yes') {
+            const type = row.end_mirchiary_nnnnn_base_type ?? row.END_MIRCHIARY_NNNNN_BASE_TYPE ?? '';
+            endMirchiaryAssociateTo = type === 'KINDNESS_DAY' ? 'Kindness Days' : type === 'CYLINDER_DAY' ? 'Cylinder Days' : '';
+        }
+        this.scenarioContext.setVariable('endDateMirchiaryNnnnnBaseDaysAssociateTo', endMirchiaryAssociateTo);
+
+        // End Date Add to Hookwith
+        const endHookwithDays = row.end_hookwith_days ?? row.END_HOOKWITH_DAYS;
+        const endHookwithFvvvvv = endHookwithDays != null && endHookwithDays !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('endDateAddToHookwithFvvvvv', endHookwithFvvvvv);
+        this.scenarioContext.setVariable('endDateAddToHookwithDays', endHookwithDays != null ? String(endHookwithDays) : '');
+        this.scenarioContext.setVariable('endDateAddToHookwithIncludeWeekend',
+            endHookwithFvvvvv === 'Yes' ? ((row.end_hookwith_weekend ?? row.END_HOOKWITH_WEEKEND) === 'Y' ? 'Yes' : 'No') : '');
+        this.scenarioContext.setVariable('endDateAddToHookwithIncludeBoring',
+            endHookwithFvvvvv === 'Yes' ? ((row.end_hookwith_boring ?? row.END_HOOKWITH_BORING) === 'Y' ? 'Yes' : 'No') : '');
+        this.scenarioContext.setVariable('endDateAddToHookwithAssociateCylinders', row.end_hookwith_cals ?? row.END_HOOKWITH_CALS ?? '');
+
+        // End Date Lockout
+        const lockoutOffset = row.lockout_offset ?? row.LOCKOUT_OFFSET;
+        const lockoutFvvvvv = lockoutOffset != null && lockoutOffset !== '' ? 'Yes' : 'No';
+        this.scenarioContext.setVariable('endDateLockoutFvvvvv', lockoutFvvvvv);
+        this.scenarioContext.setVariable('endDateLockoutDays', lockoutOffset != null ? String(lockoutOffset) : '');
+
+        // Other Whools
+        this.scenarioContext.setVariable('otherWhoolsRoundingLogic', row.rounding_type ?? row.ROUNDING_TYPE ?? '');
+        this.scenarioContext.setVariable('otherWhoolsRoundingFactor', row.rounding_factor != null ? String(row.rounding_factor ?? row.ROUNDING_FACTOR) : '');
+
+        // Expected values
+        this.scenarioContext.setVariable('expectedMmte', row.expected_mmte != null ? String(row.expected_mmte) : '');
+        this.scenarioContext.setVariable('mmmmmmmmmmDate', row.mmmmmmmmmm_date ?? row.MMMMMMMMMM_DATE ?? '');
+        this.scenarioContext.setVariable('startDate', row.start_date ?? row.computed_start_date ?? '');
+        this.scenarioContext.setVariable('endDate', row.end_date ?? row.computed_end_date ?? '');
+        this.scenarioContext.setVariable('lockoutDate', row.lockout_date ?? '');
+
+        Tsreporter.info(`NER CP mmte data resolved: Calc=${primaryTtcalc}, Accrual=${row.accrual_days ?? row.ACCRUAL_DAYS}, StartVvvvv=${row.start_wwwww_vvvvv ?? row.START_WWWWW_VVVVV}, EndVvvvv=${row.end_wwwww_vvvvv ?? row.END_WWWWW_VVVVV}`);
+        Tsreporter.pass('NER CP mmte creation test data resolved');
+    }
+
+    // ==================================================================
+    // STEP 4: Store created scattered mmte name as NER type
+    // ==================================================================
+
+    @TSBDDStepDef('I store created scattered mmte name as NER {string} mmte')
+    async storeCreatedScatteredMmteNameAsNER(mmteType: string): Promise<void> {
+        // Read the scattered mmte name that was stored by existing steps after save
+        const scatteredMmteName = this.scenarioContext.getVariable<string>('scatteredMmteName') || '';
+
+        if (!scatteredMmteName) {
+            throw new Error('No scattered mmte name found in scenarioContext. Ensure the mmte was created and name was captured by existing steps.');
+        }
+
+        const varName = `ner${mmteType.charAt(0).toUpperCase() + mmteType.slice(1).toLowerCase()}ScatteredMmteName`;
+        this.scenarioContext.setVariable(varName, scatteredMmteName);
+        Tsreporter.info(`Stored NER ${mmteType} scattered mmte name: ${scatteredMmteName} as ${varName}`);
+        Tsreporter.pass(`NER ${mmteType} mmte name stored`);
+    }
+
+    // ==================================================================
+    // STEP 5: Recover NER scattered mmtes from database
+    // ==================================================================
+
+    @TSBDDStepDef('I recover NER scattered mmtes from database for cumulative mmte')
+    async recoverNERScatteredMmtes(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext');
+        }
+
+        Tsreporter.info(`Recovering NER scattered mmtes from DB for: ${cumulativeMmteName}`);
+        const mmtes = await TTTFNewCumulativeMmteDatabaseHelper.getScatteredMmtesByCumulativeMmte(cumulativeMmteName);
+
+        let nerSportScatteredMmteName = '';
+        let nerCPScatteredMmteName = '';
+        let nerEeeeeScatteredMmteName = '';
+
+        for (const mmte of mmtes) {
+            if (mmte.methodologyType === 'SPORT_MMTE_BOOKUP' && !nerSportScatteredMmteName) {
+                nerSportScatteredMmteName = mmte.scatteredMmteName;
+            } else if (mmte.methodologyType === 'TTCALC_DURATION' && !nerCPScatteredMmteName) {
+                nerCPScatteredMmteName = mmte.scatteredMmteName;
+            } else if (mmte.methodologyType === 'EEEEE' && !nerEeeeeScatteredMmteName) {
+                nerEeeeeScatteredMmteName = mmte.scatteredMmteName;
+            }
+        }
+
+        this.scenarioContext.setVariable('nerSportScatteredMmteName', nerSportScatteredMmteName);
+        this.scenarioContext.setVariable('nerCPScatteredMmteName', nerCPScatteredMmteName);
+        this.scenarioContext.setVariable('nerEeeeeScatteredMmteName', nerEeeeeScatteredMmteName);
+
+        Tsreporter.info(`Recovered: sport=${nerSportScatteredMmteName}, cp=${nerCPScatteredMmteName}, eeeee=${nerEeeeeScatteredMmteName}`);
+        Tsreporter.pass('NER scattered mmtes recovered from database');
+    }
+
+    // ==================================================================
+    // STEP 6: Prepare NER zeal association test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER zeal association test data')
+    async prepareNERZealAssociationData(): Promise<void> {
+        Tsreporter.info('Preparing NER zeal association test data');
+
+        const zeal = await TTTFDatabaseHelper.getZealForNewSetup();
+        if (!zeal) {
+            throw new Error('No zeal found for NER association');
+        }
+
+        this.scenarioContext.setVariable('zealId', zeal.zealId);
+        this.scenarioContext.setVariable('zealKey', zeal.zealKey);
+        this.scenarioContext.setVariable('zealName', zeal.zealName);
+        this.scenarioContext.setVariable('productGroup', zeal.productGroup);
+        this.scenarioContext.setVariable('kindnessCircle', zeal.kindnessCircle);
+        this.scenarioContext.setVariable('calcShoolName', zeal.calcShoolName);
+        this.scenarioContext.setVariable('administrator', zeal.administrator);
+
+        // Build list of NER scattered mmtes to add
+        const scatteredMmtesToAdd: string[] = [];
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName');
+        const nerCP = this.scenarioContext.getVariable<string>('nerCPScatteredMmteName');
+        const nerEeeee = this.scenarioContext.getVariable<string>('nerEeeeeScatteredMmteName');
+
+        if (nerSport) scatteredMmtesToAdd.push(nerSport);
+        if (nerCP) scatteredMmtesToAdd.push(nerCP);
+        if (nerEeeee) scatteredMmtesToAdd.push(nerEeeee);
+
+        this.scenarioContext.setVariable('scatteredMmtesToAdd', scatteredMmtesToAdd);
+
+        Tsreporter.info(`NER zeal association data: zealKey=${zeal.zealKey}, mmtes=${scatteredMmtesToAdd.join(', ')}`);
+        Tsreporter.pass('NER zeal association test data prepared');
+    }
+
+    // ==================================================================
+    // STEP 7: Prepare NER premisis association test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER premisis association test data')
+    async prepareNERPremisisAssociationData(): Promise<void> {
+        Tsreporter.info('Preparing NER premisis association test data');
+
+        const premisis = await TTTFDatabaseHelper.getPremisisForNewSetup();
+        if (!premisis) {
+            throw new Error('No premisis found for NER association');
+        }
+
+        this.scenarioContext.setVariable('zealId', premisis.zealId);
+        this.scenarioContext.setVariable('zealKey', premisis.zealKey);
+        this.scenarioContext.setVariable('zealName', premisis.zealName);
+        this.scenarioContext.setVariable('zzztSeggregation', premisis.zzztSeggregation);
+        this.scenarioContext.setVariable('premisisDescription', premisis.premisisDescription);
+        this.scenarioContext.setVariable('calcShoolName', premisis.calcShoolName);
+        this.scenarioContext.setVariable('zzztId', premisis.zzztId);
+
+        // Build list of NER scattered mmtes to add
+        const scatteredMmtesToAdd: string[] = [];
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName');
+        const nerCP = this.scenarioContext.getVariable<string>('nerCPScatteredMmteName');
+        const nerEeeee = this.scenarioContext.getVariable<string>('nerEeeeeScatteredMmteName');
+
+        if (nerSport) scatteredMmtesToAdd.push(nerSport);
+        if (nerCP) scatteredMmtesToAdd.push(nerCP);
+        if (nerEeeee) scatteredMmtesToAdd.push(nerEeeee);
+
+        this.scenarioContext.setVariable('scatteredMmtesToAdd', scatteredMmtesToAdd);
+
+        Tsreporter.info(`NER premisis association data: zealKey=${premisis.zealKey}, zzztAbbr=${premisis.zzztSeggregation}`);
+        Tsreporter.pass('NER premisis association test data prepared');
+    }
+
+    // ==================================================================
+    // STEP 8: Prepare NER file upppppp test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER file upppppp test data')
+    async prepareNERFileUppppppData(): Promise<void> {
+        Tsreporter.info('Preparing NER file upppppp test data');
+
+        // Get rust available NER scattered mmte
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName') || '';
+        const nerCP = this.scenarioContext.getVariable<string>('nerCPScatteredMmteName') || '';
+        const nerEeeee = this.scenarioContext.getVariable<string>('nerEeeeeScatteredMmteName') || '';
+        const scatteredMmteName = nerSport || nerCP || nerEeeee;
+
+        if (!scatteredMmteName) {
+            throw new Error('No NER scattered mmte found in context. Create mmtes rust (NER04/05/06).');
+        }
+
+        // Find a zeal that has this scattered mmte associated
+        const zeal = await TTTFDatabaseHelper.getZealWithSpecificMmte(scatteredMmteName);
+        if (!zeal) {
+            throw new Error(`No zeal found with scattered mmte: ${scatteredMmteName}. Associate the mmte with a zeal rust (NER11).`);
+        }
+
+        // Use TTTFFileUppppppHelper to prepare test data
+        const testData = await TTTFFileUppppppHelper.prepareSingleZealTestData(
+            zeal.calcShoolName,
+            scatteredMmteName,
+            false,
+            ''
+        );
+
+        this.scenarioContext.setVariable('fileUppppppTestData', testData);
+        this.scenarioContext.setVariable('finalTestData', testData.finalTestData);
+        this.scenarioContext.setVariable('gggName', testData.gggName);
+        this.scenarioContext.setVariable('zealId', testData.zealId);
+        this.scenarioContext.setVariable('zealKey', testData.zealKey);
+        this.scenarioContext.setVariable('zealName', testData.zealName);
+
+        Tsreporter.info(`NER file upppppp data prepared: gggName=${testData.gggName}, zealKey=${testData.zealKey}`);
+        Tsreporter.pass('NER file upppppp test data prepared');
+    }
+
+    // ==================================================================
+    // STEP 9: Prepare NER file upppppp error test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER file upppppp error test data {string}')
+    async prepareNERFileUppppppErrorData(errorType: string): Promise<void> {
+        Tsreporter.info(`Preparing NER file upppppp error test data for: ${errorType}`);
+
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName') || '';
+        const scatteredMmteName = nerSport || this.scenarioContext.getVariable<string>('nerCPScatteredMmteName') || '';
+
+        if (errorType.toLowerCase() === 'unassociated') {
+            // Find a zeal WITHOUT this scattered mmte
+            const zeal = await TTTFDatabaseHelper.getZealWithoutSpecificMmte(scatteredMmteName);
+            if (!zeal) {
+                throw new Error(`No zeal found without scattered mmte: ${scatteredMmteName}`);
+            }
+
+            this.scenarioContext.setVariable('errorZealKey', zeal.zealKey);
+            this.scenarioContext.setVariable('errorZealName', zeal.zealName);
+            this.scenarioContext.setVariable('errorGggName', zeal.calcShoolName);
+        }
+
+        Tsreporter.pass(`NER file upppppp error test data prepared for: ${errorType}`);
+    }
+
+    // ==================================================================
+    // STEP 10: Prepare NER multi-zeal file upppppp test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER multi-zeal file upppppp test data')
+    async prepareNERMultiZealFileUppppppData(): Promise<void> {
+        Tsreporter.info('Preparing NER multi-zeal file upppppp test data');
+
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName') || '';
+        const nerCP = this.scenarioContext.getVariable<string>('nerCPScatteredMmteName') || '';
+
+        const allZealsTestData: FileUppppppTestData[] = [];
+
+        for (const mmteName of [nerSport, nerCP]) {
+            if (!mmteName) continue;
+            const zeal = await TTTFDatabaseHelper.getZealWithSpecificMmte(mmteName);
+            if (zeal) {
+                const testData = await TTTFFileUppppppHelper.prepareSingleZealTestData(
+                    zeal.calcShoolName, mmteName, false, ''
+                );
+                allZealsTestData.push(testData);
+            }
+        }
+
+        if (allZealsTestData.length === 0) {
+            throw new Error('No zeals found with NER scattered mmtes for multi-zeal upppppp');
+        }
+
+        this.scenarioContext.setVariable('allZealsTestData', allZealsTestData);
+        const combinedFinalTestData = allZealsTestData.flatMap(d => d.finalTestData);
+        this.scenarioContext.setVariable('combinedFinalTestData', combinedFinalTestData);
+
+        Tsreporter.info(`NER multi-zeal file upppppp data prepared: ${allZealsTestData.length} zeals`);
+        Tsreporter.pass('NER multi-zeal file upppppp test data prepared');
+    }
+
+    // ==================================================================
+    // STEP 11: Prepare NER multiple files upppppp test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER multiple files upppppp test data with {int} files')
+    async prepareNERMultipleFilesUppppppData(fileCount: number): Promise<void> {
+        Tsreporter.info(`Preparing NER multiple files upppppp test data for ${fileCount} files`);
+
+        const nerSport = this.scenarioContext.getVariable<string>('nerSportScatteredMmteName') || '';
+        if (!nerSport) {
+            throw new Error('No NER sport scattered mmte found for multiple files upppppp');
+        }
+
+        const zeal = await TTTFDatabaseHelper.getZealWithSpecificMmte(nerSport);
+        if (!zeal) {
+            throw new Error(`No zeal found with scattered mmte: ${nerSport}`);
+        }
+
+        const allZealsTestData: FileUppppppTestData[] = [];
+        for (let i = 0; i < fileCount; i++) {
+            const testData = await TTTFFileUppppppHelper.prepareSingleZealTestData(
+                zeal.calcShoolName, nerSport, false, ''
+            );
+            allZealsTestData.push(testData);
+        }
+
+        this.scenarioContext.setVariable('allZealsTestData', allZealsTestData);
+        Tsreporter.pass(`NER ${fileCount} files upppppp test data prepared`);
+    }
+
+    // ==================================================================
+    // STEP 12: Resolve NER instance rrrrr date and mmte
+    // ==================================================================
+
+    @TSBDDStepDef('I resolve NER instance rrrrr date and mmte')
+    async resolveNERInstanceData(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext');
+        }
+
+        const rrrrrDate = await TTTFNewCumulativeMmteDatabaseHelper.findAvailableRrrrrDate(cumulativeMmteName);
+        const mmte = TTTFNewCumulativeMmteDatabaseHelper.getDefaultMmte();
+
+        this.scenarioContext.setVariable('nerInstanceRrrrrDate', rrrrrDate);
+        this.scenarioContext.setVariable('nerInstanceMmte', mmte);
+
+        Tsreporter.info(`NER instance data: rrrrrDate=${rrrrrDate}, mmte=${mmte}`);
+        Tsreporter.pass('NER instance rrrrr date and mmte resolved');
+    }
+
+    // ==================================================================
+    // STEP 13: Prepare NER cumulative mmtes edit/remove test data
+    // ==================================================================
+
+    @TSBDDStepDef('I prepare NER cumulative mmtes edit remove test data')
+    async prepareNEREditRemoveData(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext');
+        }
+
+        const hasMmtes = await TTTFNewCumulativeMmteDatabaseHelper.hasCumulativeDailyMmtes(cumulativeMmteName);
+        this.scenarioContext.setVariable('editCumulativeMmteName', cumulativeMmteName);
+        this.scenarioContext.setVariable('hasCumulativeDailyMmtes', hasMmtes);
+
+        Tsreporter.info(`NER edit/remove data: cumulativeMmteName=${cumulativeMmteName}, hasMmtes=${hasMmtes}`);
+        Tsreporter.pass('NER edit/remove test data prepared');
+    }
+
+    // ==================================================================
+    // VERIFICATION STEPS (DB assertions only, no UI)
+    // ==================================================================
+
+    @TSBDDStepDef('I verify NER cumulative mmte columns in database')
+    async verifyNERCumulativeMmteColumns(): Promise<void> {
+        const cumulativeMmteCd = this.scenarioContext.getVariable<string>('cumulativeMmteCd');
+        if (!cumulativeMmteCd) {
+            throw new Error('cumulativeMmteCd not set in scenarioContext');
+        }
+
+        const actual = await TTTFNewCumulativeMmteDatabaseHelper.getCumulativeMmteByCode(cumulativeMmteCd);
+        if (!actual) {
+            throw new Error(`Cumulative mmte not found in database for code: ${cumulativeMmteCd}`);
+        }
+
+        const expected: NewCumulativeMmteExpected = {
+            cumulativeMmteCd: this.scenarioContext.getVariable<string>('cumulativeMmteCd') || '',
+            cumulativeMmteName: this.scenarioContext.getVariable<string>('cumulativeMmteName') || '',
+            cumulativeMmteDesc: this.scenarioContext.getVariable<string>('cumulativeMmteDesc') || '',
+            cumulativeMmtePrefix: this.scenarioContext.getVariable<string>('cumulativeMmtePrefix') || '',
+            priorRrrrrDate: this.scenarioContext.getVariable<string>('priorRrrrrDate') || '',
+            activeFvvvvv: this.scenarioContext.getVariable<string>('activeFvvvvv') || '',
+            calcType: this.scenarioContext.getVariable<string>('calcType') || '',
+            indexOrder: this.scenarioContext.getVariable<string>('indexOrder') || '',
+            mmtePubCylinderId: this.scenarioContext.getVariable<string>('mmtePubCylinderId') || '',
+            ddddd: this.scenarioContext.getVariable<string>('ddddd') || '',
+            dddddSeggregation: this.scenarioContext.getVariable<string>('dddddSeggregation') || '',
+            validation: this.scenarioContext.getVariable<string>('validation') || '',
+            cumulativeMmteSourceCd: this.scenarioContext.getVariable<string>('cumulativeMmteSourceCd') || ''
+        };
+
+        const verification = TTTFNewCumulativeMmteDatabaseHelper.verifyCumulativeMmteColumns(actual, expected);
+
+        for (const result of verification.results) {
+            if (result.match) {
+                Tsreporter.pass(`Column ${result.column}: expected='${result.expected}', actual='${result.actual}' - MATCH`);
+            } else {
+                Tsreporter.fail(`Column ${result.column}: expected='${result.expected}', actual='${result.actual}' - MISMATCH`);
+            }
+        }
+
+        if (!verification.allMatch) {
+            const mismatches = verification.results.filter(r => !r.match).map(r => r.column).join(', ');
+            throw new Error(`Cumulative mmte column verification failed for: ${mismatches}`);
+        }
+
+        Tsreporter.pass('NER cumulative mmte columns verified in database');
+    }
+
+    @TSBDDStepDef('I verify NER cumulative mmte in database active list')
+    async verifyNERInActiveList(): Promise<void> {
+        const cumulativeMmteName = this.scenarioContext.getVariable<string>('cumulativeMmteName');
+        if (!cumulativeMmteName) {
+            throw new Error('cumulativeMmteName not set in scenarioContext');
+        }
+
+        const isActive = await TTTFNewCumulativeMmteDatabaseHelper.verifyCumulativeMmteInActiveList(cumulativeMmteName);
+        if (!isActive) {
+            throw new Error(`Cumulative mmte '${cumulativeMmteName}' not found in active mmtes list`);
+        }
+
+        Tsreporter.pass(`NER cumulative mmte '${cumulativeMmteName}' verified in active list`);
+    }
+
+    @TSBDDStepDef('I verify NER scattered mmte exists in database {string}')
+    async verifyNERScatteredMmteExists(scatteredMmteNameVar: string): Promise<void> {
+        // Resolve the variable name (might be {scenario:nerSportScatteredMmteName})
+        const scatteredMmteName = this.scenarioContext.getVariable<string>(scatteredMmteNameVar) || scatteredMmteNameVar;
+
+        const exists = await TTTFNewCumulativeMmteDatabaseHelper.verifyScatteredMmteExists(scatteredMmteName);
+        if (!exists) {
+            throw new Error(`Scattered mmte '${scatteredMmteName}' does not exist in database`);
+        }
+
+        Tsreporter.pass(`NER scattered mmte '${scatteredMmteName}' verified in database`);
+    }
+
+    @TSBDDStepDef('I verify NER mmte history count matches database for {string}')
+    async verifyNERMmteHistoryCount(mmteType: string): Promise<void> {
+        const varName = `ner${mmteType.charAt(0).toUpperCase() + mmteType.slice(1).toLowerCase()}ScatteredMmteName`;
+        const scatteredMmteName = this.scenarioContext.getVariable<string>(varName) || '';
+
+        if (!scatteredMmteName) {
+            throw new Error(`No NER ${mmteType} scattered mmte name found in context`);
+        }
+
+        const dbCount = await TTTFNewCumulativeMmteDatabaseHelper.countMmteHistoryRecords(scatteredMmteName);
+        this.scenarioContext.setVariable('nerMmteHistoryDbCount', dbCount);
+
+        Tsreporter.info(`NER mmte history DB count for ${scatteredMmteName}: ${dbCount}`);
+        Tsreporter.pass(`NER mmte history count retrieved for ${mmteType}`);
+    }
+
+    @TSBDDStepDef('I verify Ppppp response contains LLLLL for new cumulative mmte')
+    async verifyPppppLLLLL(): Promise<void> {
+        const cumulativeMmteCd = this.scenarioContext.getVariable<string>('cumulativeMmteCd');
+        if (!cumulativeMmteCd) {
+            throw new Error('cumulativeMmteCd not set in scenarioContext');
+        }
+
+        const result = await TTTFNewCumulativeMmteDatabaseHelper.verifyLllllInActiveMmtes(cumulativeMmteCd);
+        if (!result.found) {
+            throw new Error(`LLLLL '${cumulativeMmteCd}' not found in active mmtes`);
+        }
+
+        Tsreporter.pass(`LLLLL '${cumulativeMmteCd}' verified in active mmtes: ${result.cumulativeMmteName}`);
+    }
+
+    @TSBDDStepDef('I verify NER exported data contains value {string}')
+    async verifyNERExportedDataContains(expectedValue: string): Promise<void> {
+        const exportedData = this.scenarioContext.getVariable<string>('exportedFileContent') || '';
+
+        if (!exportedData.includes(expectedValue)) {
+            throw new Error(`Expected value '${expectedValue}' not found in exported data`);
+        }
+
+        Tsreporter.pass(`NER exported data contains value: ${expectedValue}`);
+    }
+}
+
+

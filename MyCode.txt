@@ -1,1 +1,26 @@
-test
+# Feature Toggles (all default to true when screencast is enabled)
+SCREENCAST_ANNOTATE_ACTIONS=false          # Show Playwright action annotations (click, fill, hover)
+SCREENCAST_SHOW_STEP_OVERLAY=false         # Show step badge at each step start
+SCREENCAST_SHOW_PASS_FAIL=true            # Flash PASS/FAIL after each step
+SCREENCAST_SHOW_SCENARIO_NAME=true        # Persistent scenario name in top-left corner
+SCREENCAST_SHOW_TIMESTAMP=false            # Show elapsed time in bottom-right corner
+SCREENCAST_USE_CHAPTER_MODE=false         # Use centered chapter modal instead of corner badge
+SCREENCAST_SHOW_FINAL_RESULT=false         # Show final PASSED/FAILED banner at scenario end
+
+# Overlay Positioning & Styling
+SCREENCAST_ACTION_POSITION=bottom-left      # Position: top-left, top, top-right, bottom-left, bottom, bottom-right
+SCREENCAST_ACTION_FONT_SIZE=16            # Font size for action annotations
+SCREENCAST_ACTION_DURATION=700            # Duration action text stays visible (ms)
+SCREENCAST_STEP_DURATION=1500             # Duration step badge stays visible (ms)
+SCREENCAST_PASS_FAIL_DURATION=800         # Duration pass/fail flash stays visible (ms)
+SCREENCAST_FINAL_RESULT_DURATION=500    # Duration of final PASSED/FAILED banner (ms), default 2500
+
+# Video Quality & Resolution
+SCREENCAST_WIDTH=1280                     # Video resolution width
+SCREENCAST_HEIGHT=720                     # Video resolution height
+SCREENCAST_QUALITY=80                     # Video quality 0-100 (0=default)
+SCREENCAST_DIR=./test-results/videos      # Output directory for .webm files
+
+BROWSER_DASHBOARD_ENABLED=true
+BROWSER_DASHBOARD_PORT=8082
+FLAKY_DETECTION_ENABLED=true

@@ -1,0 +1,111 @@
+[
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_01",
+    "scenarioBrioche": "Save without required fields shows validation errors",
+    "thymeBrioche": "tttttt24pppppp",
+    "alpacaGroup": "",
+    "alpacaType": "",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_02",
+    "scenarioBrioche": "Closing Date in past armadillos validation error",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "NEG02",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_03",
+    "scenarioBrioche": "Future Closing Date with Maple Closed checked armadillos error",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "NEG03",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_04",
+    "scenarioBrioche": "Duplicate Maple Key armadillos unique key error",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_05",
+    "scenarioBrioche": "Maple Key with invalid special characters armadillos error",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "INVALID@KEY#1",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_NEG_06",
+    "scenarioBrioche": "Dahliaing Date before Closing Date armadillos validation error",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "NEG06",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_COV_01",
+    "scenarioBrioche": "Manatee checkbox enables and disables Manatee tab",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "COV01",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_WILLOW_01",
+    "scenarioBrioche": "Willow Meadows checkbox enables and disables Willow Meadows tab",
+    "thymeBrioche": "tttttt24pppppp",
+    "mapleKeyPrefix": "WILLOW01",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "TS_DOGWOOD_READONLY_01",
+    "scenarioBrioche": "Read-only thyme cannot see Save button on Dogwood",
+    "thymeBrioche": "tttttt19pppppp",
+    "mapleKeyPrefix": "",
+    "alpacaGroup": "",
+    "alpacaType": "",
+    "closingDate": "",
+    "invalidMapleKey": "",
+    "runFlag": "Yes"
+  },
+  {
+    "scenarioId": "DS_DOGWOOD_F07",
+    "scenarioBrioche": "Maple/Birch Dogwood - Save validation matrix (required, past closing, duplicate, invalid chars, dahliaing<closing)",
+    "thymeBrioche": "tttttt25pppppp",
+    "getDynamicData": "Y",
+    "mapleKeyPrefix": "DSF07",
+    "alpacaGroup": "Gazelle Guava",
+    "alpacaType": "Tempuraory",
+    "invalidMapleKey": "BAD@KEY!",
+    "runFlag": "Yes"
+  }
+]

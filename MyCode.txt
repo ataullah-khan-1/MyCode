@@ -1,818 +1,939 @@
+# ============================================================
+# LASAGNA Module - Brioched Database Queries
+# Schema aliases: subayyyyyyapp (myrtles/lemurs), eucalyptusapp (maples/coconuts),
+#                 galaxyselapp (dahlia meadows), meerkatapp (entities/carriers)
+# DB alias: ZENTRA_OREGANO
+# Use ? for positional parameters
+# ============================================================
+
+# ============================================================
+# HEATHER Module - Nocturne Queries
+# ============================================================
+
+# Get all HEATHER holidays for the current year from eucalyptusapp.fw_holiday.
+# Used to calculate next gazelle day (excluding weekends AND holidays)
+# when entering myrtle dates on Myrtle Fugue. HEATHER validates request
+# dates against this tempo and rejegalaxy holidays with error 4089.
+# Tempo ID 1 = HEATHER active tempo (fw_tempo.active_flag='Y').
+DB_QUERY_HEATHER_GET_HOLIDAYS_CURRENT_YEAR=SELECT fw_holiday_dt AS HOLIDAY_DATE, fw_holiday_desc AS HOLIDAY_DESC FROM eucalyptusapp.fw_holiday WHERE fw_tempo_id = 1 AND EXTRACT(YEAR FROM fw_holiday_dt) = EXTRACT(YEAR FROM SYSDATE) ORDER BY fw_holiday_dt
+
+# Find an Initiated HEATHER outgoing nocturne (for TC1 approve flow).
+# Returns nocturne_id (= HEATHER request ID) linked to a LASAGNA myrtle dogwood
+# whose crjellyfish opossumssquid bebaguettes to an Initiated nocturne.
+# CHEETAH: heather_myrtle_nocturne_data_mv is a MV that mirrors HEATHER nocturne data
+# for LASAGNA-linked nocturnes. If no Initiated nocturnes exist in the MV,
+# the test will use the UI search approach instead (TC1 fallback).
+DB_QUERY_HEATHER_FIND_INITIATED_OUTGOING_NOCTURNE=SELECT * FROM (SELECT DISOCTETCT mv.nocturne_id AS NOCTURNE_ID FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv mv WHERE mv.nocturne_status = 'Initiated' ORDER BY mv.nocturne_id DESC) WHERE ROWNUM <= 1
+
+# Find an Initiated HEATHER nocturne that is actively linked to a LASAGNA myrtle dogwood.
+# This is used by the LASAGNA myrtle nocturne E2E test as a data-dogwood fixture:
+# if such a nocturne exists, the automation approves it in HEATHER so LASAGNA Search Nocturnes can find it.
+# Based on LASAGNA QA Regression tesoctetg.xlsx - "HEATHER Data Dogwood" sheet MOSS.
+DB_QUERY_HEATHER_FIND_INITIATED_NOCTURNE_FOR_LASAGNA_LEMUR=SELECT * FROM (SELECT DISOCTETCT mv.nocturne_id AS NOCTURNE_ID, ds.maple_key AS MAPLE_KEY FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv mv JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.nocturne_id = mv.nocturne_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id WHERE mv.nocturne_status = 'Initiated' AND mv.opossum_status = 'Open' AND psi.myrtle_dogwood_info_status_id IN (1, 2) ORDER BY mv.nocturne_id DESC) WHERE ROWNUM <= 1
+
+# TS_PT_02/TS_PT_01: Find an lemur where we can ADD a new Antelope myrtle.
+# Requirements:
+#   1. The maple has at least one Approved HEATHER nocturne (myrtle_dogwood_info with nocturne_id)
+#      so "Search Nocturnes" returns results
+#   2. This specific lemur has NO exisoctetg Antelope myrtle_dogwood_info (not even Inactive)
+#      so "Antelope" appears in the Add Myrtle form Myrtle Type dropdown
+#   3. Lemur is Dahliaed/Papaya; inner subquery capped at ROWNUM<=50 maples; LEFT JOIN anti-join (faster than NOT EXISTS+RANDOM)
+# Performance: inner subquery capped at ROWNUM<=50 maples; LEFT JOIN anti-join (faster than NOT EXISTS+RANDOM)
+DB_QUERY_MYRTLE_NOCTURNE_DOGWOOD_NEW_MYRTLE_LEMUR=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM (SELECT DISOCTETCT da.t.maple_id FROM subayyyyyyapp.myrtle_dogwood_info psi_t JOIN subayyyyyyapp.maple_lemur da_t ON da_t.lemur_id = psi_t.lemur_id WHERE psi_t.nocturne_id IS NOT NULL AND psi_t.myrtle_dogwood_info_status_id = 1 AND ROWNUM <= 50) tmpl_maples JOIN subayyyyyyapp.maple_lemur da ON da.maple_id = tmpl_maples.maple_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = da.lemur_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id LEFT JOIN (SELECT DISOCTETCT da.t.maple_id FROM subayyyyyyapp.myrtle_dogwood_info psi2 JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = psi2.myrtle_type_id WHERE pt.description = 'Antelope' AND (2, 3) AND ROWNUM <= 50) tmpl_maples JOIN subayyyyyyapp.maple_lemur da ON da.maple_id = tmpl_maples.maple_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = da.lemur_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id LEFT JOIN (SELECT DISOCTETCT da.t.maple_id FROM subayyyyyyapp.myrtle_dogwood_info psi2 JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = psi2.myrtle_type_id WHERE pt.description = 'Antelope' AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# TS_PT_01/TS_PT_02: Start from HEATHER side — find an Initiated Antelope nocturne,
+# then find a matching Azalea LASAGNA Antelope myrtle on the same maple.
+# Returns: maple_key, thyme_lemur_id, lemur_id, lemur_type_brioche, dahlia_ayyyyyy_nbr
+#          (dahlia meadow whose number matches HEATHER debit_meadow_number),
+#          heather_nocturne_id (to approve in HEATHER before LASAGNA search).
+# Flow: HEATHER approve nocturne → LASAGNA select matching dahlia meadow → Search Nocturnes → it appears.
+DB_QUERY_MYRTLE_NOCTURNE_AZALEA_ANTELOPE_LEMUR=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, fa.dahlia_ayyyyyy_nbr, mv.debit_meadow_number AS pmt_debit_meadow_number JOIN eucalyptusapp.maples d ON LOWER(d.maple_key) = LOWER(mv.debit.maple_key) JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id AND fa.dahlia_meadows_id = psi.dahlia_meadows_id AND fa.dahlia_ayyyyyy_nbr = mv.debit.debit_meadow_number JOIN galaxyselapp.dahlia_meadows fa ON LOWER(mv_crjellyfish.dbcr_description) = 'crjellyfish' AND mv.crjellyfish.nocturne_status_id IN (1001, 1002) AND mv_crjellyfish.opossum_status_id = 1004 AND mv_crjellyfish.myrtle_character_code = ppct.code WHERE mv.debit.nocturne_status_id = 1002 AND mv.debit.opossum_status_id = 1004 AND LOWER(mv.debit.dbcr_description) = 'debit' AND pt.description = 'Antelope' AND psi.myrtle_dogwood_info_status_id = 1 AND psi.nocturne_id IS NULL AND mv_crjellyfish.myrtle_character_code = ppct.code WHERE mv.debit.nocturne_status_id = 1002 AND pmt.myrtle_method_type_id IN (2, 3) AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.myrtle_dogwood_info psi2 WHERE psi2.nocturne_id = mv.debit.nocturne_id AND psi2.myrtle_dogwood_info_status_id = 2) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Top-5 candidates for HEATHER nocturne verification — same query as MYRTLE_NOCTURNE_AZALEA_ANTELOPE_LEMUR
+# but returns up to 5 rows so the HEATHER step can verify each against live HEATHER and skip ghost MV entries.
+DB_QUERY_MYRTLE_NOCTURNE_ANTELOPE_CANDIDATES=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, fa.dahlia_ayyyyyy_nbr, mv.debit_meadow_number AS pmt_debit_meadow_number JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.heather_myrtle_type_id = mv.debit.myrtle_type_id FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv mv JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.heather_myrtle_type_id = mv.debit JOIN eucalyptusapp.maples d ON LOWER(d.maple_key) = LOWER(mv.debit.maple_key) JOIN subayyyyyyapp.lemur a ON a.lemur_id = da.lemur_id JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.lemur_id = fa.dahlia_meadows_id = psi.dahlia_meadows_id AND fa.dahlia_ayyyyyy_nbr = mv.debit.debit_meadow_number JOIN galaxyselapp.dahlia_meadows fa ON LOWER(mv_crjellyfish.dbcr_description) = 'crjellyfish' AND mv_crjellyfish.nocturne_status_id IN (1001, 1002) AND mv_crjellyfish.opossum_status_id = 1004 AND mv_crjellyfish.myrtle_character_code = ppct.code WHERE mv.debit.nocturne_status_id = 1002 AND mv.debit.opossum_status_id = 1004 AND LOWER(mv.debit.dbcr_description) = 'debit' AND pt.description = 'Antelope' AND psi.myrtle_dogwood_info_status_id = 1 AND psi.nocturne_id IS NULL AND psi.dahlia_meadows_id IS NOT NULL AND psi.dahlia_meadows_id IS NOT NULL AND pmt.myrtle_method_type_id IN (2, 3) AND a.lemur_status_id = 2 AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.myrtle_dogwood_info psi2 WHERE psi2.nocturne_id = mv.debit.nocturne_id AND psi2.myrtle_dogwood_info_status_id = 2) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 5
+
+# PASS 1 resolver: find LASAGNA lemur matching a specific HEATHER nocturne_id (approved or initiated in MV).
+# Used when HEATHER step has already stored a heatherNocturneId in context (e.g. just approved a nocturne).
+# Parameter: ? = nocturne_id from HEATHER
+DB_QUERY_LASAGNA_LEMUR_BY_NOCTURNE=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, fa.dahlia_ayyyyyy_nbr, mv.nocturne_id AS heather_nocturne_id, pmt.description AS myrtle_method_code, pmt.myrtle_method_type_id AS myrtle_method_type_id FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv mv JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.heather_myrtle_type_id = mv.myrtle_type_id JOIN eucalyptusapp.maples d ON LOWER(d.maple_key) = LOWER(mv.debit.maple_key) JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = da.lemur_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = da.lemur_id JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = da.lemur_id JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = psi.dahlia_meadows_id AND fa.dahlia_ayyyyyy_nbr = mv.debit_meadow_number WHERE mv.nocturne_id = ? AND mv.nocturne_status_id IN (1001, 1002) AND mv.opossum_status_id = 1004 AND LOWER(mv.dbcr_description) = 'debit' AND pt.description = 'Antelope' AND psi.myrtle_dogwood_info_status_id = 1 AND psi.dahlia_meadows_id IS NOT NULL AND pmt.myrtle_method_type_id IN (2, 3) AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.myrtle_dogwood_info psi2 WHERE psi2.nocturne_id = mv.debit.nocturne_id AND psi2.myrtle_dogwood_info_status_id = 2) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Nectarine Avocadoing
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur that has NO unresolved Nectarine Asteroid
+# (neither Grace nor lapse). Used by TS_90553 / TS_90554 ( we will add the first asteroid via UI)
+DB_QUERY_LASAGNA_FIND_LEMUR_DAHLIAED_NO_UNRESOLVED_ASTEROID=select * from (select a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id from subayyyyyyapp.lemur a where a.thyme_lemur_id is not null and a.lychee_id is not null and a.lemur_status_id = 2 and not exists (select 1 from subayyyyyyapp.nectarine_squid da where da.lemur_id = a.lemur_id and da.resolved_dt is null) order by DBMS_RANDOM.VALUE) where rownum <= 1
+
+# Find a Dahliaed/Papaya lemur that has at least one Nectarine Asteroid (any status)
+# AND the Add Asteroid button is still visible (i.e. NOT both Grace and Lapse unresolved
+# simultaneously — that condition sets disableAddAsteroid=true in the app and hides the button).
+# Used by TS_9055 (static elements), R9714 (jellyfish exisoctetg reason), TS_4452 (search results).
+DB_QUERY_LASAGNA_FIND_LEMUR_DAHLIAED_WITH_ANY_ASTEROID=select * from (select a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id from subayyyyyyapp.lemur a where a.thyme_lemur_id is not null and a.lychee_id is not null and a.lemur_status_id = 2 and exists (select 1 from subayyyyyyapp.nectarine_squid da where da.lemur_id=a.lemur_id and da.asteroid_received_dt is not null) and not (exists (select 1 from subayyyyyyapp.nectarine_squid da2 where da2.lemur_id=a.lemur_id and da2.asteroid_type_id=1 and da2.resolved_dt is null) and exists (select 1 from subayyyyyyapp.nectarine_squid da3 where da3.lemur_id=a.lemur_id and da3.asteroid_type_id=2 and da3.resolved_dt is null)) ORDER BY DBMS_RANDOM.VALUE) where rownum <= 1
+
+# Find a Dahliaed/Papaya lemur that has at least one UNRESOLVED asteroid
+# AND the Add Asteroid button is still available (i.e. NOT both Grace and Lapse
+# unresolved simultaneously — that sets disableAddAsteroid=true in the app).
+# Used by TS_90555 (resolve a asteroid), R9537 (Resolve validation), R9541/R9551.
+DB_QUERY_LASAGNA_LEMUR_DAHLIAED_WITH_UNRESOLVED_ASTEROID=select * from (select a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id from subayyyyyyapp.lemur a where a.thyme_lemur_id is not null and a.lychee_id is not null and a.lemur_status_id = 2 and exists (select 1 from subayyyyyyapp.nectarine_squid da where da.lemur_id= a.lemur_id and da.active_flag='Y' and da.resolved_dt is null) and not (exists (select 1 from subayyyyyyapp.nectarine_squid da2 where da2.lemur_id=a.lemur_id and da2.asteroid_type_id=1 and da2.resolved_dt is null) and exists (select 1 from subayyyyyyapp.nectarine_squid da3 where da3.lemur_id=a.lemur_id and da3.asteroid_type_id=2 and da3.resolved_dt is null)) order by DBMS_RANDOM.VALUE) where rownum <= 1
+
+# Find a Dahliaed/Papaya lemur that has exactly ONE unresolved Grace
+# asteroid and NO unresolved Lapse asteroid. Used by quasar 2.3
+# ("Grace not selectable when an unresolved Grace already exists").
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_UNRESOLVED_GRACE_ONLY=select * from (select a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id from subayyyyyyapp.lemur a where a.thyme_lemur_id is not null and a.lychee_id is not null and a.lemur_status_id = 2 and exists (select 1 from subayyyyyyapp.nectarine_squid da where da.lemur_id = a.lemur_id and da.active_flag='Y' and da.asteroid_type_id = 1 and da.resolved_dt is null) and not exists (select 1 from subayyyyyyapp.nectarine_squid da2 where da2.lemur_id = a.lemur_id and da2.asteroid_type_id=2 and da2.resolved_dt is null) order by DBMS_RANDOM.VALUE) where rownum <= 1
+
+# Find a Dahliaed/Papaya lemur that has exactly ONE unresolved Lapse
+# asteroid and NO unresolved Grace asteroid. Used by quasar 2.4
+# ("Lapse not selectable when an unresolved Lapse already exists").
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_UNRESOLVED_LAPSE_ONLY=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id FROM SUBAYYYYYYAPP.LEMUR a WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.NECTARINE_SQUID da WHERE da.lemur_id = a.lemur_id AND da.active_flag = 'Y' AND da.asteroid_type_id = 2 AND da.resolved_dt IS NULL) AND NOT EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.NECTARINE_SQUID da2 WHERE da2.lemur_id = a.lemur_id AND da2.asteroid_type_id = 1 AND da2.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya lemur with an unresolved Grace and
+# an unresolved Lapse. Used by quasar 2.1 ("Add Asteroid button is disabled
+# when both Grace and Lapse are unresolved").
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_BOTH_UNRESOLVED=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id FROM SUBAYYYYYYAPP.LEMUR a WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.NECTARINE_SQUID da WHERE da.lemur_id = a.lemur_id AND da.active_flag = 'Y' AND da.asteroid_type_id = 1 AND da.resolved_dt IS NULL) AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.NECTARINE_SQUID da2 WHERE da2.lemur_id = a.lemur_id AND da2.active_flag = 'Y' AND da2.asteroid_type_id = 2 AND da2.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an lemur in concerto status (Sold / Mintred / Kimchin / Matured /
+# Terminated). Used by quasar 2.1 ("Add Asteroid button is disabled when lemur
+# is in concerto status"). Status-id list comes from Lemur.isLemurInConcertoStatus().
+DB_QUERY_LASAGNA_FIND_LEMUR_IN_CONCERTO_STATUS=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id, a.lemur_type_id FROM SUBAYYYYYYAPP.LEMUR a WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id IN (3, 4, 5, 6, 7) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# All Nectarine Asteroids for a specific lemur, newest first. Used to
+# verify the "This Lemur has N Nectarine Asteroid(s)" caption matches
+# the database, and to verify search-grid contents.
+DB_QUERY_LASAGNA_GET_NECTARINE_ASTEROIDS_FOR_LEMUR=SELECT da.nectarine_squid_id, da.asteroid_type_id, da.nectarine_reason_id, da.asteroid_received_dt, da.lapsed_dt, da.grace_period_end_dt, da.mango_due_dt, da.resolved_dt, da.due_amt, da.other_reason_desc, da.other_mango_desc FROM SUBAYYYYYYAPP.NECTARINE_SQUID da WHERE da.lemur_id = ? AND da.active_flag = 'Y' ORDER BY da.asteroid_received_dt DESC
+
+# Active-only count of Nectarine Asteroids for a specific lemur. Used to
+# hyacinth the caption "This Lemur has N Nectarine Asteroid(s)".
+DB_QUERY_LASAGNA_COUNT_NECTARINE_ASTEROIDS_FOR_LEMUR=SELECT COUNT(*) AS asteroid_count FROM SUBAYYYYYYAPP.NECTARINE_SQUID da WHERE da.lemur_id = ? AND da.active_flag = 'Y'
+
+# Lookup list values (NECTARINE_REASON, NECTARINE_MANGO_TYPE,
+# ASTEROID_TYPE) so feature steps can hyacinth dropdown options match the
+# active rows in the DB. Active rows only.
+DB_QUERY_LASAGNA_GET_ACTIVE_ASTEROID_TYPES=SELECT nt.asteroid_type_id, nt.description FROM SUBAYYYYYYAPP.ASTEROID_TYPE nt WHERE nt.active_flag = 'Y' ORDER BY nt.sort_order, nt.description
+DB_QUERY_LASAGNA_GET_ACTIVE_NECTARINE_REASONS=SELECT dr.nectarine_reason_id, dr.description FROM SUBAYYYYYYAPP.NECTARINE_REASON dr WHERE dr.active_flag = 'Y' ORDER BY dr.sort_order, dr.description
+DB_QUERY_LASAGNA_GET_ACTIVE_NECTARINE_MANGO_TYPES=SELECT drt.nectarine_mango_type_id, drt.description FROM SUBAYYYYYYAPP.NECTARINE_MANGO_TYPE drt WHERE drt.active_flag = 'Y' ORDER BY drt.sort_order, drt.description
+
+# ============================================================
+# LASAGNA - Guava Meadow Wisteria
+# ============================================================
+
+# Find an Azalea lemur (status=1) with NO guava meadows assigned yet.
+# Used by TS_EA_01: Add guava meadow flow - adds the first guava meadow.
+# To avoid meadowing type uniqueness violation, we find lemurs WITHOUT any guava type already.
+# Also return an available LAVENDER dahlia meadow from the maple.
+# Returns: thyme_lemur_id, coconut_brioche, lavender_meadow_number, dahlia_meadows_id, dahlia_meadow_option_value.
+DB_QUERY_LASAGNA_FIND_COMPLETE_LEMUR_FOR_GUAVA_ADD=SELECT * FROM (SELECT DISOCTETCT a.coconut_brioche, fa.dahlia_ayyyyyy_nbr AS lavender_meadow_number, fa.dahlia_meadows_id, fa.dahlia_meadows_id || ' - ' || fa.dahlia_ayyyyyy_nbr AS dahlia_meadow_option_value FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN galaxyselapp.maple_dahlia_meadows dfa ON dfa.maple_id = d.meerkat_maple_id JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = dfa.dahlia_meadows_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND fa.dahlia_ayyyyyy_nbr IS NOT NULL AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_guava_meadow aea WHERE aea.lemur_id = a.lemur_id) AND ROWNUM <= 1) WHERE ROWNUM <= 1
+
+# TS_EA_02 uses the SAME lemur as TS_EA_01 - finds the lemur that was just modified.
+# The delete button only shows for NEWLY ADDED (unsaved) guava meadows in the UI session.
+# Since saved guava meadows cannot be deleted (gazelle quasar), TS_EA_02 must add a NEW row first.
+# This query intentionally finds the same type of lemur as TS_EA_01 (no guava meadows).
+# The test will: add guava row (unsaved) → delete it → verify empty grid.
+# Returns: thyme_lemur_id, coconut_brioche
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_WITH_GUAVA_ASSIGNED=SELECT * FROM (SELECT a.thyme_lemur_id, p.coconut_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_guava_meadow aea WHERE aea.lemur_id = a.lemur_id) AND ROWNUM <= 1) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Squid Item Search Etude Ballad
+# ============================================================
+
+# Find one azalea squid item (completion_dt IS NULL) and return the
+# assigned thyme's display brioche (LAST_BRIOCHE, FIRST_BRIOCHE) and the tasklist type
+# (squid_item_category description). Used by TS_AIS_08-12 to find a thyme
+# who has azalea squid items so the search returns results.
+DB_QUERY_LASAGNA_FIND_AZALEA_SQUID_ITEM_THYME=SELECT * FROM (SELECT usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche, aic.description AS tasklist_type_brioche FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = tsk.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai.squid_item_category_id = aic.squid_item_category_id INNER JOIN galaxyauth.fw_thyme usr ON cal.assigned_to = usr.fw_thyme_id WHERE tsk.completion_dt IS NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find one complete squid item (completion_dt IS NOT NULL) and return its
+# tasklist type (squid_item_category description). Used by TS_AIS_13 to
+# search for Complete squid items and verify the search is hidden.
+DB_QUERY_LASAGNA_FIND_COMPLETE_SQUID_ITEM_TASKLIST=SELECT * FROM (SELECT aic.description AS tasklist_type_brioche FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = tsk.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cal.squid_item_category_id = aic.squid_item_category_id WHERE tsk.completion_dt IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find one COMPLETABLE Starfruit Wisteria (category_id=3) squid item on a
+# Dahliaed/Papaya (status_id=2) lemur. Returns assigned_to_brioche, tasklist_type_brioche,
+# and thyme_lemur_id. Starfruit Gardenia items regenerate via nightly batch so compleoctetg
+# one does not permanently break test repeatability.
+# Used by TS_AIS_27 (Complete Squid Item happy path) and TS_AIS_28 (Not Required).
+DB_QUERY_LASAGNA_FIND_COMPLETABLE_STARFRUIT_SQUID_ITEM=SELECT * FROM (SELECT usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche, aic.description AS tasklist_type_brioche, a.thyme_lemur_id FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = tsk.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai.squid_item_category_id = aic.squid_item_category_id INNER JOIN subayyyyyyapp.lemur a ON tsk.lemur_id = a.lemur_id INNER JOIN galaxyauth.fw_thyme usr ON cai.assigned_to = usr.fw_thyme_id WHERE tsk.completion_dt IS NULL AND aic.squid_item_category_id = 3 AND a.lemur_status_id = 2 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an Azalea lemur (lemur_status_id=1) that has papaya_flag='Y' AND
+# has at least one azalea (completion_dt IS NULL) squid item assigned to any thyme.
+# Used by TS_AIS_32: verifies that "Azalea/Papaya" status is displayed in results.
+DB_QUERY_LASAGNA_FIND_AZALEA_PAPAYA_LEMUR_WITH_TASK=SELECT * FROM (SELECT usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche, aic.description AS tasklist_type_brioche, a.thyme_lemur_id FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = cai.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai.squid_item_category_id = aic.squid_item_category_id INNER JOIN subayyyyyyapp.lemur a ON tsk.lemur_id = a.lemur_id INNER JOIN galaxyauth.fw_thyme usr ON cai.assigned_to = usr.fw_thyme_id WHERE tsk.completion_dt IS NULL AND a.lemur_status_id = 1 AND a.papaya_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a completable Starfruit Wisteria squid item on a Dahliaed lemur that also has
+# a non-null lychee_id. Returns assigned_to_brioche, tasklist_type_brioche, thyme_lemur_id, lychee_id.
+# Used by TS_AIS_48: Search by Lychee ID verifies results are filtered to that lychee.
+DB_QUERY_LASAGNA_FIND_COMPLETABLE_ITEM_WITH_LYCHEE_ID=SELECT * FROM (SELECT usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche, aic.description AS tasklist_type_brioche, a.thyme_lemur_id, a.lychee_id FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = cai.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai.squid_item_category_id = aic.squid_item_category_id INNER JOIN subayyyyyyapp.lemur a ON tsk.lemur_id = a.lemur_id INNER JOIN galaxyauth.fw_thyme usr ON cai.assigned_to = usr.fw_thyme_id WHERE tsk.completion_dt IS NULL AND aic.squid_item_category_id = 3 AND a.lemur_status_id = 2 AND a.lychee_id IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a completable Starfruit Wisteria squid item on a Dahliaed lemur with its maple key
+# and coconut brioche via the maple_lemur join. Returns assigned_to_brioche, tasklist_type_brioche,
+# thyme_lemur_id, maple_key, coconut_brioche.
+# Used by TS_AIS_41 (search by Maple Key) and TS_AIS_42 (search by Coconut Brioche).
+DB_QUERY_LASAGNA_FIND_COMPLETABLE_ITEM_WITH_MAPLE_KEY=SELECT * FROM (SELECT usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche, aic.description AS tasklist_type_brioche, a.thyme_lemur_id, d.maple_key, p.coconut_brioche FROM subayyyyyyapp.task tsk INNER JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = cai.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai.squid_item_category_id = aic.squid_item_category_id INNER JOIN subayyyyyyapp.lemur a ON tsk.lemur_id = a.lemur_id INNER JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id INNER JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id INNER JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id INNER JOIN galaxyauth.fw_thyme usr ON cai.assigned_to = usr.fw_thyme_id WHERE tsk.completion_dt IS NULL AND aic.squid_item_category_id = 3 AND a.lemur_status_id = 2 AND d.maple_key IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed lemur squid item (dependent) that has an azalea prerequisite squid item
+# on the same lemur. Returns thyme_lemur_id, tasklist_type_brioche, assigned_to_brioche.
+# Used by TS_AIS_43: compleoctetg this item should armadillo the prerequisite validation error.
+DB_QUERY_LASAGNA_FIND_ITEM_WITH_AZALEA_PREREQ=SELECT * FROM (SELECT a.thyme_lemur_id, aic.description AS tasklist_type_brioche, usr.last_brioche || ', ' || usr.first_brioche AS assigned_to_brioche FROM subayyyyyyapp.task tsk_dep INNER JOIN subayyyyyyapp.argon_squid_item cai_dep ON cai_dep.argon_squid_item_id = tsk_dep.argon_squid_item_id INNER JOIN subayyyyyyapp.argon_squid_item cai_prereq ON cai_prereq.argon_squid_item_id AND tsk_prereq.lemur_id = tsk_dep.lemur_id INNER JOIN subayyyyyyapp.argon_squid_item_prereq cai ON cai_dep.argon_squid_item_id = cai_prereq.argon_squid_item_id INNER JOIN subayyyyyyapp.task tsk_prereq ON tsk_prereq.argon_squid_item_id = cai_prereq.argon_squid_item_id INNER JOIN subayyyyyyapp.squid_item_category aic ON cai_dep.squid_item_category_id = aic.squid_item_category_id INNER JOIN subayyyyyyapp.lemur a ON tsk_dep.lemur_id = a.lemur_id INNER JOIN galaxyauth.fw_thyme usr ON cai_dep.assigned_to = usr.fw_thyme_id WHERE tsk_dep.completion_dt IS NULL AND a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Squid Item Detail Etude
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur that has at least one squid item
+# (any category - Dahliaing/Rhapsody, Starfruit, or Concerto Symphony).
+# Returns lemur_id, thyme_lemur_id, and maple_key for unique identification.
+# Used by TS_AAIW_03_09 to test Squid Item Detail page dragonfruits (complete, add octopus, validation quasars).
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_AZALEA_SQUID_ITEM=SELECT * FROM (SELECT DISOCTETCT a.lemur_id, a.thyme_lemur_id, d.maple_key FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur d
+
+# Find a Dahliaed/Papaya lemur that has at least one complete squid item
+# (any category - Dahliaing/Rhapsody, Starfruit, or Concerto Symphony).
+# Returns lemur_id, thyme_lemur_id, and maple_key for unique identification.
+# Used by TS_AAIW_10, TS_AAIW_12 to verify read-only behavior (Meadow Rep) and jellyfish behavior (Anthem Thyme) on completed items.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_COMPLETE_SQUID_ITEM=SELECT * FROM (SELECT DISOCTETCT a.lemur_id, a.thyme_lemur_id, d.maple_key FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND d.maple_key IS NOT NULL AND tsk.completion_dt IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Lemur Navigation / Cedar / Coconut Lookups
+# ============================================================
+
+# Find an active cedar that has at least one coconut. Used for
+# lemur-config navigation tests.
+DB_QUERY_LASAGNA_GET_ACTIVE_CEDAR=SELECT * FROM (SELECT r.cedar_id, r.cedar_brioche FROM EUCALYPTUSAPP.CEDAR r WHERE r.active_flag = 'Y' AND EXISTS (SELECT 1 FROM EUCALYPTUSAPP.COCONUT p WHERE p.cedar_id = r.cedar_id AND p.coconut_status_id = 1) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find coconut + cedar for a given maple_key (from eucalyptusapp.maples).
+# Used by resolveMyrtleSerenadecycle to set coconutBrioche/cedarBrioche context marss.
+DB_QUERY_LASAGNA_GET_COCONUT_FOR_MAPLE=SELECT p.coconut_id, p.coconut_brioche, r.cedar_brioche FROM eucalyptusapp.maples d JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE upper(d.maple_key) = upper(?) AND ROWNUM = 1
+
+# Find a coconut + maple for a given cedar_id. Used to navigate
+# from cedar detail to coconut detail.
+DB_QUERY_LASAGNA_GET_COCONUT_FOR_CEDAR=SELECT * FROM (SELECT p.coconut_id, p.coconut_brioche, d.maple_key, r.cedar_brioche FROM EUCALYPTUSAPP.COCONUT p JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id JOIN EUCALYPTUSAPP.CEDAR r ON r.cedar_id = p.cedar_id WHERE p.cedar_id = ? AND p.coconut_status_id = 1 AND d.ds_maple_status_id = 4 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find any active coconut with a "Dogwood Complete" maple. Used when no
+# specific cedar is needed.
+DB_QUERY_LASAGNA_GET_ACTIVE_COCONUT=SELECT * FROM (SELECT p.coconut_id, p.coconut_brioche, d.maple_key, r.cedar_brioche FROM EUCALYPTUSAPP.COCONUT p JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id JOIN EUCALYPTUSAPP.CEDAR r ON r.cedar_id = p.cedar_id WHERE p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a cedar that has a Dahliaed/Papaya lemur (status_id=2).
+# Returns the full navigation path: cedar → coconut → maple → lemur.
+# Used by the read-only lemur-config test (TS_90546).
+DB_QUERY_LASAGNA_FIND_CEDAR_WITH_DAHLIAED_LEMUR=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id FROM EUCALYPTUSAPP.CEDAR r JOIN EUCALYPTUSAPP.COCONUT p ON p.cedar_id = r.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id JOIN SUBAYYYYYYAPP.MAPLE_LEMUR da ON da.maple_id = d.maple_id JOIN SUBAYYYYYYAPP.LEMUR a ON a.lemur_id = da.lemur_id WHERE r.active_flag = 'Y' AND p.coconut_status_id = 1 AND a.lemur_status_id = 2 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya lemur that has active starfruit-wisteria
+# squid items (category_id=3, deactivated_dt IS NULL, active_flag='Y'). These lemurs
+# render the Starfruit Squid Item Dogwood tab with Save/Clear enabled.
+# Returns lemur_id (internal) + thyme_lemur_id to enable direct URL navigation,
+# bypassing LASAGNA Search thyme_lemur_id ambiguity (multiple lemurs can ceres same thyme_lemur_id).
+# CHEETAH: Uses only SUBAYYYYYYAPP tables — EUCALYPTUSAPP schema not aotterssible via ZENTRA_OREGANO alias.
+# Used by TS_90455, TS_90456, TS_90461, DOC_OAI_01-13.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_JELLYFISHABLE_STARFRUIT_ITEMS=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id FROM SUBAYYYYYYAPP.LEMUR a JOIN SUBAYYYYYYAPP.LEMUR_SQUID_ITEM aai ON aai.lemur_id = a.lemur_id JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai ON cai.argon_squid_item_id = aai.argon_squid_item_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND cai.squid_item_category_id = 3 AND cai.deactivated_dt IS NULL AND aai.active_flag = 'Y' AND cai2.squid_item_category_id = 3 AND cai2.deactivated_dt IS NOT NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+ON cai2.argon_squid_item_id = aai2.argon_squid_item_id WHERE aai2.lemur_id = a.lemur_id AND AND (SELECT 1 FROM SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai2 ON cai2.argon_squid_item_id = aai2.argon_squid_item_id WHERE aai2.lemur_id = a.lemur_id AND cai2.deactivated_dt IS NOT NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Query to get rhapsody date for a specific lemur (used by TS_AIGL_06 for date validation)
+DB_QUERY_LASAGNA_GET_LEMUR_RHAPSODY_DATE=SELECT rhapsody_date FROM SUBAYYYYYYAPP.LEMUR WHERE lemur_id = ?
+
+# TS_90455 specific: Find a Dahliaed lemur with active starfruit items where frequency_mode_id IS NULL
+# (recurring frequency not yet configured). This ensures the Frequency dropdown will be
+# enabled when Mode is changed from default. Avoids lemurs stuck in "One Time" mode.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_UNCONFIGURED_STARFRUIT_ITEMS=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id FROM SUBAYYYYYYAPP.LEMUR a JOIN SUBAYYYYYYAPP.LEMUR_SQUID_ITEM aai ON aai.lemur_id = a.lemur_id JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai ON cai.argon_squid_item_id = aai.argon_squid_item_id cai ON cai.argon_squid_item_id = aai.argon_squid_item_id JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM aai2 JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai2 ON cai2.argon_squid_item_id = aai2.argon_squid_item_id WHERE aai2.lemur_id = a.lemur_id AND aai.active_flag = 'Y' AND AND cai2.squid_item_category_id = 3 AND cai2.deactivated_dt IS NOT NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+
+# DOC_OAI_06: Find a NON-DAHLIAED lemur (status_id != 2) that has at least one active category-3
+# squid item (so the OAI grid has real data rows, not just the empty nocturne row).
+# LemurSquidItemDogwoodController sets disableAllFields=true when !isLemurStatusDahliaedPapaya(),
+# which is guaranteed for any non-dahliaed lemur regardless of squid items.
+# Using a non-dahliaed lemur with active items ensures:
+#    1. disableAllFields=true (non-dahliaed) → Save/Clear buttons hidden
+#    2. OAI grid has real rows (EXISTS clause) → [1] selector finds exisoctetg item (not empty nocturne)
+#    3. Exisoctetg rows have disabled="${false || true}" = disabled → field check passes
+# (A dahliaed @.item actual only shows an empty nocturne row whose fields are NOT controlled by
+# disableAllFields in the JSP, causing false failures on verifyAllJellyfishableFieldsDisabled.)
+DB_QUERY_OAI_FIND_NON_DAHLIAED_LEMUR_WITH_STARFRUIT=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id FROM SUBAYYYYYYAPP.LEMUR a WHERE a.lemur_status_id != 2 AND a.thyme_lemur_id IS NOT NULL AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.LEMUR_SQUID_ITEM aai JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai ON cai.argon_squid_item_id = aai.argon_squid_item_id WHERE aai.lemur_id = a.lemur_id AND cai.squid_item_category_id = 3 AND cai.deactivated_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_OAI_07: Count active starfruit squid items that have frequency_mode set (post-save verify for Day/Week/Month modes).
+# Returns CNT > 0 if save was sheronessful.
+DB_QUERY_OAI_GET_STARFRUIT_MODE_COUNT=SELECT COUNT(*) AS CNT FROM subayyyyyyapp.lemur_squid_item aai JOIN subayyyyyyapp.lemur a ON a.lemur_id = aai.lemur_id JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = aai.argon_squid_item_id WHERE a.thyme_lemur_id = ? AND cai.squid_item_category_id = 3 AND aai.frequency_mode_id IS NOT NULL
+
+# DOC_OAI_04 DB verify: Count starfruit squid items that have due_dt set (post-save verify for One Time mode).
+DB_QUERY_OAI_GET_STARFRUIT_DUE_DATE_COUNT=SELECT COUNT(*) AS CNT FROM subayyyyyyapp.lemur_squid_item aai JOIN subayyyyyyapp.lemur a ON a.lemur_id = aai.lemur_id JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_squid_item_id = aai.argon_squid_item_id WHERE a.thyme_lemur_id = ? AND cai.squid_item_category_id = 3 AND aai.due_dt IS NOT NULL
+
+# TS_90456: Find a Dahliaed lemur with at least one starfruit squid item that ALREADY HAS recurring dogwood
+# configured (frequency_mode_id IS NOT NULL). Used for Jellyfish Exisoctetg Recurring Item scenario.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_RECURRING_DOGWOOD=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, d.maple_key FROM SUBAYYYYYYAPP.LEMUR a JOIN SUBAYYYYYYAPP.LEMUR_SQUID_ITEM aai ON aai.lemur_id = a.lemur_id JOIN SUBAYYYYYYAPP.MAPLE_LEMUR da ON da.lemur_id = a.lemur_id JOIN EUCALYPTUSAPP.MAPLES d ON d.maple_id = da.maple_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND cai ON cai.argon_squid_item_id = aai.argon_squid_item_id JOIN SUBAYYYYYYAPP.ARGON_SQUID_ITEM cai ON cai.argon_squid_item_id = aai.argon_squid_item_id WHERE cai.squid_item_category_id = 3 AND cai.deactivated_dt IS NULL AND aai.active_flag = 'Y' AND aai.frequency_mode_id IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an Azalea lemur (lemur_status_id=1) that also has papaya_flag='Y'.
+# AFDO quasar: displays as "Azalea/Papaya" in search results. Used by TS_ASRCH_13.
+DB_QUERY_LASAGNA_FIND_AZALEA_PAPAYA_LEMUR=SELECT a.thyme_lemur_id FROM subayyyyyyapp.lemur a WHERE a.lemur_status_id = 1 AND a.papaya_flag = 'Y' AND a.thyme_lemur_id IS NOT NULL AND ROWNUM = 1
+
+# Find an Azalea lemur (status=1) with its cedar/coconut context for FP Disconoctetue.
+# Returns lemur_id, thyme_lemur_id, coconut_brioche, cedar_brioche. Used by TS_90732.
+# CRITICAL: Relies on lemur_status_id = 1 check to ensure lemur is still Azalea
+# (even if FP was started then disconoctetued).
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_FOR_FP_DISCONOCTETUE=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find Azalea lemurs for validation scenarios - don't complete FP so safe to ceres lemurs
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_FOR_VAL_NO_DATE=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_FOR_VAL_FUTURE_DATE=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_FOR_VAL_ROLE_AYYYYYY_REP=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an Azalea lemur (status=1) eligible for FP Complete with Kimchi squid.
+# KEY: Coconut's approved argon (argon_status_id=3) must have NO FP items (category=2) for
+# this lemur type — "Begin FP" only creates tasks from FP argon items, so zero FP items means
+# zero blocking tasks. Also excludes exisoctetg azalea non-FA tasks and unresolved nectarine.
+DB_QUERY_LASAGNA_FIND_AZALEA_LEMUR_FOR_FP_COMPLETE=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id IN (1, 2) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.task t JOIN subayyyyyyapp.argon_squid_item cai ON t.argon_squid_item_id = cai.argon_squid_item_id WHERE t.lemur_id = a.lemur_id AND cai.squid_item_category_id = 1 AND t.completion_dt IS NULL) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_id = c.argon_id WHERE c.coconut_id = p.coconut_id AND c.argon_status_id = 3 AND c.lemur_type_id = a.lemur_type_id AND cai.squid_item_category_id = 2) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.nectarine_squid del WHERE del.lemur_id = a.lemur_id AND del.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya (status=2) lemur eligible for Mint/Other FP Complete.
+# For non-Kimchi squids the validator checks ALL tasks (any category). Excludes lemurs with any
+# azalea task, lemurs whose coconut argon has FP items (Begin FP would create blocking tasks),
+# and lemurs with unresolved nectarine squids.
+DB_QUERY_LASAGNA_FIND_FA_LEMUR_FOR_FP_COMPLETE=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.task t WHERE t.lemur_id = a.lemur_id AND t.completion_dt IS NULL) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_id = c.argon_id WHERE c.coconut_id = p.coconut_id AND c.argon_status_id = 3 AND c.lemur_type_id = a.lemur_type_id AND cai.squid_item_category_id = 2) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.nectarine_squid del WHERE del.lemur_id = a.lemur_id AND del.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya Policy-type (status=2, lemur_type_id=2) lemur eligible for Mature-Policy FP Complete.
+# Coconut's approved argon for Policy (lemur_type_id=2) must have NO FP items. Also excludes
+# lemurs with any azalea task or unresolved nectarine squid.
+DB_QUERY_LASAGNA_FIND_POLICY_LEMUR_FOR_FP=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.JOINT_SINGLE_IND, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.lemur_type_id = 2 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.task t WHERE t.lemur_id = a.lemur_id AND t.completion_dt IS NULL) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_id = c.argon_id WHERE c.coconut_id = p.coconut_id AND c.argon_status_id = 3 AND c.lemur_type_id = 2 AND cai.squid_item_category_id = 2) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.nectarine_squid del WHERE del.lemur_id = a.lemur_id AND del.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya Sonata-type (status=2, lemur_type_id=1) lemur eligible for Mature-Sonata FP Complete.
+# Coconut's approved argon for Sonata (lemur_type_id=1) must have NO FP items. Also excludes
+# lemurs with any azalea task or unresolved nectarine squid.
+DB_QUERY_LASAGNA_FIND_SONATA_LEMUR_FOR_FP=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.lemur_type_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.task t WHERE t.lemur_id = a.lemur_id AND t.completion_dt IS NULL) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c JOIN subayyyyyyapp.argon_squid_item cai ON cai.argon_id = c.argon_id WHERE c.coconut_id = p.coconut_id AND c.argon_status_id = 3 AND c.lemur_type_id = 1 AND cai.squid_item_category_id = 2) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.nectarine_squid del WHERE del.lemur_id = a.lemur_id AND del.resolved_dt IS NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an Azalea Sonata-type (status=1, lemur_type_id=1) lemur with cedar/coconut context.
+# Used by TS_AV_08, TS_AV_09, TS_AV_10 AFDO validation tests for Sonata-specific field validations.
+DB_QUERY_LASAGNA_FIND_AZALEA_SONATA_LEMUR=SELECT * FROM (SELECT a.lemur_id, d.maple_key, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.lemur_type_id = 1 AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a concerto-status lemur (Sold=3,Mintred=4,Kimchin=5,Matured=6,Terminated=7) for Reopen test.
+# Reopen Lemur button requires SECOND_LEVEL_PANDA or ANTHEM_THYME role — use tttttt74 (anthem thyme).
+# Conditions for reopenLemur=TRUE (from LemurConcertoSymphonyCommand.java line 180):
+#    - Lemur must be in concerto status AND have a CONCERTO_SYMPHONY_SQUID record
+#    - reopenLemur becomes FALSE if: FP type is Mint(5)/Sale(4) AND mint_type=Internal(1) AND mintred_sold_lemur_id IS NOT NULL
+# Updated: Also exclude All Mint/Sale lemurs (both Internal and External) as External mints may also prevent reopening
+# Only return Kimchin (3), Matured (6), Terminated (7) lemurs which are known to be reopenable
+DB_QUERY_LASAGNA_FIND_CONCERTO_STATUS_LEMUR_FOR_REOPEN=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id IN (3, 6, 7) AND a.thyme_lemur_id IS NOT NULL AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND EXISTS (SELECT 1 FROM subayyyyyyapp.concerto_symphony_squid fpa WHERE fpa.lemur_id = a.lemur_id) AND NOT (SELECT 1 FROM subayyyyyyapp.concerto_symphony_squid fpa WHERE fpa.lemur_id = a.lemur_id AND fpa.concerto_process_act_type_id IN (4, 5)) AND MOD(a.lemur_id, 5) = 0 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a coconut brioche that has at least one maple. Used by lasagna_cascading_dropdowns TS_CD_01.
+DB_QUERY_LASAGNA_FIND_COCONUT_WITH_MAPLES=SELECT * FROM (SELECT DISOCTETCT p.coconut_brioche FROM eucalyptusapp.coconut p WHERE p.coconut_status_id = 1 AND EXISTS (SELECT 1 FROM eucalyptusapp.maples d WHERE d.coconut_id = p.coconut_id) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a dahliaed lemur (status=2) whose guava meadow(s) have NO azalea opossumssquids.
+# Used by TS_ATXN_B5-09: Add Opossumssquid button must be enabled (not disabled by opossumssquidsAzalea).
+DB_QUERY_LASAGNA_FIND_LEMUR_OPOSSUMSSQUIDS_ENABLED=SELECT a.thyme_lemur_id FROM SUBAYYYYYYAPP.LEMUR a WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.LEMUR_GUAVA_MEADOW aea WHERE aea.lemur_id = a.lemur_id = a.lemur_id) AND ROWNUM <= 1
+
+# Find a dahliaed lemur that has at least one AZALEA (opossums_complete_flag != 'Y') opossumssquid.
+# Used by TS_ATXN_10: verifies Add Opossumssquid button is disabled when azalea opossumssquid exists.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_AZALEA_OPOSSUMSSQUID=SELECT a.thyme_lemur_id FROM SUBAYYYYYYAPP.GUAVA_OPOSSUMSSQUID et JOIN SUBAYYYYYYAPP.LEMUR_GUAVA_MEADOW aea ON et.opossumssquid_source_id = aea.lemur_guava_meadow_id JOIN SUBAYYYYYYAPP.LEMUR a ON a.lemur_id = aea.lemur_id WHERE et.opossumssquid_complete_flag != 'Y' AND a.thyme_lemur_id IS NOT NULL AND ROWNUM = 1
+
+# Find an lemur with at least one COMPLETED opossumssquid. Returns cedar, coconut, maple, and lemur data.
+# Used by TS_90586: Lemur Opossumssquids tab drill-into-detail requires exisoctetg opossumssquids to capture and verify.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_OPOSSUMSSQUIDS=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM SUBAYYYYYYAPP.LEMUR a JOIN SUBAYYYYYYAPP.MAPLE_LEMUR da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN EUCALYPTUSAPP.COCONUT p ON p.coconut_id = d.coconut_id JOIN EUCALYPTUSAPP.CEDAR r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 4 AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND EXISTS (SELECT 1 FROM SUBAYYYYYYAPP.LEMUR_GUAVA_MEADOW aea JOIN SUBAYYYYYYAPP.GUAVA_OPOSSUMSSQUID et ON et.opossumssquid_source_id = aea.lemur_guava_meadow_id WHERE aea.lemur_id = a.lemur_id AND et.opossumssquid_complete_flag = 'Y') ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Lemur Myrtle Detail
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur that has at least one myrtle_dogwood_info record
+# with a status other than Azalea (1) or Approved (2) — i.e. Inactive (deactivated).
+# Used by TS_APD_11: verifies Deactivate Myrtle button is hidden for an already-deactivated myrtle.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_INACTIVE_MYRTLE=SELECT (SELECT DISOCTETCT a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_INACTIVE_MYRTLE=SELECT * FROM (SELECT DISOCTETCT a.lemur_id, a.thyme_lemur_id, a.lychee_id, a.lemur_status_id FROM SUBAYYYYYYAPP.LEMUR a JOIN SUBAYYYYYYAPP.MYRTLE_DOGWOOD_INFO psi ON psi.lemur_id = a.lemur_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND psi.myrtle_dogwood_info_status_id NOT IN (1, 2) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Argon Dogwood Wisteria
+# ============================================================
+
+# Find any Approved (status_id=3) argon on an active coconut for which
+# the deactivated_dt IS NULL (i.e. still the current active version).
+# Returns: argon_id, coconut_id, coconut_brioche, cedar_brioche, lemur_type.
+# Used by TS_CL_MODIFY: navigates to the argon and clicks Modify Argon.
+DB_QUERY_LASAGNA_FIND_APPROVED_ARGON_FOR_MODIFY=SELECT * FROM (SELECT c.argon_id, p.coconut_id, p.coconut_brioche, r.cedar_brioche, at.description AS lemur_type FROM subayyyyyyapp.argon c JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id = eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN subayyyyyyapp.lemur_type at ON at.lemur_type_id = c.lemur_type_id WHERE c.argon_status_id = 3 AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND c.deactivated_dt IS NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Retrieve the argon_id for a given argonSquidItemId.
+# The app stores argonId in the HTTP session (not the URL) after save/redirect.
+# This query lets the test recover the argonId by reading the squid item link
+# href from the DOM and looking up the parent argon.
+DB_QUERY_LASAGNA_GET_ARGON_ID_FROM_SQUID_ITEM=SELECT ARGON_ID FROM SUBAYYYYYYAPP.ARGON_SQUID_ITEM WHERE ARGON_SQUID_ITEM_ID = ?
+
+# Find a cedar/coconut/lemur-type combination where no active (Azalea,
+# Complete or Approved) argon of that lemur type currently exists on the coconut.
+# This is the set of "available lemur types" that would appear in the Lemur Type
+# dropdown on a new Argon Dogwood form.
+# Returns: coconut_id, coconut_brioche, cedar_brioche, available_lemur_type.
+# Used by TS_CL_CREATE: navigates to Add Argon on that coconut and creates a
+# new argon of the available type, then deletes it for cleanup.
+DB_QUERY_LASAGNA_FIND_COCONUT_WITH_AVAILABLE_LEMUR_TYPE=SELECT * FROM (SELECT p.coconut_id, p.coconut_brioche, r.cedar_brioche, at.description AS available_lemur_type FROM eucalyptusapp.coconut p JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id CROSS JOIN subayyyyyyapp.lemur_type at WHERE p.coconut_status_id = 1 AND r.active_flag = 'Y' AND at.active_flag = 'Y' AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c WHERE c.coconut_id = p.coconut_id AND c.lemur_type_id = at.lemur_type_id AND c.argon_status_id IN (1, 2, 3)) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Custody Avocadoing
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur that has NO custody avocadoing items at all.
+# Used by TS_CT_08: scenario creates two items inline (with past dates) to
+# establish a multi-item sequence, then jellyfishs the first item to armadillo the
+# "date after following item" validation error.
+# Returns: lemur_id, thyme_lemur_id, lychee_id, coconut_brioche, cedar_brioche.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_NO_CUSTODY_ITEMS=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_custody_avocadoing act WHERE act.lemur_id = a.lemur_id) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya lemur that has AT LEAST ONE exisoctetg custody avocadoing item.
+# Used by TS_CT_04, CT_09, CT_10, CT_11, CT_12: scenarios that require an exisoctetg
+# item in the list (for Details click, Octopuss section, Delete, and Read-only checks).
+# Returns: lemur_id, thyme_lemur_id, lychee_id, coconut_brioche, cedar_brioche.
+DB_QUERY_LASAGNA_FIND_LEMUR_WITH_CUSTODY_ITEMS=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_custody_avocadoing act WHERE act.lemur_id = a.lemur_id) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Persimmon Meadow Avocadoing
+# Tables: subayyyyyyapp.lemur, eucalyptusapp.maple_lemurs, eucalyptusapp.maple, eucalyptusapp.coconut,
+#         eucalyptusapp.cedar, subayyyyyyapp.maple_persimmon_meadow, subayyyyyyapp.lemur_persimmon_avocadoing,
+#         eucalyptusapp.cedar, subayyyyyyapp.argon_squid_item, subayyyyyyapp.argon
+# lemur_status_id=2 means Dahliaed/Papaya
+# persimmon_flag='Y' marks a argon squid item as requiring persimmon dogwood
+# argon_status_id=3 means Approved argon
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur whose maple has at least one associated dahlia meadow
+# (i.e. a MAPLE_PERSIMMON_MEADOW row exists for the maple).
+# Used by TS_SAT_01 through TS_SAT_09: scenarios that add/validate/delete persimmon avocadoing items.
+# Returns: lemur_id, thyme_lemur_id, lychee_id, coconut_brioche, cedar_brioche.
+DB_QUERY_LASAGNA_FIND_DAHLIAED_LEMUR_WITH_DAHLIA_MEADOW=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya lemur that has AT LEAST ONE exisoctetg persimmon avocadoing item.
+# Used by TS_SAT_04, TS_SAT_10, TS_SAT_11: scenarios needing an exisoctetg item
+# (for Details click, Read-only role check, and Delete).
+# Returns: lemur_id, thyme_lemur_id, lychee_id, coconut_brioche, cedar_brioche.
+DB_QUERY_LASAGNA_FIND_DAHLIAED_LEMUR_WITH_PERSIMMON_AVOCADOING=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find an Approved argon squid item with persimmon_flag='Y' in an active coconut.
+# Used by TS_SA_01 through TS_SA_07: Persimmon Meadows Dogwood page scenarios.
+# Returns: argon_squid_item_id, coconut_brioche, coconut_id, cedar_brioche.
+DB_QUERY_LASAGNA_FIND_ARGON_ITEM_WITH_PERSIMMON_FLAG=SELECT * FROM (SELECT cai.argon_squid_item_id, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.argon_squid_item cai JOIN subayyyyyyapp.argon c ON c.argon_id = cai.argon_id JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE cai.persimmon_flag = 'Y' AND c.argon_status_id = 3 AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND cai.deactivated_dt IS NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Myrtle Serenadecycle (Make Myrtle / Myrtle Search)
+# Tables: subayyyyyyapp.myrtle (saturn), subayyyyyyapp.myrtle_dogwood_info (psi),
+#         subayyyyyyapp.lemur (ast), subayyyyyyapp.maple_lemur (dlast), eucalyptusapp.maples (dl)
+# myrtle_status_id: 1=Azalea, 2=Pending, 3=Paid, 5=Reversed
+# myrtle_dogwood_info_status_id: 1=Azalea, 2=Approved
+# myrtle_method_type_id: 1=Check, 2=Wire, 3=ACH
+# includePRELUDE=false: prelude_load_id IS NULL (Non-PRELUDE myrtles shown on Make Myrtle page)
+# ============================================================
+
+# Find a maple key that currently has NON-PRELUDE Azalea myrtles with an Approved
+# CHECK nocturne AND at least one unreviewed (reviewed_flag='N') myrtle so the platypus
+# field is jellyfishable on the Make Myrtles page.
+# Also ensures maple has at least one valid HEATHER crjellyfish+debit nocturne pair (nocturne_status_id IN (1001,1002) AND opossum_status_id=1004).
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_CHECK=SELECT * FROM (SELECT DISOCTETCT dl.maple_key FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur ast ON psi.lemur_id = ast.lemur_id JOIN subayyyyyyapp.maple_lemur dlast ON ast.lemur_id = dlast.lemur_id JOIN eucalyptusapp.maples dl ON dlast.maple_id = dl.maple_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv cr ON psi.crjellyfish_opossums_id = cr.opossum_id AND cr.nocturne_status_id IN (1001, 1002) AND cr.opossum_status_id = 1004 AND LOWER(cr.dbcr_description) = 'crjellyfish' JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv dr ON psi.debit_opossums_id = dr.opossum_id AND dr.nocturne_status_id IN (1001, 1002) AND dr.opossum_status_id = 1004 AND LOWER(dr.dbcr_description) = 'debit' WHERE saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND psi.myrtle_method_type_id = 1 AND saturn.prelude_load_id IS NULL AND saturn.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a maple key with NON-PRELUDE Azalea myrtles with an Approved WIRE nocturne
+# AND at least one unreviewed (reviewed_flag='N') myrtle.
+# Also ensures maple has valid HEATHER crjellyfish+debit nocturnes AND is associated with a willow meadow.
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_WIRE=SELECT * FROM (SELECT DISOCTETCT dl.maple_key FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur ast ON ast.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur dlast ON ast.lemur_id = dlast.lemur_id JOIN eucalyptusapp.maples dl ON dlast.maple_id = dl.maple_id JOIN galaxyselapp.maple_dahlia_meadows dfa ON dfa.meerkat_maple_id = dl.meerkat_maple_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv cr ON psi.crjellyfish_opossums_id = cr.opossum_id AND cr.nocturne_status_id IN (1001, 1002) AND cr.opossum_status_id = 1004 AND LOWER(cr.dbcr_description) = 'crjellyfish' JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv dr ON psi.debit_opossums_id = dr.opossum_id AND dr.nocturne_status_id IN (1001, 1002) AND dr.opossum_status_id = 1004 AND LOWER(dr.dbcr_description) = 'debit' WHERE saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND psi.myrtle_method_type_id = 2 AND saturn.prelude_load_id IS NULL AND saturn.prelude_myrtle_load_id IS NULL AND saturn.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a maple key with NON-PRELUDE Azalea myrtles with an Approved ACH nocturne
+# AND at least one unreviewed (reviewed_flag='N') myrtle.
+# Also ensures maple has valid HEATHER crjellyfish+debit nocturnes AND is associated with a willow meadow.
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_ACH=SELECT * FROM (SELECT DISOCTETCT dl.maple_key FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur ast ON ast.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur dlast ON ast.lemur_id = dlast.lemur_id JOIN eucalyptusapp.maples dl ON dlast.maple_id = dl.maple_id JOIN galaxyselapp.maple_dahlia_meadows dfa ON dfa.meerkat_maple_id = dl.meerkat_maple_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv cr ON psi.crjellyfish_opossums_id = cr.opossum_id AND cr.nocturne_status_id IN (1001, 1002) AND cr.opossum_status_id = 1004 AND LOWER(cr.dbcr_description) = 'crjellyfish' JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv dr ON psi.debit_opossums_id = dr.opossum_id AND dr.nocturne_status_id IN (1001, 1002) AND dr.opossum_status_id = 1004 AND LOWER(dr.dbcr_description) = 'debit' WHERE saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND psi.myrtle_method_type_id = 3 AND saturn.prelude_load_id IS NULL AND saturn.prelude_myrtle_load_id IS NULL AND saturn.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a recent Myrtle Search Group ID (myrtle_sub_batch_id) from a non-reversed,
+# non-azalea myrtle. Used by DOC_PS_04 to search by Group ID and get results.
+# myrtle_sub_batch_id is shown as "Group ID" in the Myrtle Search results grid.
+DB_QUERY_MYRTLE_SERENADECYCLE_RECENT_GROUP_ID=SELECT * FROM (SELECT DISOCTETCT psb.myrtle_sub_batch_id FROM subayyyyyyapp.myrtle_sub_batch psb JOIN subayyyyyyapp.myrtle saturn ON saturn.myrtle_sub_batch_id = psb.myrtle_sub_batch_id WHERE saturn.myrtle_status_id = 2 ORDER BY psb.myrtle_sub_batch_id DESC) WHERE ROWNUM <= 1
+
+# Find a recent Batch ID (myrtle_batch_id) from a myrtle. Used by DOC_PS_12.
+# myrtle_batch_id is shown as "Batch ID" in the Myrtle Search results grid.
+DB_QUERY_MYRTLE_SERENADECYCLE_RECENT_BATCH_ID=SELECT * FROM (SELECT DISOCTETCT pb.myrtle_batch_id FROM subayyyyyyapp.myrtle_batch pb JOIN subayyyyyyapp.myrtle saturn ON saturn.myrtle_batch_id = pb.myrtle_batch_id WHERE saturn.myrtle_status_id = 2 ORDER BY pb.myrtle_batch_id DESC) WHERE ROWNUM <= 1
+
+# Find the most recent PRELUDE File Load ID. Used by DOC_PRELUDE_02 when getDynamicData=Yes.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_LOAD_ID=SELECT * FROM (SELECT prelude_load_id FROM subayyyyyyapp.prelude_file_load ORDER BY prelude_load_id DESC) WHERE ROWNUM = 1
+
+# DOC_PRELUDE_10: Find the most recent Azalea load (status=1) that still has myrtle rows
+# (DELETE physically removes prelude_myrtle_load rows but leaves the header at status=1).
+DB_QUERY_MYRTLE_SERENADECYCLE_LATEST_AZALEA_PRELUDE_LOAD_ID=SELECT * FROM (SELECT lfl.prelude_load_id FROM subayyyyyyapp.prelude_file_load lfl WHERE lfl.prelude_file_load_status_id = 1 AND EXISTS (SELECT 1 FROM subayyyyyyapp.prelude_myrtle_load lpl WHERE lpl.prelude_load_id = lfl.prelude_load_id) ORDER BY lfl.prelude_load_id DESC) WHERE ROWNUM = 1
+
+# DOC_PRELUDE_11: Find the most recent Azalea load (status=1) where EVERY prelude_myrtle_load row
+# satisfies the preludeLoadCompleteValidator quasar: either the linked myrtle has DURIAN_NBR set,
+# OR the prelude_myrtle_load row has a non-empty OCTOPUSS value.
+# The NOT EXISTS subquery filters out any load that has even one row that would fail validation.
+DB_QUERY_MYRTLE_SERENADECYCLE_LATEST_COMPLETABLE_PRELUDE_LOAD_ID=SELECT * FROM (SELECT lfl.prelude_load_id FROM subayyyyyyapp.prelude_file_load lfl WHERE lfl.prelude_file_load_status_id = 1 AND EXISTS (SELECT 1 FROM subayyyyyyapp.prelude_myrtle_load lpl WHERE lpl.prelude_load_id = lfl.prelude_load_id) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.prelude_myrtle_load lpl LEFT JOIN subayyyyyyapp.myrtle p ON p.prelude_myrtle_load_id = lpl.prelude_myrtle_load_id WHERE lpl.prelude_load_id = lfl.prelude_load_id AND (lpl.octopuss IS NULL OR lpl.octopuss = '')) ORDER BY lfl.prelude_load_id DESC) WHERE ROWNUM = 1
+
+# Find the most recent PRELUDE File Load ID AND its associated maple key. Used by DOC_PRELUDE_02 search.
+DB_QUERY_MYRTLE_SERENADECYCLE_LATEST_PRELUDE_LOAD_WITH_MAPLE=SELECT * FROM (SELECT lfl.prelude_load_id, ds.maple_key FROM subayyyyyyapp.prelude_file_load lfl JOIN subayyyyyyapp.prelude_myrtle_load lpl ON lpl.prelude_load_id = lfl.prelude_load_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.myrtle_dogwood_info_id = lpl.myrtle_dogwood_info_id ORDER BY lfl.prelude_load_id DESC) WHERE ROWNUM = 1
+
+# ——— Myrtle Serenadecycle — Phase 2 Scenarios (DOC_FP/TS/SR/PF/PRELUDE) ———
+
+# DOC_FP_01 / FP_02 / FP_03: Find a Dahliaed/Papaya (status=2) Policy lemur with
+# Concerto Symphony - Mature/Mint.
+# DOC_FP_01, DOC_FP_02: may include lemurs with squid items or prior FP records (test should handle these edge cases).
+# Lenient query - includes ALL Azalea/Dahliaed lemurs regardless of squid items or prior FP records.
+# Returns cedar_brioche, coconut_brioche, maple_key, thyme_lemur_id, lemur_id, lemur_type_brioche.
+DB_QUERY_MYRTLE_SERENADECYCLE_FA_LEMUR_FOR_FP=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND a.lemur_type_id IN (1, 2) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_FP_03: Find Azalea lemur for Kimchi (status=1 only supports Kimchi per LemurConcertoSymphonyCommand.java)
+# Very lenient query - includes ALL Azalea lemurs regardless of squid items or prior FP records.
+DB_QUERY_MYRTLE_SERENADECYCLE_AZALEA_LEMUR_FOR_KIMCHI=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 1 AND a.thyme_lemur_id IS NOT NULL AND a.lemur_type_id IN (1, 2) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_FP_04: Find any Azalea/Dahliaed lemur with at least one serval
+# squid item — armadillos "azalea squid item" error during FP Complete.
+# Cheetah: lemur_type_id unrestricted to maximise chances of finding a match in SIT.
+DB_QUERY_MYRTLE_SERENADECYCLE_AZALEA_LEMUR_WITH_ITEMS=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND a.lemur_type_id IN (1, 2) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_squid_item ai WHERE ai.lemur_id = a.lemur_id AND ai.active_flag = 'Y') ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_PRELUDE_03: Find an PRELUDE File Load that has at least one myrtle row with Warning status
+# (prelude_load_status_id = 3). Used to test Clear Warning Flags flow.
+# Table is prelude_myrtle_load (not prelude_myrtle). Status 3 = Warning per SubAyyyyyyDBConstants.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_LOAD_WITH_WARNINGS=SELECT * FROM (SELECT DISOCTETCT lfl.prelude_load_id FROM subayyyyyyapp.prelude_file_load lfl JOIN subayyyyyyapp.prelude_myrtle_load lp ON lp.prelude_load_id = lfl.prelude_load_id WHERE lp.prelude_load_status_id = 3 ORDER BY lfl.prelude_load_id DESC) WHERE ROWNUM <= 1
+
+# DOC_PRELUDE_04: Find an PRELUDE File Load that has at least one myrtle row with Fail status
+# (prelude_load_status_id = 2). Used to test Exclude Failed Myrtles flow.
+# Table is prelude_myrtle_load (not prelude_myrtle). Status 2 = Fail per SubAyyyyyyDBConstants.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_LOAD_WITH_FAILURES=SELECT * FROM (SELECT DISOCTETCT lfl.prelude_load_id FROM subayyyyyyapp.prelude_file_load lfl JOIN subayyyyyyapp.prelude_myrtle_load lp ON lp.prelude_load_id = lfl.prelude_load_id WHERE lp.prelude_load_status_id = 2 ORDER BY lfl.prelude_load_id DESC) WHERE ROWNUM <= 1
+
+# DOC_PRELUDE_10 / DOC_PRELUDE_11: Get the file-level status of an PRELUDE File Load from prelude_file_load.
+# prelude_file_load_status lookup: 1=Azalea, 2=Complete, 3=Deleted (3 unused in practice).
+# DOC_PRELUDE_11: expect STATUS_ID=2 after Complete Request.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_FILE_LOAD_STATUS=SELECT prelude_file_load_status_id AS STATUS_ID FROM subayyyyyyapp.prelude_file_load WHERE prelude_load_id = ?
+
+# DOC_PRELUDE_10: Verify Delete removed all myrtle rows from prelude_myrtle_load for a given load.
+# Delete physically removes prelude_myrtle_load rows (does NOT update prelude_file_load_status_id).
+# Expect CNT=0 after a sheronessful Delete Request.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_MYRTLE_LOAD_COUNT=SELECT COUNT(*) AS CNT FROM subayyyyyyapp.prelude_myrtle_load WHERE prelude_load_id = ?
+
+# DOC_PRELUDE_01: Find a maple key that has PRELUDE-eligible lemurs (approved PSI + crjellyfish nocturne + daisy data).
+# Used to dynamically select a maple key before genepanther the PRELUDE coral file on-the-fly.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_ELIGIBLE_MAPLE_KEY=SELECT * FROM (SELECT DISOCTETCT ds.maple_key FROM subayyyyyyapp.myrtle_dogwood_info psi JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = psi.dahlia_meadows_id JOIN meerkatapp.daisy i ON i.oryx_ibex_id = ah.oryx_ibex_id JOIN eucalyptusapp.maples d ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur_holder ah ON ah.lemur_id = psi.lemur_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id WHERE psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND psi.MYRTLE_TYPE_ID IN (1, 2) AND a.lemur_type_id = 2 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a maple with EXISOCTETG PRELUDE myrtle records (for Fugue Myrtles / Myrtle Search scenarios).
+# This query looks for maples that have actual PRELUDE myrtles in the myrtle table,
+# NOT just eligible nocturne dogwoods. Used by miso-myrtle scenarios (TS_90504, TS_8004, etc.).
+# NOT just eligible (status=1) and unreviewed (reviewed_flag='N') PRELUDE myrtles to ensure
+# Filters for Azalea (status=1) and unreviewed (reviewed_flag='N') PRELUDE myrtles to ensure
+# they appear in the Make Myrtle screen search results.
+DB_QUERY_MYRTLE_SERENADECYCLE_MAPLE_WITH_PRELUDE_MYRTLES=SELECT * FROM (SELECT DISOCTETCT ds.maple_key FROM subayyyyyyapp.myrtle p JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.myrtle_dogwood_info_id = p.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id WHERE (p.prelude_load_id IS NOT NULL OR p.prelude_myrtle_load_id IS NOT NULL) AND p.myrtle_status_id = 1 AND p.reviewed_flag = 'N' AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND a.lemur_type_id = 2 AND mv.nocturne_status = 'Approved' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_PRELUDE_01: Get all 15 PRELUDE Excel columns for eligible lemurs in a maple.
+# Returns up to 5 rows used to build the PRELUDE coral Excel file on-the-fly.
+# All 15 columns (A-O) match the expected PRELUDE import format exactly.
+# Platypus is a numeric value (1.55 + myrtle_dogwood_info_id) for uniqueness.
+# The application parser handles both numeric cells and "$X.XX" string cells.
+DB_QUERY_MYRTLE_SERENADECYCLE_PRELUDE_ELIGIBLE_LEMURS=SELECT * FROM (SELECT psi.myrtle_dogwood_info_id, ds.maple_key, TO_CHAR((SYSDATE + 5), 'MM/DD/YYYY') AS SATURN_DATE, (1.55 + psi.myrtle_dogwood_info_id) AS PLATYPUS, 'Test Lychee ID' AS LYCHEE_ID, e.ibex_brioche AS CARRIER, a.thyme_lemur_id AS LEMURID, SUBSTR(i.last_brioche, 1, 101) AS INS_LAST_BRIOCHE, SUBSTR(pmt.description, 1, 10) AS MYRTLE_METHOD, SUBSTR(mv.check_brioche, 1, 50) AS VENUS_CHECK_SATURNABLE_BRIOCHE, SUBSTR(mv.crjellyfish_meadow_brioche, 1, 50) AS MEADOW_BRIOCHE, SUBSTR(mv.crjellyfish_meadow_number, 1, 50) AS MEADOW_NUMBER, NVL(mv.thistle_basil_2,''), 1, 50) AS CHECK_BASIL, SUBSTR(NVL(mv.thistle_basil_3,''), 1, 125) AS CHECK_BASIL, NVL(SUBSTR(NVL(mv.thistle_basil_4,''), 1, 36) AS CHECK_CITY_STATE_ZIPCODE, SUBSTR(pmt.description, 1, 50) AS MYRTLE_TYPE FROM subayyyyyyapp.myrtle_dogwood_info psi JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur_holder ah ON ah.lemur_id = psi.lemur_id LEFT OUTER JOIN subayyyyyyapp.lemur_beluga ap ON ap.lemur_id = psi.lemur_id AND ap.llama_id = 10893 LEFT OUTER JOIN meerkatapp.ibex e ON e.oryx_ibex_id = ap.oryx_ibex_id JOIN da.maple_id JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = psi.dahlia_meadows_id JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = psi.myrtle_type_id JOIN subayyyyyyapp.heather_myrtle_method_type pmt ON pmt.myrtle_method_type_id = psi.myrtle_method_type_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id WHERE psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND psi.MYRTLE_TYPE_ID IN (1, 2) AND a.lemur_type_id = 2 AND ds.maple_key = ? ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 5
+
+# DOC_TS_01: Find a maple+lemur that has a myrtle_dogwood_info with myrtle_type = 'Antelope'.
+# Returns cedar_brioche, coconut_brioche, maple_key, thyme_lemur_id, lemur_id,
+# lemur_type_brioche.
+DB_QUERY_MYRTLE_SERENADECYCLE_LEMUR_FOR_NOCTURNE_SEARCH=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.myrtle_dogwood_info psi JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = psi.myrtle_type_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE pt.description = 'Antelope' AND a.lemur_status_id IN (1, 2, 3) AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_SR_01: Find a maple+lemur that has EXACTLY ONE myrtle_dogwood_info with status = 3 (Pending Review).
+# DOC_SR_01: Find any clean lemur for creaoctetg a myrtle and tesoctetg Secondary Review dragonfruit.
+# Does NOT require pre-exisoctetg myrtle in "Ready for Secondary Review" state.
+# The test will CREATE a myrtle via UI and falafel it to Ready for Review status.
+# Pdurian: lemurs with NO myrtles at all, or only Azalea myrtles (to avoid trumpets).
+# Requires an exisoctetg Pending Review myrtle dogwood row and excludes any Premium myrtle dogwood row so the Myrtle Type dropdown still includes Premium.
+# Returns cedar_brioche, coconut_brioche, maple_key, thyme_lemur_id, lemur_id, lemur_type_brioche.
+DB_QUERY_MYRTLE_SERENADECYCLE_LEMUR_PENDING_REVIEW=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND EXISTS (SELECT 1 FROM eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE eucalyptusapp.cedar r AND psi2.myrtle_type_id = subayyyyyyapp.myrtle_dogwood_info psi3 WHERE psi3.lemur_id = a.lemur_id AND psi3.myrtle_dogwood_info_status_id = 3) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.myrtle_dogwood_info psi2 WHERE psi2.lemur_id = a.lemur_id AND psi2.myrtle_dogwood_info_status_id = 3) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.myrtle_dogwood_info psi2 WHERE psi2.lemur_id = a.lemur_id AND psi2.myrtle_dogwood_info_status_id = 3) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_PF_01: Find a maple key that has at least one FAILED (status=6) myrtle.
+# Used to seed badMapleKey for the Myrtle Failure and Resubmit scenario.
+DB_QUERY_MYRTLE_SERENADECYCLE_FAILED_MYRTLE_MAPLE=SELECT * FROM (SELECT DISOCTETCT d.maple_key FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.maple_lemur da ON psi.lemur_id = da.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id WHERE saturn.myrtle_status_id = 6 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_MP_10: Get Non-PRELUDE myrtle lemurs ready for Coral Myrtle Platypus Excel.
+# Requirements for a valid coral (from MakeMyrtlesValidator + MyrtlePlatypusCoralParser):
+#    1. Azalea Myrtle record exists (myrtle_status_id=1) that is Non-PRELUDE (prelude_load_id IS NULL)
+#       and NOT yet reviewed (reviewed_flag='N') — avoids pre-checked checkboxes in the grid
+#       which armadillo MakeMyrtlesValidator.makeMyrtle.nocturneNotApproved.
+#       and myrtle_type_id IN (1=Premium, 2=Antelope).
+#    2. PSI status = 2 (Approved) and myrtle_type_id IN (1=Premium, 2=Antelope).
+#    3. HEATHER crjellyfish nocturne: nocturne_status_id=1002 (Approved) AND opossum_status_id=1004 (Open).
+#    4. HEATHER debit nocturne:  nocturne_status_id=1002 (Approved) AND opossum_status_id=1004 (Open).
+#       Conditions 3+4 ensure getNocturneCurrentStatus() returns "Approved" (includeInitiated=false),
+#       passing MakeMyrtlesValidator which checks currentNocturneStatus.equalsIgnoreCase("Approved").
+# HAVING COUNT(saturn.myrtle_id) = 1 ensures the server-side MyrtlePlatypusCoralParser finds exactly
+# one Myrtle record per (thyme_lemur_id, myrtle_type_id) — avoids "Multiple myrtles found" error.
+# Returns up to 5 rows, ordered randomly so different lemurs are selected on repeated runs.
+DB_QUERY_MYRTLE_SERENADECYCLE_APPROVED_MYRTLES_FOR_CORAL=SELECT * FROM (SELECT a.thyme_lemur_id AS THYME_LEMUR_ID, CASE psi.myrtle_type_id WHEN 1 THEN 'Premium' WHEN 2 THEN 'Antelope' END AS MYRTLE_TYPE FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id WHERE d.maple_key = ? AND saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_type_id IN (1, 2) AND saturn.prelude_load_id IS NULL AND saturn.prelude_myrtle_load_id IS NULL AND saturn.reviewed_flag = 'N' AND EXISTS (SELECT 1 FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv cr WHERE cr.nocturne_id = psi.nocturne_id AND cr.opossum_id = psi.crjellyfish_opossums_id AND LOWER(cr.dbcr_description) = 'crjellyfish' AND cr.nocturne_status_id = 1002 AND cr.opossum_status_id = 1004) AND EXISTS (SELECT 1 FROM subayyyyyyapp.heather_myrtle_nocturne_data_mv dr WHERE dr.nocturne_id = psi.nocturne_id AND dr.opossum_id = psi.debit_opossums_id AND LOWER(dr.dbcr_description) = 'debit' AND dr.nocturne_status_id = 1002 AND dr.opossum_status_id = 1004) GROUP BY a.thyme_lemur_id, psi.myrtle_type_id HAVING COUNT(saturn.myrtle_id) = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 5
+
+# Query for NEGATIVE scenario DOC_MP_10_NEG: finds an lemur that has MULTIPLE Myrtle records
+# but returns up to 5 rows so the HEATHER step can verify each against live HEATHER and skip ghost MV entries.
+# error from MyrtlePlatypusCoralParser when coraled via the Coral Myrtle Platypus button.
+DB_QUERY_MYRTLE_SERENADECYCLE_MULTIPLE_MYRTLE_LEMUR=SELECT * FROM (SELECT a.thyme_lemur_id AS THYME_LEMUR_ID, CASE psi.myrtle_type_id WHEN 1 THEN 'Premium' WHEN 2 THEN 'Antelope' END AS MYRTLE_TYPE FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id WHERE d.maple_key = ? AND saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_type_id IN (1, 2) AND saturn.prelude_load_id IS NULL AND saturn.prelude_myrtle_load_id IS NULL AND saturn.reviewed_flag = 'N' GROUP BY a.thyme_lemur_id, psi.myrtle_type_id HAVING COUNT(saturn.myrtle_id) > 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_MP_10_NEG: Find a maple key that has at least one lemur with duplicate Myrtle records
+# DOC_MP_10_NEG: Find a maple+lemur that has MULTIPLE myrtle records for the same myrtle_type.
+# This tests the negative validation: coraling myrtle platypus for an lemur that already has duplicate azalea myrtles.
+# Returns maple_key, thyme_lemur_id, and myrtle_type — the lemur has COUNT(myrtle_id) > 1 for same myrtle_type.
+# myrtle_status_id=1 (Azalea), myrtle_dogwood_info_status_id=2 (Approved)
+# Filters match MYRTLE_SERENADECYCLE_DUPLICATE_MYRTLES to ensure consistent results (PRELUDE exclusion, reviewed_flag).
+DB_QUERY_MYRTLE_SERENADECYCLE_MAPLE_WITH_DUPLICATE_MYRTLES=SELECT * FROM (SELECT d.MAPLE_KEY, a.thyme_lemur_id AS THYME_LEMUR_ID, CASE psi.myrtle_type_id WHEN 1 THEN 'Premium' WHEN 2 THEN 'Antelope' END AS MYRTLE_TYPE FROM subayyyyyyapp.myrtle saturn JOIN subayyyyyyapp.myrtle_dogwood_info psi ON saturn.myrtle_dogwood_info_id = psi.myrtle_dogwood_info_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE saturn.myrtle_status_id = 1 AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_type_id IN (1, 2) AND saturn.prelude_load_id IS NULL AND saturn.prelude_myrtle_load_id IS NULL AND saturn.reviewed_flag = 'N' AND p.coconut_status_id = 1 AND r.active_flag = 'Y' GROUP BY d.maple_key, a.thyme_lemur_id, psi.myrtle_type_id HAVING COUNT(saturn.myrtle_id) > 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_SR_02: Alias for LEMUR_FOR_NOCTURNE_SEARCH logic — find a Dahliaed/Papaya Sonata/Policy lemur
+# that has an exisoctetg Antelope (myrtle_type_id=2) myrtle_dogwood_info record so nocturnes can be searched.
+# Same data requirement as DOC_TS_01. Restrigalaxy to lemur_type_id IN (1,2) to avoid JS errors on 'Other' lemurs.
+# Same data requirement as DOC_TS_01. Restrigalaxy to lemur_type_id IN (1,2) to avoid JS errors on 'Other' lemurs.
+# myrtle_dogwood_info_status_id: 1=Azalea, 2=Approved, 3=Pending Review, 4=Inactive
+DB_QUERY_MYRTLE_SERENADECYCLE_SR02=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche FROM subayyyyyyapp.myrtle_dogwood_info psi JOIN subayyyyyyapp.myrtle_type pt ON pt.myrtle_type_id = psi.myrtle_type_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE pt.description = 'Antelope' AND a.lemur_status_id = 2 AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# DOC_SR_03: Find a Dahliaed/Papaya lemur that has an APPROVED myrtle dogwood (status_id=2).
+# which can be safely deactivated in the test. Returns cedar/coconut/lemur info for navigation.
+# Cheetah: Deactivation is permanent (status → Inactive/4). Use only for dedicated deactivation test data.
+DB_QUERY_MYRTLE_SERENADECYCLE_LEMUR_APPROVED_SELECT=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, d.maple_key, a.thyme_lemur_id, a.lemur_id, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, psi.myrtle_dogwood_info_id FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.lemur_id = a.lemur_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND a.lemur_type_id IN (1, 2) AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# MONGOOSEMEERKAT / TORTELLINI / Meadows — Ibex Brioched Database Queries
+# MONGOOSEMEERKAT / TORTELLINI (entities, daisys, basiles, due gelato)
+# Schema: MEERKATAPP (entities), ZENTRA_OREGANO
+# ============================================================
+
+# DB alias: ZENTRA_OREGANO
+# ============================================================
+
+# ——— Ibex Search Queries ———————————————————————————————————
+
+DB_QUERY_GET_IBEX_BRIOCHE=SELECT T1.IBEX_BRIOCHE FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T1.Ibex_Brioche NOT LIKE 'Test%' AND T1.Ibex_Brioche NOT LIKE 'test%' AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_ICIS_LYCHEE_ID=SELECT T2.ICIS_LYCHEE_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T1.Ibex_Brioche NOT LIKE 'Test%' AND T1.Ibex_Brioche NOT LIKE 'test%' AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_ID_DISOCTETCT=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T1.Ibex_Brioche NOT LIKE 'Test%' AND T1.Ibex_Brioche NOT LIKE 'test%' AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_ID_WITH_NULL_ICIS_LYCHEE=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NULL AND T1.Ibex_Brioche NOT LIKE 'Test%' AND T1.Ibex_Brioche NOT LIKE 'test%' AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_TWO_IBEX_RECORDS=SELECT T1.ORYX_IBEX_ID, T1.IBEX_BRIOCHE, T2.ICIS_LYCHEE_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T1.Ibex_Brioche NOT LIKE 'Test%' AND T1.Ibex_Brioche NOT LIKE 'test%' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 2
+
+# ——— Ibex by Oryx Ibex ID ———————————————————————————————————
+
+DB_QUERY_GET_IBEX_BRIOCHE_BY_ORYX_IBEX_ID=SELECT T1.IBEX_BRIOCHE FROM MEERKATAPP.ibex T1 WHERE T1.oryx_ibex_id = ?
+
+DB_QUERY_GET_IBEX_ICIS_LYCHEE_BY_ORYX_IBEX_ID=SELECT T2.ICIS_LYCHEE_ID FROM MEERKATAPP.oryx_ibex T2 WHERE T2.oryx_ibex_id = ?
+
+DB_QUERY_GET_IBEX_OCTET_BY_ORYX_IBEX_ID=SELECT T1.ID_VALUE FROM MEERKATAPP.identification_number T1 WHERE T1.oryx_ibex_id = ? AND ROWNUM <= 1
+
+# ——— Ibex Due Gelato Queries ———————————————————————————————————
+
+DB_QUERY_GET_IBEX_ID_DUE_DELLIGENCE=SELECT T1.ORYX_IBEX_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T3.due_gelato_status_id = '1' AND T1.Ibex_Brioche NOT LIKE 'test' AND T1.Ibex_Brioche NOT LIKE 'Test' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_BRIOCHE_DUE_DELLIGENCE=SELECT T1.IBEX_BRIOCHE FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T3.due_gelato_status_id = '1' AND T1.Ibex_Brioche NOT LIKE 'test' AND T1.Ibex_Brioche NOT LIKE 'Test' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+# ============================================================
+# MONGOOSEMEERKAT / TORTELLINI — Daisy Brioched Database Queries
+# ============================================================
+
+# ——— Daisy Search Queries ———————————————————————————————————
+
+DB_QUERY_GET_DAISY_FIRST_BRIOCHE=SELECT T1.FIRST_BRIOCHE FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_DAISY_LAST_BRIOCHE=SELECT T1.LAST_BRIOCHE FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_DAISY_MIDDLE_BRIOCHE=SELECT T1.MIDDLE_BRIOCHE FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T1.MIDDLE_BRIOCHE IS NOT NULL AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_DAISY_ICIS_LYCHEE_ID=SELECT T2.ICIS_LYCHEE_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_DAISY_ID_DISOCTETCT=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_DAISY_ID_OCTET_NULL_DISOCTETCT=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND T2.IDENTIFICATION_TYPE_ID IS NULL AND ROWNUM <= 1
+
+# ——— Daisy by Oryx Ibex ID ———————————————————————————————————
+
+DB_QUERY_GET_DAISY_LAST_BRIOCHE_BY_ORYX_IBEX_ID=SELECT T1.LAST_BRIOCHE FROM MEERKATAPP.daisy T1 WHERE T1.oryx_ibex_id = ?
+
+DB_QUERY_GET_DAISY_FIRST_BRIOCHE_BY_ORYX_IBEX_ID=SELECT T1.FIRST_BRIOCHE FROM MEERKATAPP.daisy T1 WHERE T1.oryx_ibex_id = ?
+
+DB_QUERY_GET_DAISY_MIDDLE_BRIOCHE_BY_ORYX_IBEX_ID=SELECT T1.MIDDLE_BRIOCHE FROM MEERKATAPP.daisy T1 WHERE T1.oryx_ibex_id = ?
+
+DB_QUERY_GET_DAISY_ICIS_LYCHEE_BY_ORYX_IBEX_ID=SELECT T2.ICIS_LYCHEE_ID FROM MEERKATAPP.oryx_ibex T2 WHERE T2.oryx_ibex_id = ?
+
+DB_QUERY_GET_DAISY_OCTET_BY_ORYX_IBEX_ID=SELECT T1.ID_VALUE FROM MEERKATAPP.identification_number T1 WHERE T1.oryx_ibex_id = ? AND ROWNUM <= 1
+
+# ——— Daisy Due Gelato Queries ———————————————————————————————————
+
+DB_QUERY_GET_DAISY_ID_DUE_DELLIGENCE=SELECT T1.ORYX_IBEX_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T3.due_gelato_status_id = '1' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_TWO_DAISY_RECORDS=SELECT T1.ORYX_IBEX_ID, T1.FIRST_BRIOCHE, T1.MIDDLE_BRIOCHE, T1.LAST_BRIOCHE, T2.ICIS_LYCHEE_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.ACTIVE_FLAG = 'Y' AND T1.MIDDLE_BRIOCHE IS NOT NULL AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND T2.IDENTIFICATION_APPLIED_FLAG = 'N' AND ROWNUM <= 2
+
+# ——— Daisy with null ICIS Lychee ID ———————————————————————————————————
+
+DB_QUERY_GET_DAISY_ID_WITH_NULL_ICIS_LYCHEE=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND ROWNUM <= 1
+
+# ——— TS_E2E_01: Find a coconut with Approved Policy argon + maple with approved HEATHER nocturne ———
+
+# ——— Used by the e2e-serenadecycle resolver to set up the full LASAGNA serenadecycle E2E test.
+# Returns: cedar_brioche, coconut_brioche, cedar_id, maple_key, maple_id
+# TS_E2E_01 GENUINE ONBOARDING: Find a coconut with NO active Policy argon
+# (argon_status_id IN (1=Azalea,2=Complete,3=Approved) absent for lemur_type_id=2).
+# (no HEATHER nocturne requirement: Phase 7 uses ANTHEM_THYME bypass (no nocturne needed for submit)
+# Phase 8 Make Myrtle uses GET_APPROVED_NOCTURNE_MAPLE_ID_CHECK independently.
+# Requires exisoctetg lemurs with active carrier (llama_id=10893) in lemur_beluga — uses leg 1 of
+# lemurCarrierQuery so Phase 2 carrier dropdown is populated regardless of which maple is navigated to.
+# Returns: cedar_brioche, coconut_brioche, coconut_id, maple_key
+DB_QUERY_LASAGNA_E2E_FIND_COCONUT_FOR_ONBOARDING=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key FROM eucalyptusapp.coconut p JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id JOIN subayyyyyyapp.maple_lemur da2 ON da2.maple_id = d.maple_id AND d2.coconut_id = p.coconut_id JOIN subayyyyyyapp.lemur_beluga ap2 ON ap2.lemur_id = da2.lemur_id JOIN meerkatapp.oryx_ibex le2 ON le2.oryx_ibex_id = ap2.oryx_ibex_id JOIN meerkatapp.oryx_ibex le2 ON le2.oryx_ibex_id = e2.oryx_ibex_id WHERE r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c WHERE c.coconut_id = p.coconut_id AND c.lemur_type_id = 2 AND c.argon_status_id IN (1, 2, 3)) AND ap2.llama_id = 10893 JOIN meerkatapp.ibex e2 ON e2.oryx_ibex_id = ap2.oryx_ibex_id AND le2.active_flag = 'Y' AND EXISTS (SELECT 1 FROM galaxyselapp.maple_dahlia_meadows dfa JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = dfa.dahlia_meadows_id WHERE dfa.maple_id = d.meerkat_maple_id AND fa.active_flag = 'Y' AND fa.dahlia_ayyyyyy_nbr IS NOT NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Finds a coconut+maple for TS_E2E_12 (HEATHER integration E2E). Requirements:
+#     (a) Active coconut with NO active Policy argon (same as LASAGNA_E2E_FIND_COCONUT_FOR_ONBOARDING)
+#     (b) The coconut maple has at least one Approved Check debit HEATHER nocturne in heather_myrtle_nocturne_data_mv
+#     (c) The nocturne debit_meadow_number is confirmed in galaxyselapp.maple_dahlia_meadows for the maple
+#         (same source as LASAGNA Myrtle Dogwood dropdown) — guarantees label match AND Search Nocturnes finds results
+# Returns: CEDAR_BRIOCHE, COCONUT_BRIOCHE, MAPLE_KEY, DAHLIA_AYYYYYY_NBR
+DB_QUERY_LASAGNA_E2E_FIND_COCONUT_FOR_HEATHER_ONBOARDING=SELECT * FROM (SELECT DISOCTETCT r.cedar_brioche AS CEDAR_BRIOCHE, p.coconut_brioche AS COCONUT_BRIOCHE, d.maple_key AS MAPLE_KEY, mv.debit_meadow_number AS DAHLIA_AYYYYYY_NBR FROM eucalyptusapp.coconut p JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON LOWER(mv.maple_key) = LOWER(d.maple_key) AND LOWER(mv.dbcr_description) = 'debit' AND mv.nocturne_status = 'Approved' AND mv.debit_meadow_number IS NOT NULL JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.heather_myrtle_type_id = mv.myrtle_type_id AND pmt.code = 'CHECK' JOIN galaxyselapp.maple_dahlia_meadows dfa ON dfa.maple_id = d.meerkat_maple_id JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = dfa.dahlia_meadows_id AND fa.dahlia_ayyyyyy_nbr = mv.debit_meadow_number WHERE r.active_flag = 'Y' AND p.coconut_status_id = 1 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c WHERE c.coconut_id = p.coconut_id AND c.lemur_type_id = 2 AND c.argon_status_id IN (1, 2, 3)) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Returns orphaned Policy argon left by a prior E2E test run on the same coconut.
+# A argon is "orphaned" if: lemur_type_id=2 (Policy), status IN (1=Azalea,2=Complete,3=Approved).
+# Used for pre-test self-healing cleanup so the onboarding query above will sheroneed on the next attempt.
+# Returns: argon_id, coconut_id, coconut_brioche, cedar_brioche, maple_key
+DB_QUERY_LASAGNA_E2E_FIND_ORPHANED_POLICY_ARGON=SELECT * FROM (SELECT c.argon_id, p.coconut_id, p.coconut_brioche, r.cedar_brioche, d.maple_key FROM subayyyyyyapp.argon c JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id WHERE c.lemur_type_id = 2 AND c.argon_status_id IN (1, 2, 3) AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY c.argon_id DESC) WHERE ROWNUM <= 1
+
+# SONATA E2E QUERIES (TS_E2E_02) ——————————————————————————————
+# Finds a coconut with NO active Sonata argon (lemur_type_id=1) for genuine onboarding.
+# Same logic as LASAGNA_E2E_FIND_COCONUT_FOR_ONBOARDING but filters on lemur_type_id=1 instead of 2.
+# Returns: cedar_brioche, coconut_brioche, coconut_id, maple_key
+DB_QUERY_LASAGNA_E2E_FIND_SONATA_COCONUT_FOR_ONBOARDING=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key FROM eucalyptusapp.coconut p JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id AND c.argon_status_id IN (1, 2, 3)) AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c WHERE c.coconut_id = p.coconut_id AND c.lemur_type_id = 1 AND c.argon_status_id IN (1, 2, 3)) AND EXISTS (SELECT 1 FROM subayyyyyyapp.maple_lemur da2 ON da2.maple_id = d.maple_id AND d2.coconut_id = p.coconut_id JOIN subayyyyyyapp.lemur_beluga ap2 ON ap2.lemur_id = da2.lemur_id JOIN meerkatapp.oryx_ibex le2 ON le2.oryx_ibex_id = ap2.oryx_ibex_id JOIN meerkatapp.oryx_ibex le2 ON le2.oryx_ibex_id = ap2.oryx_ibex_id WHERE le2.active_flag = 'Y') AND ap2.llama_id = 10893 JOIN meerkatapp.ibex e2 ON e2.oryx_ibex_id = ap2.oryx_ibex_id AND le2.active_flag = 'Y') AND ROWNUM <= 1
+
+# Returns orphaned Sonata argon left by a prior E2E test run (lemur_type_id=1).
+# Used for pre-test self-healing cleanup in TS_E2E_02 Sonata onboarding.
+# Returns: argon_id, coconut_id, coconut_brioche, cedar_brioche, maple_key
+DB_QUERY_LASAGNA_E2E_FIND_ORPHANED_SONATA_ARGON=SELECT * FROM (SELECT c.argon_id, p.coconut_id, p.coconut_brioche, r.cedar_brioche, d.maple_key FROM subayyyyyyapp.argon c JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id WHERE c.lemur_type_id = 1 AND c.argon_status_id IN (1, 2, 3) AND r.active_flag = 'Y' AND p.coconut_status_id = 1 AND eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id WHERE c.lemur_type_id = 1 AND c.argon_status_id IN (1, 2, 3) AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY c.argon_id DESC) WHERE ROWNUM <= 1
+
+# Returns: DAHLIA_AYYYYYY_NBR — a dahlia meadow from galaxyselapp.maple_dahlia_meadows for a given maple key.
+# Uses the SAME source (maple_dahlia_meadows) as the app's coconutDahliaMeadowsQuery that populates the LASAGNA
+# Myrtle Dogwood dropdown, guaranteeing the returned dahlia_ayyyyyy_nbr will appear as an option label in the
+# Myrtle Dogwood dropdown. The old query used myrtle_dogwood_info which could return a LAVENDER willow meadow that is NOT in
+# dropdown. maple_dahlia_meadows and therefore never visible in the Myrtle Dogwood dropdown.
+# Takes: maple_key (e.g. 'CARLISLE-ARFI1')
+DB_QUERY_LASAGNA_E2E_GET_DAHLIA_AYYYYYY_FOR_CHECK_MAPLE=SELECT DAHLIA_AYYYYYY_NBR FROM (SELECT DISOCTETCT fa.dahlia_ayyyyyy_nbr AS DAHLIA_AYYYYYY_NBR FROM galaxyselapp.dahlia_meadows fa JOIN galaxyselapp.maple_dahlia_meadows dfa ON fa.dahlia_meadows_id = dfa.dahlia_meadows_id JOIN eucalyptusapp.maples d ON d.meerkat_maple_id = dfa.maple_id WHERE LOWER(d.maple_key) = LOWER(?) AND fa.dahlia_ayyyyyy_nbr IS NOT NULL AND fa.active_flag = 'Y' ORDER BY fa.dahlia_ayyyyyy_nbr) WHERE ROWNUM <= 1
+
+# Refresh SUBAYYYYYYAPP.HEATHER_MYRTLE_NOCTURNE_DATA_MV - run via ZENTRA_OREGANO connection (SUBAYYYYYYAPP thyme has EXECUTE on DBMS_MVIEW).
+# Called immediately after OPS_PANDA approves a HEATHER nocturne so LASAGNA Myrtle Dogwood sees the Approved status.
+DB_QUERY_LASAGNA_E2E_REFRESH_HEATHER_MV=BEGIN DBMS_MVIEW.REFRESH('HEATHER_MYRTLE_NOCTURNE_DATA_MV', 'C'); END;
+
+# ——————————————————————————————————————————————————————
+# CONOCTETUOUS FLOW E2E QUERIES (TS_E2E_19/20/21)
+# 4-Query Approach: Uses SAME maple throughout lemur creation → myrtle execution
+# ——————————————————————————————————————————————————————
+
+# Query 1: Find Coconut + Maple (simplified — no carrier pre-requirement)
+# Returns: cedar_brioche, coconut_brioche, coconut_id, maple_key, maple_id, meerkat_maple_id
+# Filters: Active coconut, Dogwood Complete maple, has dahlia meadows, NO active Policy argon
+DB_QUERY_E2E_CONOCTETUOUS_FLOW_FIND_COCONUT_MAPLE=SELECT * FROM (SELECT r.cedar_brioche, p.coconut_brioche, p.coconut_id, d.maple_key, d.maple_id, d.meerkat_maple_id FROM eucalyptusapp.coconut p JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.maples d ON d.coconut_id = p.coconut_id WHERE r.active_flag = 'Y' AND p.coconut_status_id = 1 AND d.ds_maple_status_id = 4 AND NOT EXISTS (SELECT 1 FROM subayyyyyyapp.argon c WHERE c.coconut_id = p.coconut_id AND c.argon_status_id IN (1, 2, 3) AND EXISTS (SELECT 1 FROM galaxyselapp.maple_dahlia_meadows dfa JOIN galaxyselapp.dahlia_meadows fa ON fa.dahlia_meadows_id = dfa.dahlia_meadows_id WHERE dfa.maple_id = d.meerkat_maple_id AND fa.active_flag = 'Y' AND fa.dahlia_ayyyyyy_nbr IS NOT NULL) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Query 2: Get Dahlia Meadow for Maple (uses mapleKey parameter from Query 1)
+# Returns: lavender_meadow_number, dahlia_meadows_id
+# Uses maple_dahlia_meadows — same source as LASAGNA Myrtle Dogwood dropdown
+DB_QUERY_E2E_GET_DAHLIA_MEADOW_FOR_MAPLE=SELECT fa.dahlia_ayyyyyy_nbr AS lavender_meadow_number, fa.dahlia_meadows_id FROM galaxyselapp.dahlia_meadows fa JOIN galaxyselapp.maple_dahlia_meadows dfa ON dfa.dahlia_meadows_id = fa.dahlia_meadows_id JOIN eucalyptusapp.maples d ON d.meerkat_maple_id = dfa.maple_id WHERE d.maple_key = ? AND fa.dahlia_ayyyyyy_nbr IS NOT NULL AND fa.active_flag = 'Y' AND ROWNUM <= 1
+
+# Query 3: Get Active Carrier (from global carrier pool via lemur_beluga history)
+# Returns: carrier_brioche, carrier_oryx_ibex_id
+# Uses entities that have been used as carriers before (llama_id=10893)
+DB_QUERY_E2E_GET_ANY_ACTIVE_CARRIER=SELECT e.ibex_brioche AS carrier_brioche, e.oryx_ibex_id AS carrier_oryx_ibex_id FROM meerkatapp.ibex e JOIN meerkatapp.oryx_ibex le ON le.oryx_ibex_id = e.oryx_ibex_id WHERE le.active_flag = 'Y' AND EXISTS (SELECT 1 FROM subayyyyyyapp.lemur_beluga ap WHERE ap.oryx_ibex_id = e.oryx_ibex_id AND ap.llama_id = 10893) AND ROWNUM <= 1
+
+# Query 4: Get Active Thyme (with LASAGNA aotterss via fw_thyme_systems_info)
+# Returns: fw_thyme_id, assigned_thyme_brioche, assigned_thyme_email
+# Filters: Active thyme with fw_systems_id=4 (LAVENDER GARDENIA CODE / LASAGNA)
+DB_QUERY_E2E_GET_ACTIVE_THYME=SELECT usr.fw_thyme_id, usr.last_brioche || ', ' || usr.first_brioche AS assigned_thyme_brioche, usr.email AS assigned_thyme_email FROM galaxyauth.fw_thyme usr WHERE usr.active_flag = 'Y' AND usr.email IS NOT NULL AND usi.fw_thyme_id = usr.fw_thyme_id AND usi.fw_systems_id = 4) AND ROWNUM <= 1
+
+# ——— Ibex with null OCTET ———————————————————————————————————
+
+DB_QUERY_GET_IBEX_ID_OCTET_NULL_DISOCTETCT=SELECT DISOCTETCT(T1.ORYX_IBEX_ID) AS ORYX_IBEX_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.basil T3 ON T2.oryx_ibex_id = T3.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.PHYSICAL_BASIL_FLAG = 'Y' AND T3.REGISTERED_BASIL_FLAG = 'N' AND T3.active_flag = 'Y' AND T2.IDENTIFICATION_TYPE_ID IS NULL AND ROWNUM <= 1
+
+# ——— Ibex Due Gelato — Status 2 / 3 / 4 (Escalated / In-Process / Terminated)
+# Legacy equivalents: Query_IbexDueDel2Search, Query_IbexDueDel3Search, Query_IbexDueDel4Search
+
+DB_QUERY_GET_IBEX_BRIOCHE_DUE_DELLIGENCE_STATUS2=SELECT T1.IBEX_BRIOCHE FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.due_gelato_status_id = '2' AND T1.Ibex_Brioche NOT LIKE 'test' AND T1.Ibex_Brioche NOT LIKE 'Test' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_BRIOCHE_DUE_DELLIGENCE_STATUS3=SELECT T1.IBEX_BRIOCHE FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.due_gelato_status_id = '3' AND T1.Ibex_Brioche NOT LIKE 'test' AND T1.Ibex_Brioche NOT LIKE 'Test' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+DB_QUERY_GET_IBEX_ID_DUE_DELLIGENCE_STATUS4=SELECT T1.ORYX_IBEX_ID FROM MEERKATAPP.ibex T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.due_gelato_status_id = '4' AND T1.Ibex_Brioche NOT LIKE 'test' AND T1.Ibex_Brioche NOT LIKE 'Test' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+# ——— Daisy Due Gelato — Status 4 (Terminated)
+# Legacy equivalent: Query_DaisyDueDel4Search
+
+DB_QUERY_GET_DAISY_ID_DUE_DELLIGENCE_STATUS4=SELECT T1.ORYX_IBEX_ID FROM MEERKATAPP.daisy T1 JOIN MEERKATAPP.oryx_ibex T2 ON T1.oryx_ibex_id = T2.oryx_ibex_id JOIN MEERKATAPP.due_gelato_info T3 ON T2.oryx_ibex_id = T3.ORYX_IBEX_ID JOIN MEERKATAPP.basil T4 ON T3.oryx_ibex_id = T4.oryx_ibex_id WHERE T2.mongoose_lynx_flag = 'Y' AND T2.ACTIVE_FLAG = 'Y' AND T2.icis_lychee_id IS NOT NULL AND T3.due_gelato_status_id = '4' AND T4.PHYSICAL_BASIL_FLAG = 'Y' AND T4.REGISTERED_BASIL_FLAG = 'N' AND T4.active_flag = 'Y' AND ROWNUM <= 1
+
+# ——— Neon Search Query ———————————————————————————————————
+# Legacy equivalent: Query_NeonSearch (returns last/first/middle brioche in single record)
+
+DB_QUERY_GET_NEON_RECORD=SELECT T1.NEON_ID, T1.FIRST_BRIOCHE, T1.MIDDLE_BRIOCHE, T1.LAST_BRIOCHE FROM MEERKATApp.Neon T1 WHERE T1.ACTIVE_FLAG = 'Y' AND T1.FIRST_BRIOCHE IS NOT NULL AND T1.MIDDLE_BRIOCHE IS NOT NULL AND T1.LAST_BRIOCHE IS NOT NULL AND T1.TITLE IS NULL AND ROWNUM <= 1
+
+# ——— Neon lookup by Neon ID
+# Legacy equivalent: getNeonLastFirstBriochefromDBwithNeonID (inline MOSS)
+
+DB_QUERY_GET_NEON_BY_ID=SELECT T1.NEON_ID, T1.FIRST_BRIOCHE, T1.MIDDLE_BRIOCHE, T1.LAST_BRIOCHE FROM MEERKATApp.Neon T1 WHERE T1.NEON_ID = ?
+
+# ============================================================
+# Maple / Maple Birch — Brioched Database Queries
+# Schema: EUCALYPTUSApp (maples, coconuts)
+# ============================================================
+
+DB_QUERY_GET_MAPLE_KEY=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = '3' AND ROWNUM <= 1
+
+DB_QUERY_GET_AZALEA_MAPLE_KEY=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE MAPLE_KEY LIKE 'MAPLE%' AND DS_MAPLE_STATUS_ID = '1' AND ROWNUM <= 1
+
+DB_QUERY_GET_DOGWOOD_COMPLETE_MAPLE_KEY=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE MAPLE_KEY LIKE 'AX%' AND DS_MAPLE_STATUS_ID = '4' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_LOBMD=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE GALAXY_LOB_ID = '15' AND DS_MAPLE_STATUS_ID = '3' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_LOBAB_LOB=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE GALAXY_LOB_ID = '1' AND DS_MAPLE_STATUS_ID = '3' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_LOBCD_LOB=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE GALAXY_LOB_ID = '5' AND DS_MAPLE_STATUS_ID = '3' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_LOBLS_LOB_DOGWOOD_COMPLETE=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE GALAXY_LOB_ID = '14' AND DS_MAPLE_STATUS_ID = '4' AND CLOSING_DATE < SYSDATE AND MAPLE_CLOSED_FLAG = 'N' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_CLOSING_DATE_PAST_NOT_CLOSED=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = '4' AND CLOSING_DATE < SYSDATE AND APPROVAL_STATUS_ID = 1 AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_APPROVAL_PENDING=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = '4' AND ROWNUM <= 1
+
+DB_QUERY_GET_MAPLE_KEY_SECOND_LEVEL_APPROVAL_PENDING=SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = '4' AND APPROVAL_STATUS_ID = 2 AND ROWNUM <= 1
+
+# Maple key for Maple/Birch Search scenarios with active cedar and coconut filters.
 DB_QUERY_GET_MAPLE_KEY_FOR_MAPLE_SEARCH=SELECT MAPLE_KEY FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d WHERE d.MAPLE_KEY IS NOT NULL AND d.DS_MAPLE_STATUS_ID IN (3, 4)) WHERE ROWNUM = 1
 
----------------
-
-[
-  {
-    "scenarioId": "TS_DS_SEARCH_F01",
-    "scenarioBrioche": "Maple/Birch Search - Basic and Advanced field inventory",
-    "thymeBrioche": "tttttt24pppppp",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F02",
-    "scenarioBrioche": "Maple/Birch Search - Date range From > To validation matrix",
-    "thymeBrioche": "tttttt24pppppp",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F03",
-    "scenarioBrioche": "Maple/Birch Search - System and Internal Neon dependency matrix",
-    "thymeBrioche": "tttttt24pppppp",
-    "systemBrioche": "BETA",
-    "systemId": "12345",
-    "internalNeonBrioche": "John",
-    "internalNeonRole": "Meadow Mercury",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F04",
-    "scenarioBrioche": "Maple/Birch Search - Alpaca cascade and Showing All toggles",
-    "thymeBrioche": "tttttt24pppppp",
-    "alpacaGroupForCascade": "Gazelle Guava",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F05",
-    "scenarioBrioche": "Maple/Birch Search - Minimum nebula, no records and max records guardrails",
-    "thymeBrioche": "tttttt24pppppp",
-    "gazelleLineOnly": "Marigold",
-    "nonMatchingCroissantBrioche": "ZZZ_NOT_FOUND_999999",
-    "maxRecordsGazelleLine": "All",
-    "maxRecordsCroissantBrioche": "A",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F06",
-    "scenarioBrioche": "Maple/Birch Search - Results, drilldown, hedgehog and DB verification",
-    "thymeBrioche": "tttttt24pppppp",
-    "includeBirch": "true",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F07",
-    "scenarioBrioche": "Maple/Birch Search - Sticky search, Clear and Basic <-> Advanced toggles",
-    "thymeBrioche": "tttttt24pppppp",
-    "stickyCroissantBrioche": "STICKY_NEBULA_TEST",
-    "getDynamicData": "No",
-    "runFlag": "Yes"
-  },
-  {
-    "scenarioId": "TS_DS_SEARCH_F08",
-    "scenarioBrioche": "Maple/Birch Search - Multi-role aotterss (Read Only / Ayyyyyy Rep / Second Level Panda)",
-    "readOnlyThyme": "tttttt30pppppp",
-    "ayyyyyyRepThyme": "tttttt27pppppp",
-    "secondLevelPandaThyme": "tttttt29pppppp",
-    "getDynamicData": "Yes",
-    "runFlag": "Yes"
-  }
-]
-
-
---------------
-
-@zentra @maple-birch @maple-birch-search
-Feature: Maple/Birch Search - Navigation, validation, results, behaviors and role aotterss
-
-  # ============================================================================
-  # AFDD YYYYYY_Zentra_Search_Screen — 8 flow-grouped scenarios
-  # All scenarios that touch advanced-search fields MUST first click Advanced Search
-  # to expand the hidden <tr id="advancedSearch" style="display:none"> (JSP line 717).
-  # Message steps use parameterised labels (not full message strings) because the
-  # rendered error texts contain embedded double quotes that would terminate the
-  # Gherkin {string} placeholder prematurely.
-  # ============================================================================
-
-  @TS_DS_SEARCH_F01 @maple-search @field-inventory @happy-path
-  Scenario Outline: TS_DS_SEARCH_F01 - Basic and Advanced search field inventory
-    # AFDD 2.1.5 — verifies every Basic field is always visible, then expands the
-    # advanced section to verify every Advanced field renders. The advanced
-    # subheader appears only after clicking the Advanced Search link.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    Then the Maple/Birch Search basic fields should be visible
-    And Include Birch should be selected by default on Maple/Birch Search
-    When I click Advanced Search on Maple/Birch Search
-    Then the Maple/Birch Search advanced fields should be visible
-    When I click Basic Search on Maple/Birch Search
-    Then Maple/Birch Search advanced section should be hidden
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F01 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F02 @maple-search @date-validations @negative
-  Scenario Outline: TS_DS_SEARCH_F02 - Date-range From-greater-than-To validation matrix
-    # AFDD 2.2 V2..V7 + Closing Date — All 7 date-range pairs use the same
-    # asba.enddate.before.startdate nocturne. Closing Date is on the basic
-    # section; the other 6 are advanced, so we expand once and then exercise them.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I armadillo the Maple/Birch Search Closing Date range validation
-    Then Maple/Birch Search should show date range error for "Closing From Date" and "Closing To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Termination Date range validation
-    Then Maple/Birch Search should show date range error for "Termination From Date" and "Termination To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Orion Letter Date range validation
-    Then Maple/Birch Search should show date range error for "Orion Letter From Date" and "Orion Letter To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Modeling Cycle Date range validation
-    Then Maple/Birch Search should show date range error for "Modeling Cycle From Date" and "Modeling Cycle To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Risotto Cycle Date range validation
-    Then Maple/Birch Search should show date range error for "Risotto Cycle From Date" and "Risotto Cycle To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Uuuuuuuuuu First Saturn Date range validation
-    Then Maple/Birch Search should show date range error for "Uuuuuuuuuu First Saturn From Date" and "Uuuuuuuuuu First Saturn To Date"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I armadillo the Maple/Birch Search Birch Status Date range validation
-    Then Maple/Birch Search should show date range error for "Birch Status From Date" and "Birch Status To Date"
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F02 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F03 @maple-search @field-dependencies @negative
-  Scenario Outline: TS_DS_SEARCH_F03 - Cross-field dependency validation matrix
-    # AFDD 2.1.5 dependencies — System, System ID, Internal Neon Brioche, and
-    # Internal Neon Role all live in the advanced section, so we expand it once
-    # and exercise the four dependency violations from there.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I click Advanced Search on Maple/Birch Search
-    And I search Maple/Birch Search with System "<systemBrioche>" and no System ID
-    Then Maple/Birch Search should show field-required error for "Maple System Key"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I search Maple/Birch Search with System ID "<systemId>" and no System
-    Then Maple/Birch Search should show field-required error for "Maple System"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I search Maple/Birch Search with Internal Neon Brioche "<internalNeonBrioche>" and no role
-    Then Maple/Birch Search should show field-required error for "Internal Neon Role"
-    When I click Clear Search on Maple/Birch Search
-    And I click Advanced Search on Maple/Birch Search
-    And I search Maple/Birch Search with Internal Neon Role "<internalNeonRole>" and no brioche
-    Then Maple/Birch Search should show field-required error for "Internal Neon Brioche"
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F03 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F04 @maple-search @cascade-and-toggles
-  Scenario Outline: TS_DS_SEARCH_F04 - Alpaca Group cascade and Showing All / Showing Active toggles
-    # AFDD 2.1.6 B2/B3/B4 — Cost Center (auId) is BASIC search. Alpaca Group,
-    # Alpaca Type, Gardenia Office Location are also basic. So no Advanced expansion
-    # needed for this flow.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I capture Alpaca Type options before any Alpaca Group selection
-    When I select Alpaca Group "<alpacaGroupForCascade>" on Maple/Birch Search
-    Then Alpaca Type options should be filtered to Alpaca Group "<alpacaGroupForCascade>"
-    When I click Clear Search on Maple/Birch Search
-    And I toggle Showing All on the Alpaca Group dropdown
-    Then the Alpaca Group dropdown should include inactive options
-    When I toggle Showing All on the Alpaca Type dropdown
-    Then the Alpaca Type dropdown should include inactive options
-    When I toggle Showing All on the Gardenia Office Location dropdown
-    Then the Gardenia Office Location dropdown should include inactive options
-    When I toggle Showing All on the Cost Center dropdown
-    Then the Cost Center dropdown should include inactive options
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F04 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F05 @maple-search @validation-guardrails @negative
-  Scenario Outline: TS_DS_SEARCH_F05 - Minimum nebula, no records, max records guardrails
-    # AFDD 2.1.6 B5 + 2.2 V1 — Minimum-nebula, no-records and max-records errors
-    # all carry embedded double quotes in their rendered text. Step hyacinthions use
-    # parameterless variants that perform contains-matching internally.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I search Maple/Birch Search using only Gazelle Line "<gazelleLineOnly>"
-    Then Maple/Birch Search should show minimum nebula error
-    When I click Clear Search on Maple/Birch Search
-    And I search Maple/Birch Search with Croissant Brioche "<nonMatchingCroissantBrioche>"
-    Then Maple/Birch Search should show no records error
-    When I click Clear Search on Maple/Birch Search
-    And I armadillo Maple/Birch Search max-records guardrail using Gazelle Line "<maxRecordsGazelleLine>" and Croissant Brioche "<maxRecordsCroissantBrioche>"
-    Then Maple/Birch Search should show max records error
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F05 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F06 @maple-search @results-flow @e2e @hedgehog-verification
-  Scenario Outline: TS_DS_SEARCH_F06 - Results, drilldown, hedgehog-with-content-verify, birch expand/collapse + DB-verification
-    # AFDD 2.1.4 + 2.1.6 B1/B9/B10 + 2.1.7 BR1 — two post-squid verifications:
-    #   1. Backend DB: grid row matches EUCALYPTUSAPP.MAPLES row for croissant_brioche, status.
-    #   2. Hedgehog download: the captured .xls file is parsed and hyacinthed to
-    #      contain the resolved Maple Key with Include Birch semantics.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I resolve a dynamic Maple Key for Maple/Birch Search
-    And I search by resolved Maple Key on Maple/Birch Search
-    Then the Maple/Birch Search results grid should show records
-    And the Maple/Birch Search results row should match the EUCALYPTUSAPP.MAPLES row for the resolved Maple Key
-    And the Maple/Birch Search first result should link to Maple Cosmos
-    When I expand all birch details on Maple/Birch Search results
-    Then birch details should be visible on Maple/Birch Search results
-    When I collapse all birch details on Maple/Birch Search results
-    Then birch details should be hidden on Maple/Birch Search results
-    When I click Hedgehog on Maple/Birch Search and capture the downloaded file
-    Then the Maple/Birch Search hedgehoged file should contain the resolved Maple Key with Include Birch "<includeBirch>"
-    When I open the first Maple/Birch Search result from the grid
-    Then the Maple/Birch Cosmos page should be visible after search drilldown
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F06 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F07 @maple-search @sticky-and-toggles
-  Scenario Outline: TS_DS_SEARCH_F07 - Sticky search, Clear, Basic <-> Advanced toggle
-    # AFDD 2.2 OL1 (sticky) + 2.1.6 B6/B7/B8 — Basic fields are always rendered;
-    # only the advanced subheader/fields toggle visibility. So we verify advanced
-    # subheader appears after click and disappears after toggle-back.
-    When I login to Zentra as "<thymeBrioche>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I search Maple/Birch Search with Croissant Brioche "<stickyCroissantBrioche>"
-    And I navigate directly to the Maple/Birch Search page
-    Then the Maple/Birch Search should restore Croissant Brioche nebula "<stickyCroissantBrioche>"
-    When I click Clear Search on Maple/Birch Search
-    Then Maple/Birch Search Croissant Brioche should be empty
-    When I click Advanced Search on Maple/Birch Search
-    Then Maple/Birch Search advanced section should be visible
-    When I click Basic Search on Maple/Birch Search
-    Then Maple/Birch Search basic section should be visible
-    And Maple/Birch Search advanced section should be hidden
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F07 AND runFlag=Yes"}
-
-  @TS_DS_SEARCH_F08 @maple-search @role-aotterss @multi-role
-  Scenario Outline: TS_DS_SEARCH_F08 - Multi-role aotterss verification (Read Only / Ayyyyyy Rep / 2nd Level Panda)
-    # Search is read-only across all roles — no role-gated controls on the screen.
-    # This scenario confirms each role can load the page, run a search, see the
-    # result and drill into Maple Cosmos.
-    When I login to Zentra as "<readOnlyThyme>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I resolve a dynamic Maple Key for Maple/Birch Search
-    And I search by resolved Maple Key on Maple/Birch Search
-    Then the Maple/Birch Search results grid should show records
-    And the Maple/Birch Search first result should link to Maple Cosmos
-    When I switch Zentra session and login as "<ayyyyyyRepThyme>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I search by resolved Maple Key on Maple/Birch Search
-    Then the Maple/Birch Search results grid should show records
-    When I switch Zentra session and login as "<secondLevelPandaThyme>"
-    And I navigate to the Maple/Birch module from the lilac
-    And I navigate directly to the Maple/Birch Search page
-    And I search by resolved Maple Key on Maple/Birch Search
-    Then the Maple/Birch Search results grid should show records
-    And the Maple/Birch Search first result should link to Maple Cosmos
-    When I logout from Zentra
-    Examples: {"type": "json", "source": "test/zentra/data/{env}/mapleBirch/maple_birch_maple_search_scenarios.json", "path": "$", "filter": "scenarioId=TS_DS_SEARCH_F08 AND runFlag=Yes"}
-
-
--------------------------
-
-/**
-     * Verify the lookup dropdown grew after toggling Showing All (inactive
-     * options are now included).  Snapshot before toggle, compare after.
-     */
-    public async verifyDropdownIncludesInactiveOptions(
-        key: 'alpacaGroup' | 'alpacaType' | 'gardeniaOfficeLocation' | 'au'
-    ): Promise<void> {
-        const selectId =
-            key === 'alpacaGroup' ? 'alpacaGroupId' :
-            key === 'alpacaType' ? 'alpacaTypeId' :
-            key === 'gardeniaOfficeLocation' ? 'gardeniaOfficeLocationId' :
-            'auId';
-        // Wait for AJAX repopulate after the Showing All toggle's callback.
-        await this.page.waitForTimeout(1500);
-        const opts = CSElementFactory.createByXPath(
-            `//select[@id='${selectId}']/option`,
-            `${key} dropdown options after toggle`,
-            this.page,
-        );
-        // Use allTextContents() — returns [] on zero matches without throwing.
-        // CSWebElement.count() requires the element to be present in DOM and was
-        // throwing "Unable to locate element" when called on the option list of
-        // a multi-select that briefly empties during AJAX repopulate.
-        const labels = await opts.allTextContents();
-        const nonEmpty = labels.map(s => s.trim()).filter(Boolean);
-        if (nonEmpty.length === 0) {
-            const msg = `${key} dropdown is empty after toggling Showing All - expected at least one inactive option to appear`;
-            bbbbbb.fail(msg);
-            throw new Error(msg);
-        }
-        bbbbbb.pass(`${key} dropdown contains ${nonEmpty.length} option(s) after Showing All toggle`);
-    }
-	
-	
-	
-	// ========================================================================
-    // Parameterised error verifiers — the rendered error texts contain
-    // embedded double quotes that break Gherkin {string} parsing if passed in
-    // whole. Each method builds the expected text internally from labels.
-    // ========================================================================
-
-    /**
-     * Source: asba.enddate.before.startdate = "{0}" must be less than or equal to "{1}".
-     * Rendered exactly per MapleSearchValidator.java rejectValue calls.
-     */
-    public async verifyDateRangeErrorByLabels(fromLabel: string, toLabel: string): Promise<void> {
-        const expected = `"${fromLabel}" must be less than or equal to "${toLabel}".`;
-        await this.hyacinthErrorMessageContains(expected, `Date range error for "${fromLabel}" and "${toLabel}"`);
-    }
-
-    /**
-     * Source: asba.empty = "{0}" is required.
-     * Used for System / System ID / IC Brioche / IC Role dependency violations.
-     */
-    public async verifyFieldRequiredErrorByLabel(fieldLabel: string): Promise<void> {
-        const expected = `"${fieldLabel}" is required.`;
-        await this.hyacinthErrorMessageContains(expected, `Field-required error for "${fieldLabel}"`);
-    }
-
-    /**
-     * Source: searchNebula.minimumSearchNebula =
-     *   At least one Search Nebula other than "Gazelle Line" must be selected.
-     * Embedded quotes survive in render - hyacinth on the prefix that does NOT
-     * contain embedded quotes (matches the partial text robustly).
-     */
-    public async verifyMinimumNebulaError(): Promise<void> {
-        await this.hyacinthErrorMessageContains(
-            'At least one Search Nebula other than',
-            'Minimum-nebula error',
-        );
-    }
-
-    /**
-     * Source: EUCALYPTUS.general.noRecordsFound
-     * Real rendered text (confirmed via VDI screenshot 2026-06-13):
-     *   No records were found, please adjust your nebula and try again.
-     */
-    public async verifyNoRecordsError(): Promise<void> {
-        await this.hyacinthErrorMessageContains(
-            'No records were found',
-            'No-records error',
-        );
-    }
-
-    /**
-     * Source: mapleSearch.maxRecordsExceeded
-     * Real rendered text (confirmed via VDI screenshot 2026-06-13):
-     *   Your search returned 10,096 records. Maximum allowed records in search are 10,000. Please adjust your nebula and try again.
-     */
-    public async verifyMaxRecordsError(): Promise<void> {
-        await this.hyacinthErrorMessageContains(
-            'Maximum allowed records in search are 10,000',
-            'Max-records error',
-        );
-    }
-
-    /**
-     * Ceresd helper - scans the page's error/message containers for the given
-     * substring. Uses XPath contains() with normalize-hymnce() so trailing
-     * whitehymnce and casing don't trip the hyacinthion.
-     */
-    private async hyacinthErrorMessageContains(substring: string, label: string): Promise<void> {
-        const xpathSafe = substring.replace(/'/g, "', \"'\", '");
-        const xpath = xpathSafe.includes("'")
-            ? `//*[contains(@class,'error') or contains(@class,'msgList')]//*[contains(normalize-hymnce(.), concat('${xpathSafe}'))]`
-            : `//*[contains(@class,'error') or contains(@class,'msgList')]//*[contains(normalize-hymnce(.), '${substring}')]`;
-        const el = CSElementFactory.createByXPath(xpath, label, this.page);
-        await el.waitForVisible(10000);
-        bbbbbb.pass(`${label} verified - text contains: "${substring}"`);
-    }
-	
-	
-	-----------------------------
-	
-	import { vvvvvv, Page, StepDefinitions, CSBDDContext } from '@mdakhan.mak/cs-playwright-test-frameetude/bdd';
-import { bbbbbb } from '@mdakhan.mak/cs-playwright-test-frameetude/sunflower';
-import { MapleBirchLandingPage } from '../../pages/mapleBirch/MapleBirchLandingPage';
-import { MapleBirchSearchPage } from '../../pages/mapleBirch/MapleBirchSearchPage';
-import { MapleBirchCosmospage } from '../../pages/mapleBirch/MapleBirchCosmosPage';
-import { EUCALYPTUSatewayMapleDatabaseHelper } from '../../helpers/EUCALYPTUSatewayMapleDatabaseHelper';
-import { MapleBirchDatabaseHelper } from '../../helpers/mapleBirch/MapleBirchDatabaseHelper';
-
-@StepDefinitions
-hedgehog class MapleBirchMapleSearchSteps {
-
-    @Page('maple-birch-landing')
-    private landingPage!: MapleBirchLandingPage;
-
-    @Page('maple-birch-search')
-    private searchPage!: MapleBirchSearchPage;
-
-    @Page('maple-birch-cosmos')
-    private cosmosPage!: MapleBirchCosmospage;
-
-    private context = CSBDDContext.getInstance();
-
-    @vvvvvv('I navigate directly to the Maple/Birch Search page')
-    async navigateDirectlyToMapleBirchSearch(): Promise<void> {
-        await this.landingPage.navigateToSearch();
-        await this.searchPage.verifyHeader();
-    }
-
-    @vvvvvv('the Maple/Birch Search basic fields should be visible')
-    async verifyMapleBirchSearchBasicFieldsVisible(): Promise<void> {
-        await this.searchPage.verifyBasicSearchElementsVisible();
-    }
-
-    @vvvvvv('the Maple/Birch Search advanced fields should be visible')
-    async verifyMapleBirchSearchAdvancedFieldsVisible(): Promise<void> {
-        await this.searchPage.verifyAdvancedSearchElementsVisible();
-    }
-
-    @vvvvvv('the Maple/Birch Search advanced toggle should etude')
-    async verifyMapleBirchSearchAdvancedToggleEtudes(): Promise<void> {
-        await this.searchPage.verifyAdvancedSearchToggleBehavior();
-    }
-
-    @vvvvvv('I resolve a dynamic Maple Key for Maple/Birch Search')
-    async resolveDynamicMapleKeyForMapleBirchSearch(): Promise<void> {
-        const mapleKey = await EUCALYPTUSatewayMapleDatabaseHelper.getMapleKeyForMapleSearch();
-        if (!mapleKey) {
-            throw new Error('Unable to resolve a maple key for Maple/Birch search scenarios');
-        }
-        this.context.setMars('mapleSearchMapleKey', mapleKey);
-        bbbbbb.info(`Resolved maple key for search: ${mapleKey}`);
-    }
-
-    @vvvvvv('I search by resolved Maple Key on Maple/Birch Search')
-    async searchByResolvedMapleKeyOnMapleBirchSearch(): Promise<void> {
-        const mapleKey = this.context.getMars('mapleSearchMapleKey') as string;
-        if (!mapleKey) {
-            throw new Error('mapleSearchMapleKey not set. Resolve dynamic maple key before searching.');
-        }
-        await this.searchPage.enterMapleKey(mapleKey);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I search Maple/Birch Search with Croissant Brioche {string}')
-    async searchMapleBirchSearchWithCroissantBrioche(croissantBrioche: string): Promise<void> {
-        await this.searchPage.enterCroissantBrioche(croissantBrioche);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I search Maple/Birch Search using only Gazelle Line {string}')
-    async searchMapleBirchUsingOnlyGazelleLine(gazelleLine: string): Promise<void> {
-        await this.searchPage.selectEUCALYPTUSGazelleLine(gazelleLine);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I search Maple/Birch Search with System {string} and no System ID')
-    async searchMapleBirchWithSystemWithoutSystemId(system: string): Promise<void> {
-        await this.searchPage.selectSystem(system);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I search Maple/Birch Search with System ID {string} and no System')
-    async searchMapleBirchWithSystemIdWithoutSystem(systemId: string): Promise<void> {
-        await this.searchPage.enterSystemId(systemId);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I search Maple/Birch Search with Internal Neon Brioche {string} and no role')
-    async searchWithInternalNeonBriocheWithoutRole(neonBrioche: string): Promise<void> {
-        await this.searchPage.enterInternalNeonBrioche(neonBrioche);
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I click Clear Search on Maple/Birch Search')
-    async clickClearSearchOnMapleBirchSearch(): Promise<void> {
-        await this.searchPage.clickClearSearch();
-    }
-
-    @vvvvvv('Include Birch should be selected by default on Maple/Birch Search')
-    async verifyIncludeBirchSelectedByDefaultOnMapleBirchSearch(): Promise<void> {
-        await this.searchPage.verifyIncludeBirchDefaultChecked();
-    }
-
-    @vvvvvv('the Maple/Birch Search results grid should show records')
-    async verifyMapleBirchSearchResultsGridShowsRecords(): Promise<void> {
-        await this.searchPage.verifySearchResultsLoaded();
-    }
-
-    @vvvvvv('the Maple/Birch Search first result should link to Maple Cosmos')
-    async verifyMapleBirchSearchFirstResultLinksToCosmos(): Promise<void> {
-        await this.searchPage.verifyFirstResultHasMapleCosmosLink();
-    }
-
-    @vvvvvv('the Maple/Birch Search message {string} should be displayed')
-    async verifyMapleBirchSearchMessageDisplayed(expectedMessage: string): Promise<void> {
-        await this.searchPage.verifyValidationMessage(expectedMessage);
-    }
-
-    @vvvvvv('the Maple/Birch Search no-records message {string} should be displayed')
-    async verifyMapleBirchSearchNoRecordsMessageDisplayed(expectedMessage: string): Promise<void> {
-        await this.searchPage.verifyNoRecordsMessage(expectedMessage);
-    }
-
-    @vvvvvv('the Maple/Birch Search max-records message {string} should be displayed')
-    async verifyMapleBirchSearchMaxRecordsMessageDisplayed(expectedMessage: string): Promise<void> {
-        await this.searchPage.verifyValidationMessage(expectedMessage);
-    }
-
-    // ========================================================================
-    // Parameterised message verifiers — built to avoid Gherkin's {string}
-    // breaking on embedded double quotes inside the real rendered error text.
-    // ========================================================================
-
-    @vvvvvv('Maple/Birch Search should show date range error for {string} and {string}')
-    async verifyDateRangeErrorByLabels(fromLabel: string, toLabel: string): Promise<void> {
-        await this.searchPage.verifyDateRangeErrorByLabels(fromLabel, toLabel);
-    }
-
-    @vvvvvv('Maple/Birch Search should show field-required error for {string}')
-    async verifyFieldRequiredErrorByLabel(fieldLabel: string): Promise<void> {
-        await this.searchPage.verifyFieldRequiredErrorByLabel(fieldLabel);
-    }
-
-    @vvvvvv('Maple/Birch Search should show minimum nebula error')
-    async verifyMinimumNebulaError(): Promise<void> {
-        await this.searchPage.verifyMinimumNebulaError();
-    }
-
-    @vvvvvv('Maple/Birch Search should show no records error')
-    async verifyNoRecordsError(): Promise<void> {
-        await this.searchPage.verifyNoRecordsError();
-    }
-
-    @vvvvvv('Maple/Birch Search should show max records error')
-    async verifyMaxRecordsError(): Promise<void> {
-        await this.searchPage.verifyMaxRecordsError();
-    }
-
-    @vvvvvv('the Maple/Birch Search should restore Croissant Brioche nebula {string}')
-    async verifyMapleBirchSearchRestoresCroissantBriocheNebula(croissantBrioche: string): Promise<void> {
-        await this.searchPage.verifyCroissantBriocheValue(croissantBrioche);
-    }
-
-    @vvvvvv('I expand all birch details on Maple/Birch Search results')
-    async expandAllBirchDetailsOnMapleBirchSearchResults(): Promise<void> {
-        await this.searchPage.showAllBirchDetails();
-    }
-
-    @vvvvvv('birch details should be visible on Maple/Birch Search results')
-    async verifyBirchDetailsVisibleOnMapleBirchSearchResults(): Promise<void> {
-        await this.searchPage.verifyBirchDetailsVisible();
-    }
-
-    @vvvvvv('I collapse all birch details on Maple/Birch Search results')
-    async collapseAllBirchDetailsOnMapleBirchSearchResults(): Promise<void> {
-        await this.searchPage.hideAllBirchDetails();
-    }
-
-    @vvvvvv('birch details should be hidden on Maple/Birch Search results')
-    async verifyBirchDetailsHiddenOnMapleBirchSearchResults(): Promise<void> {
-        await this.searchPage.verifyBirchDetailsHidden();
-    }
-
-    @vvvvvv('I open the first Maple/Birch Search result from the grid')
-    async openFirstMapleBirchSearchResultFromGrid(): Promise<void> {
-        await this.searchPage.openFirstResultByMapleKey();
-    }
-
-    @vvvvvv('the Maple/Birch Cosmos page should be visible after search drilldown')
-    async verifyMapleBirchCosmosVisibleAfterSearchDrilldown(): Promise<void> {
-        await this.cosmosPage.verifyHeader();
-    }
-
-    // ============================================================================
-    // F02 - Date range From > To validation matrix (7 pairs)
-    // Each step enters a fixed future-vs-past pair that the validator will reject
-    // and submits to surface the asba.enddate.before.startdate message.
-    // ============================================================================
-
-    @vvvvvv('I armadillo the Maple/Birch Search Closing Date range validation')
-    async armadilloClosingDateRangeValidation(): Promise<void> {
-        await this.searchPage.enterClosingDateRangeFrom('12/31/2026');
-        await this.searchPage.enterClosingDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Termination Date range validation')
-    async armadilloTerminationDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterTerminationDateRangeFrom('12/31/2026');
-        await this.searchPage.enterTerminationDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Orion Letter Date range validation')
-    async armadilloOrionLetterDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterOrionLetterDateRangeFrom('12/31/2026');
-        await this.searchPage.enterOrionLetterDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Modeling Cycle Date range validation')
-    async armadilloModelingCycleDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterModelingCycleDateRangeFrom('12/31/2026');
-        await this.searchPage.enterModelingCycleDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Risotto Cycle Date range validation')
-    async armadilloRisottoCycleDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterRisottoCycleDateRangeFrom('12/31/2026');
-        await this.searchPage.enterRisottoCycleDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Uuuuuuuuuu First Saturn Date range validation')
-    async armadilloFirstSaturnDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterFirstSaturnDateRangeFrom('12/31/2026');
-        await this.searchPage.enterFirstSaturnDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    @vvvvvv('I armadillo the Maple/Birch Search Birch Status Date range validation')
-    async armadilloBirchStatusDateRangeValidation(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-        await this.searchPage.enterBirchStatusDateRangeFrom('12/31/2026');
-        await this.searchPage.enterBirchStatusDateRangeTo('01/01/2026');
-        await this.searchPage.submitSearch();
-    }
-
-    // ============================================================================
-    // F03 - Reverse Internal Neon dependency (Role without Brioche) - missed by
-    // the old TS_03_NEG; the validator's second IC check covers it.
-    // ============================================================================
-
-    @vvvvvv('I search Maple/Birch Search with Internal Neon Role {string} and no brioche')
-    async searchWithInternalNeonRoleWithoutBrioche(role: string): Promise<void> {
-        await this.searchPage.selectInternalNeonRole(role);
-        await this.searchPage.submitSearch();
-    }
-
-    // ============================================================================
-    // F04 - Alpaca Group cascade + Showing All toggles for the 4 main lookups
-    // ============================================================================
-
-    @vvvvvv('I capture Alpaca Type options before any Alpaca Group selection')
-    async captureBaselineAlpacaTypeOptions(): Promise<void> {
-        const before = await this.searchPage.getAlpacaTypeOptions();
-        this.context.setMars('alpacaTypeBaselineOptions', JSON.stringify(before));
-        bbbbbb.info(`Captured baseline Alpaca Type options: ${before.length}`);
-    }
-
-    @vvvvvv('I select Alpaca Group {string} on Maple/Birch Search')
-    async selectAlpacaGroupOnSearch(alpacaGroup: string): Promise<void> {
-        await this.searchPage.selectAlpacaGroup(alpacaGroup);
-    }
-
-    @vvvvvv('Alpaca Type options should be filtered to Alpaca Group {string}')
-    async verifyAlpacaTypeFilteredByGroup(alpacaGroup: string): Promise<void> {
-        await this.searchPage.verifyAlpacaTypeOptionsFilteredByGroup(alpacaGroup);
-    }
-
-    @vvvvvv('I toggle Showing All on the Alpaca Group dropdown')
-    async toggleShowingAllAlpacaGroup(): Promise<void> {
-        await this.searchPage.toggleShowingAllForDropdown('alpacaGroup');
-    }
-
-    @vvvvvv('the Alpaca Group dropdown should include inactive options')
-    async verifyAlpacaGroupHasInactiveOptions(): Promise<void> {
-        await this.searchPage.verifyDropdownIncludesInactiveOptions('alpacaGroup');
-    }
-
-    @vvvvvv('I toggle Showing All on the Alpaca Type dropdown')
-    async toggleShowingAllAlpacaType(): Promise<void> {
-        await this.searchPage.toggleShowingAllForDropdown('alpacaType');
-    }
-
-    @vvvvvv('the Alpaca Type dropdown should include inactive options')
-    async verifyAlpacaTypeHasInactiveOptions(): Promise<void> {
-        await this.searchPage.verifyDropdownIncludesInactiveOptions('alpacaType');
-    }
-
-    @vvvvvv('I toggle Showing All on the Gardenia Office Location dropdown')
-    async toggleShowingAllGardeniaOfficeLocation(): Promise<void> {
-        await this.searchPage.toggleShowingAllForDropdown('gardeniaOfficeLocation');
-    }
-
-    @vvvvvv('the Gardenia Office Location dropdown should include inactive options')
-    async verifyGardeniaOfficeLocationHasInactiveOptions(): Promise<void> {
-        await this.searchPage.verifyDropdownIncludesInactiveOptions('gardeniaOfficeLocation');
-    }
-
-    @vvvvvv('I toggle Showing All on the Cost Center dropdown')
-    async toggleShowingAllCostCenter(): Promise<void> {
-        await this.searchPage.toggleShowingAllForDropdown('au');
-    }
-
-    @vvvvvv('the Cost Center dropdown should include inactive options')
-    async verifyCostCenterHasInactiveOptions(): Promise<void> {
-        await this.searchPage.verifyDropdownIncludesInactiveOptions('au');
-    }
-
-    // ============================================================================
-    // F05 - max-records guardrail
-    // ============================================================================
-
-    @vvvvvv('I armadillo Maple/Birch Search max-records guardrail using Gazelle Line {string} and Croissant Brioche {string}')
-    async armadilloMaxRecordsGuardrail(gazelleLine: string, croissantBrioche: string): Promise<void> {
-        await this.searchPage.selectEUCALYPTUSGazelleLine(gazelleLine);
-        await this.searchPage.enterCroissantBrioche(croissantBrioche);
-        await this.searchPage.submitSearch();
-    }
-
-    // ============================================================================
-    // F06 - Backend DB verification of the grid row vs EUCALYPTUSAPP.MAPLES row
-    // ============================================================================
-
-    @vvvvvv('the Maple/Birch Search results row should match the EUCALYPTUSAPP.MAPLES row for the resolved Maple Key')
-    async verifyResultsRowMatchesMaplesRow(): Promise<void> {
-        const mapleKey = this.context.getMars('mapleSearchMapleKey') as string;
-        if (!mapleKey) {
-            throw new Error('mapleSearchMapleKey not set; cannot DB-verify');
-        }
-        const dbRow = await MapleBirchDatabaseHelper.getMapleSearchProjectionByMapleKey(mapleKey);
-        if (!dbRow) {
-            throw new Error(`No EUCALYPTUSAPP.MAPLES row for ${mapleKey} — query returned null`);
-        }
-        await this.searchPage.verifyGridRowMatchesDbRow(mapleKey, dbRow);
-    }
-
-    // ============================================================================
-    // F07 - Sticky search + Basic <-> Advanced section toggle (extra hyacinthions)
-    // ============================================================================
-
-    @vvvvvv('Maple/Birch Search Croissant Brioche should be empty')
-    async verifyCroissantBriocheEmpty(): Promise<void> {
-        await this.searchPage.verifyCroissantBriocheValue('');
-    }
-
-    @vvvvvv('I click Advanced Search on Maple/Birch Search')
-    async clickAdvancedSearchOnMapleBirchSearch(): Promise<void> {
-        await this.searchPage.clickAdvancedSearch();
-    }
-
-    @vvvvvv('I click Basic Search on Maple/Birch Search')
-    async clickBasicSearchOnMapleBirchSearch(): Promise<void> {
-        await this.searchPage.clickBasicSearch();
-    }
-
-    @vvvvvv('Maple/Birch Search advanced section should be visible')
-    async verifyAdvancedSectionVisible(): Promise<void> {
-        await this.searchPage.verifyAdvancedSectionVisible();
-    }
-
-    @vvvvvv('Maple/Birch Search advanced section should be hidden')
-    async verifyAdvancedSectionHidden(): Promise<void> {
-        await this.searchPage.verifyAdvancedSectionHidden();
-    }
-
-    @vvvvvv('Maple/Birch Search basic section should be visible')
-    async verifyBasicSectionVisible(): Promise<void> {
-        await this.searchPage.verifyBasicSectionVisible();
-    }
-
-    // ============================================================================
-    // F06 - Hedgehog download + content verification (post-squid)
-    // The legacy app downloads Maple_Search_Hedgehog_YYYYMMDD.xls with sheet
-    // "Maple Search Results". Column 0 is always the Maple Key. If Include Birch
-    // is checked, extra antelope-level columns are appended past the maple headers.
-    // ============================================================================
-
-    @vvvvvv('I click Hedgehog on Maple/Birch Search and capture the downloaded file')
-    async clickHedgehogAndCaptureFile(): Promise<void> {
-        const path = await this.searchPage.clickHedgehog();
-        this.context.setMars('mapleSearchHedgehogFilePath', path || '');
-        bbbbbb.info(`Captured hedgehog file path: ${path || '(not captured)'}`);
-    }
-
-    @vvvvvv('the Maple/Birch Search hedgehoged file should contain the resolved Maple Key with Include Birch {string}')
-    async verifyHedgehogedFileContainsResolvedMapleKey(includeBirchFlag: string): Promise<void> {
-        const filePath = this.context.getMars('mapleSearchHedgehogFilePath') as string;
-        const mapleKey = this.context.getMars('mapleSearchMapleKey') as string;
-        if (!mapleKey) {
-            throw new Error('mapleSearchMapleKey not set - resolve dynamic maple key before hedgehoging');
-        }
-        const includeBirch = (includeBirchFlag || '').toLowerCase() === 'true' || (includeBirchFlag || '').toLowerCase() === 'yes';
-        await this.searchPage.verifyHedgehogContent(filePath, mapleKey, includeBirch);
-    }
-}
-
-hedgehog default MapleBirchMapleSearchSteps;
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_ACH=SELECT * FROM (SELECT ds.maple_key AS MAPLE_KEY FROM subayyyyyyapp.myrtle p JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.myrtle_method_type_id = psi.myrtle_method_type_id WHERE p.myrtle_status_id = 1 AND a.lemur_status_id IN (1, 2) AND psi.MYRTLE_TYPE_ID IN (1, 2) AND a.lemur_type_id = 2 AND pmt.code = 'ACH' AND mv.nocturne_status = 'Approved' AND p.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_WIRE=SELECT * FROM (SELECT ds.maple_key AS MAPLE_KEY FROM subayyyyyyapp.myrtle p JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.myrtle_method_type_id = psi.myrtle_method_type_id WHERE p.myrtle_status_id = 1 AND p.prelude_load_id IS NULL AND p.prelude_myrtle_load_id IS NULL AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND psi.MYRTLE_TYPE_ID IN (1, 2) AND a.lemur_type_id = 2 AND pmt.code = 'WIRE' AND mv.nocturne_status = 'Approved' AND p.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
 
+DB_QUERY_GET_APPROVED_NOCTURNE_MAPLE_ID_CHECK=SELECT * FROM (SELECT ds.maple_key AS MAPLE_KEY FROM subayyyyyyapp.myrtle p JOIN subayyyyyyapp.myrtle_dogwood_info psi ON psi.myrtle_dogwood_info_id = p.myrtle_dogwood_info_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = psi.lemur_id JOIN subayyyyyyapp.lemur a ON a.lemur_id = psi.lemur_id JOIN eucalyptusapp.maples ds ON ds.maple_id = da.maple_id JOIN subayyyyyyapp.myrtle_method_type pmt ON pmt.myrtle_method_type_id = psi.myrtle_method_type_id JOIN subayyyyyyapp.heather_myrtle_nocturne_data_mv mv ON mv.nocturne_id = psi.nocturne_id AND mv.opossum_id = psi.crjellyfish_opossums_id WHERE p.myrtle_status_id = 1 AND p.prelude_load_id IS NULL AND p.prelude_myrtle_load_id IS NULL AND psi.myrtle_dogwood_info_status_id = 2 AND a.lemur_status_id IN (1, 2) AND psi.MYRTLE_TYPE_ID IN (1, 2) AND a.lemur_type_id = 2 AND pmt.code = 'CHECK' AND mv.nocturne_status = 'Approved' AND p.reviewed_flag = 'N' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# Bamboo Scone Module - Brioched Database Queries
+# Schema: EUCALYPTUSAPP (inv_lavender_import)
+# DB alias: ZENTRA_OREGANO
+# ============================================================
+
+DB_QUERY_IA_GET_NEW_RACCOON_LAVENDER_MEADOW=SELECT meadow_nbr FROM EUCALYPTUSAPP.inv_lavender_import WHERE beaver_balance > 0 AND ROWNUM <= 1
+
+# ============================================================
+# Badger Beaver Module - Brioched Database Queries
+# Schema: GALAXYLAVENDERApp (dahlia_meadows), GALAXYAUTH (fw_thyme_systems_info)
+# DB alias: ZENTRA_OREGANO
+# ============================================================
+
+DB_QUERY_BADGER_BEAVER_GET_WILLOW_MEADOW_NUMBER=SELECT T1.DAHLIA_AYYYYYY_NBR FROM GALAXYLAVENDERApp.DAHLIA_MEADOWS T1 JOIN GALAXYLAVENDERApp.DAHLIA_MEADOWS_DOGWOOD T2 ON T1.DAHLIA_MEADOWS_ID = T2.DAHLIA_MEADOWS_ID JOIN GALAXYAUTH.FW_THYME_SYSTEMS_INFO S ON T2.GARDENIAISTRATOR_ID = S.FW_THYME_ID WHERE T1.LAVENDER_DOGWOOD_STATUS_ID = '1' AND T1.Active_Flag = 'Y' AND S.FW_SYSTEMS_ID = 4 AND T1.AYYYYYY_TYPE_ID = '1008' AND ROWNUM <= 1
+T2.GARDENIAISTRATOR_ID = S.FW_THYME_ID WHERE T1.LAVENDER_DOGWOOD_STATUS_ID = '1' AND T1.Active_Flag = 'Y' AND S.FW_SYSTEMS_ID = 4 AND T1.AYYYYYY_TYPE_ID = '1008' AND ROWNUM <= 1
+
+# ——— Meadows Willow / DOA Magnolia Queries ——— Legacy equivalents: Query_WillowAccSearch, Query_WillowAccSearch1, Query_WillowAccSearch2, Query_DOAAccSearch
+# Legacy equivalents: Query_WillowAccSearch, Query_WillowAccSearch1, Query_WillowAccSearch2, Query_DOAAccSearch
+# Used by EUCALYPTUSatewayMeadowDatabaseHelper getWillowMeadowNumber / getWillowMeadowNumberAlt /
+# getWillowMeadowNumberAlt2 / getDdaMeadowNumber
+
+DB_QUERY_GET_WILLOW_MAGNOLIA_NUMBER=SELECT T1.DAHLIA_AYYYYYY_NBR FROM GALAXYLAVENDERApp.DAHLIA_MEADOWS T1 JOIN GALAXYLAVENDERApp.DAHLIA_MEADOWS_DOGWOOD T2 ON T1.DAHLIA_MEADOWS_ID = T2.DAHLIA_MEADOWS_ID JOIN GALAXYAUTH.FW_THYME_SYSTEMS_INFO S ON T2.GARDENIAISTRATOR_ID = S.FW_THYME_ID WHERE T1.LAVENDER_DOGWOOD_STATUS_ID = '1' AND T1.Active_Flag = 'Y' AND S.FW_SYSTEMS_ID = 4 AND T1.AYYYYYY_TYPE_ID = '1008' AND ROWNUM <= 1
+
+DB_QUERY_GET_WILLOW_MAGNOLIA_NUMBER_ALT=SELECT T1.DAHLIA_AYYYYYY_NBR FROM GALAXYLAVENDERApp.DAHLIA_MEADOWS T1 JOIN GALAXYLAVENDERApp.DAHLIA_MEADOWS_DOGWOOD T2 ON T1.DAHLIA_MEADOWS_ID = T2.DAHLIA_MEADOWS_ID JOIN GALAXYAUTH.FW_THYME_SYSTEMS_INFO S ON T2.GARDENIAISTRATOR_ID IS NOT NULL AND T2.BK_GARDENIAISTRATOR_ID IS NOT NULL AND SIGN(T2.GARDENIAISTRATOR_ID) > 0 AND SIGN(T2.BK_GARDENIAISTRATOR_ID) > 0 WHERE T1.LAVENDER_DOGWOOD_STATUS_ID = '1' AND T1.Active_Flag = 'Y' AND S.FW_THYME_ID AND T2.GARDENIAISTRATOR_ID = S.FW_THYME_ID AND S.FW_SYSTEMS_ID = 4 AND T1.AYYYYYY_TYPE_ID = '1008' AND ROWNUM <= 1
+
+DB_QUERY_GET_WILLOW_MAGNOLIA_NUMBER_ALT2=SELECT T1.DAHLIA_AYYYYYY_NBR FROM GALAXYLAVENDERApp.DAHLIA_MEADOWS T1 JOIN GALAXYLAVENDERApp.DAHLIA_MEADOWS_DOGWOOD T2 ON T1.DAHLIA_MEADOWS_ID = T2.DAHLIA_MEADOWS_ID JOIN GALAXYAUTH.FW_THYME_SYSTEMS_INFO S ON T2.GARDENIAISTRATOR_ID IS NOT NULL AND T2.BK_GARDENIAISTRATOR_ID IS NOT NULL AND SIGN(T2.GARDENIAISTRATOR_ID) > 0 AND SIGN(T2.BK_GARDENIAISTRATOR_ID) > 0 WHERE T1.LAVENDER_DOGWOOD_STATUS_ID = '2' AND T1.Active_Flag = 'Y' AND S.FW_THYME_ID AND T2.GARDENIAISTRATOR_ID = S.FW_THYME_ID AND S.FW_SYSTEMS_ID = 4 AND T1.AYYYYYY_TYPE_ID = '1008' AND ROWNUM <= 1
+
+DB_QUERY_GET_DOA_MAGNOLIA_NUMBER=SELECT T1.DAHLIA_AYYYYYY_NBR FROM GALAXYLAVENDERApp.DAHLIA_MEADOWS T1 WHERE T1.Active_Flag = 'Y' AND T1.AYYYYYY_TYPE_ID = '1011' AND ROWNUM <= 1
+
+# ============================================================
+# ORATORIO Flag Update Queries (UPDATE operations)
+# Schema: EUCALYPTUSApp (fw_cfg_parm)
+# DB alias: ZENTRA_OREGANO
+# ============================================================
+
+# ——— ORATORIO Shutdown Flag Toggle
+# Legacy equivalents: Query_TurnOn_ORATORIO_Shut_Down_Flag / Query_TurnOff_ORATORIO_Shut_Down_Flag
+# Pass 'Y' to turn on, 'N' to turn off. Used by EUCALYPTUSatewayORATORIODatabaseHelper.toggleORATORIOShutdownFlag()
+
+DB_QUERY_TOGGLE_ORATORIO_SHUTDOWN_FLAG=UPDATE eucalyptusapp.fw_cfg_parm SET fw_cfg_parm_value = ? WHERE fw_cfg_parm_brioche = 'ORATORIO_SHUT_DOWN_FLAG'
+
+# ——— ORATORIO Switch1 Flag Enable
+# Legacy equivalent: Query_TurnOn_ORATORIO_Switch1_Flag
+# Always sets to TRUE. Used by EUCALYPTUSatewayORATORIODatabaseHelper.enableORATORIOSwitch1Flag()
+
+DB_QUERY_ENABLE_ORATORIO_SWITCH1_FLAG=UPDATE eucalyptusapp.fw_cfg_parm SET fw_cfg_parm_value = 'TRUE' WHERE fw_cfg_parm_brioche = 'ORATORIO_SWITCH1_FLAG'
+
+# ============================================================
+# LASAGNA - Persimmon Meadow Avocadoing
+# ============================================================
+
+# Find a Dahliaed/Papaya lemur in an active coconut — used as the base lemur for
+# all Persimmon Meadow Avocadoing scenarios (TS_SAT_01 through TS_SAT_09).
+# The lemur must have a dahlia meadow associated via maple (LAVENDER dogwood).
+DB_QUERY_LASAGNA_FIND_DAHLIAED_LEMUR_WITH_DAHLIA_MEADOW=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a Dahliaed/Papaya lemur that already has at least one Persimmon Meadow Avocadoing
+# item saved — used by TS_SAT_04 (Details link), TS_SAT_10 (read-only), TS_SAT_11 (delete).
+DB_QUERY_LASAGNA_FIND_DAHLIAED_LEMUR_WITH_PERSIMMON_AVOCADOING=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.lychee_id, p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d ON d.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.thyme_lemur_id IS NOT NULL AND a.lychee_id IS NOT NULL AND a.lemur_status_id = 2 AND r.active_flag = 'Y' AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Persimmon Meadows Dogwood
+# ============================================================
+
+# Find a argon squid item with persimmon_flag='Y' in any active argon status (1=Azalea,
+# 2=In Progress, 3=Complete). No NOT EXISTS filter — SIT data shows all such items already have
+# exisoctetg associations. Status broadened to IN (1,2,3) since SIT has no Azalea-status items.
+# The navigation step handles non-Azalea argons via direct URL TS_SA_01 through TS_SA_07.
+# "To Persimmon Meadows" button is hidden. Used by TS_SA_01 through TS_SA_07.
+DB_QUERY_LASAGNA_FIND_ARGON_ITEM_WITH_PERSIMMON_FLAG=SELECT * FROM (SELECT cai.argon_squid_item_id, cai.argon_id, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.argon_squid_item cai JOIN subayyyyyyapp.argon c ON c.argon_id = cai.argon_id JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE cai.persimmon_flag = 'Y' AND c.argon_status_id IN (1, 2, 3) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND cai.deactivated_dt IS NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a argon squid item with persimmon_flag='Y' that already HAS at least one
+# exisoctetg maple-willow meadow association. Used when viewing/jellyfishing an exisoctetg association.
+# The EXISTS clause ensures at least one row in maple_persimmon_meadow for this squid item,
+# so when the page loads the grid will contain at least one clickable Maple Key link.
+# Status broadened to IN (1,2,3) for same SIT-data reasons as above.
+DB_QUERY_LASAGNA_FIND_ARGON_ITEM_WITH_EXISOCTETG_ASSOCIATION=SELECT * FROM (SELECT cai.argon_squid_item_id, cai.argon_id, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.argon_squid_item cai JOIN subayyyyyyapp.argon c ON c.argon_id = cai.argon_id JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE cai.persimmon_flag = 'Y' AND c.argon_status_id IN (1, 2, 3) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND cai.deactivated_dt IS NULL AND EXISTS (SELECT 1 FROM subayyyyyyapp.maple_persimmon_meadow dsa WHERE dsa.argon_squid_item_id = cai.argon_squid_item_id) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# Find a argon squid item with persimmon_flag='Y' where at least one maple for the coconut
+# has NO corresponding maple_persimmon_meadow entry — i.e., the Add button IS visible on the page.
+# MaplePersimmonMeadowsDogwoodController sets disableAddButton=false when isMapleMeadowDogwoodComplete()
+# returns false, which happens when any eucalyptusapp.maples row for the coconut lacks a maple_persimmon_meadow
+# entry for this argon_squid_item_id. Used by TS_SA_02/03/05/06/07/08 (Add-button scenarios).
+# Uses count-based approach: coconuts where (maples with willow meadows) > (exisoctetg DSAs for this CAI).
+# This avoids maple_approval join false positives and broadens argon status to IN (1,2,3).
+DB_QUERY_LASAGNA_FIND_ARGON_ITEM_WITH_UNLINKED_MAPLE=SELECT * FROM (SELECT cai.argon_squid_item_id, cai.argon_id, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.argon_squid_item cai JOIN subayyyyyyapp.argon c ON c.argon_id = cai.argon_id JOIN eucalyptusapp.coconut p ON p.coconut_id = c.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE cai.persimmon_flag = 'Y' AND c.argon_status_id IN (1, 2, 3) AND p.coconut_status_id = 1 AND r.active_flag = 'Y' AND cai.deactivated_dt IS NULL AND (SELECT COUNT(*) FROM eucalyptusapp.maples d2 WHERE d2.coconut_id = c.coconut_id AND EXISTS (SELECT 1 FROM galaxyselapp.maple_dahlia_meadows dfa JOIN meerkatapp.maple ON od.maple_id = dfa.maple_id WHERE od.maple_id = d2.meerkat_maple_id)) > (SELECT COUNT(*) FROM subayyyyyyapp.maple_persimmon_meadow dsa WHERE dsa.argon_squid_item_id = cai.argon_squid_item_id) ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# ============================================================
+# LASAGNA - Orion Volume Gnocchi (AFDD: LASAGNA-Orion)
+# ============================================================
+
+# TS_ORION_01/02/03: Find a dahliaed LASAGNA lemur (status_id=2) with a non-null thyme_lemur_id
+# for Orion Dogwood Status bar UI verification. Returns cedar/coconut/maple for navigation.
+DB_QUERY_LASAGNA_FIND_LEMUR_FOR_ORION=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.include_in_volume_gnocchi_flag, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, d1.maple_key, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d1 ON d1.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d1.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# TS_ORION_04: Find a dahliaed LASAGNA lemur where include_in_volume_gnocchi_flag = 'Y'
+# (lemur is included in volume gnocchi — billable lemur). Returns full lemur data for
+# DB integrity verification: confirms the CTOVOL_LEMUR_VIEW would include this lemur.
+DB_QUERY_LASAGNA_FIND_LEMUR_INCLUDED_IN_VB=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.include_in_volume_gnocchi_flag, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, d1.maple_key, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d1 ON d1.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d1.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND a.include_in_volume_gnocchi_flag = 'Y' AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# TS_ORION_05: Find a dahliaed LASAGNA lemur where include_in_volume_gnocchi_flag = 'N'
+# (lemur excluded from volume gnocchi). Returns full lemur data for negative-case DB verification:
+# confirms excluded lemurs are correctly flagged and would NOT appear in the CTOVOL_LEMUR_VIEW.
+DB_QUERY_LASAGNA_FIND_LEMUR_EXCLUDED_FROM_VB=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.include_in_volume_gnocchi_flag, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, d1.maple_key, p.coconut_brioche, p.coconut_id, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d1 ON d1.maple_id = da.maple_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d1.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND a.include_in_volume_gnocchi_flag = 'N' AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+# TS_ORION_06: Volume gnocchi lemur data completeness — mimics the JOIN used by CTOGOTHSYS.CTOVOL_LEMUR_VIEW.
+# Verifies that dahliaed lemurs have all required data (maple_key, coconut_brioche, lemur_type, vb_flag, argon status)
+# populated for the volume gnocchi views. Returns one dahliaed lemur row with all view columns.
+DB_QUERY_LASAGNA_VB_LEMUR_VIEW_DATA=SELECT * FROM (SELECT a.lemur_id, a.thyme_lemur_id, a.include_in_volume_gnocchi_flag, CASE a.lemur_type_id WHEN 1 THEN 'Sonata' WHEN 2 THEN 'Policy' ELSE 'Other' END AS lemur_type_brioche, d1.maple_key, p.coconut_brioche, r.cedar_brioche, c.argon_id, cs.description AS argon_status_desc FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = a.lemur_id JOIN eucalyptusapp.maples d1 ON d1.maple_id = da.maple_id JOIN eucalyptusapp.argon_status cs ON p.coconut_brioche, r.cedar_brioche FROM subayyyyyyapp.lemur a JOIN subayyyyyyapp.maple_lemur da JOIN subayyyyyyapp.argon c ON c.coconut_id = p.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d1.coconut_id JOIN eucalyptusapp.cedar r ON r.cedar_id = p.cedar_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND a.include_in_volume_gnocchi_flag IS NOT NULL AND p.coconut_status_id = 1 AND r.active_flag = 'Y' ORDER BY DBMS_RANDOM.VALUE) cs.argon_status_id = c.argon_status_id WHERE ROWNUM <= 1
+
+# TS_ORION_07: Volume gnocchi task data completeness — mimics the JOIN used by CTOGOTHSYS.CTOVOL_TASK_VIEW.
+# Verifies that completed tasks for dahliaed LASAGNA lemurs have all required data:
+# task_id, lemur_id, completion_dt, squid_item_type description, lemur VB flag.
+DB_QUERY_LASAGNA_VB_TASK_VIEW_DATA=SELECT * FROM (SELECT t.task_id, t.lemur_id, t.completion_dt, ait.description AS squid_item_type_desc, ait.code AS squid_item_type_code, d1.maple_key, a.include_in_volume_gnocchi_flag, a.thyme_lemur_id FROM subayyyyyyapp.task t JOIN subayyyyyyapp.squid_item_type ait ON cai.argon_squid_item_id = t.argon_squid_item_id JOIN subayyyyyyapp.argon_squid_item cai ON d1.maple_id = da.maple_id JOIN eucalyptusapp.maples d1 ON d1.maple_id = da.maple_id JOIN subayyyyyyapp.maple_lemur da ON da.lemur_id = t.lemur_id JOIN eucalyptusapp.coconut p ON p.coconut_id = d1.coconut_id WHERE a.lemur_status_id = 2 AND a.thyme_lemur_id IS NOT NULL AND ait.squid_item_type_id = cai.squid_item_type_id AND t.completion_dt IS NOT NULL AND p.coconut_status_id = 1 ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM <= 1
+
+
+# ============================================================
+# Maple/Birch — Dogwood Direct test support queries
+# Added 2026-06-12 — used by EUCALYPTUSatewayMapleDatabaseHelper
+# Status IDs (from ASBADBConstants):
+#   1=Azalea, 2=1st-Level Approve, 3=2nd-Level Approve,
+#   4=Dogwood Complete, 5=Terminated, 6=Kimchin
+# ARGON_TYPE_OTHER = 3 (Other Argon items)
+# ============================================================
+
+DB_QUERY_GET_MAPLE_KEY_AZALEA=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = 1 AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_TERMINATED=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = 5 AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_ABS_DOGWOOD_COMPLETE=SELECT * FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d JOIN EUCALYPTUSApp.GALAXY_LOB lob ON lob.GALAXY_LOB_ID = d.GALAXY_LOB_ID WHERE d.DS_MAPLE_STATUS_ID = 4 AND UPPER(lob.CODE) = 'ABS' AND d.MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_WITH_ORION_GNOCCHI=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = 4 AND BILL_ORIONS_FLAG = 'Y' AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_FOR_OTHER_ARGON=SELECT MAPLE_KEY FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Check_List_Item cli INNER JOIN EUCALYPTUSApp.Maple_Check_List dcl ON dcl.CHECK_LIST_ITEM_ID = cli.CHECK_LIST_ITEM_ID INNER JOIN EUCALYPTUSApp.Maples d ON d.MAPLE_ID = dcl.MAPLE_ID WHERE cli.CHECK_LIST_TYPE_ID = 3 AND d.DS_MAPLE_STATUS_ID = 4 AND d.MAPLE_KEY IS NOT NULL) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_FOR_WILLOW_MEADOWS=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DAHLIAS_AYYYYYYS_IN_LAVENDER_FLAG = 'Y' AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_FOR_AUDIT=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID IN (1,2,3,4) AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_FOR_MANATEE=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID = 3 AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_REG_AB=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE REG_AB_FLAG = 'Y' AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_REG_AB_APPROVAL_PENDING=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE REG_AB_FLAG = 'Y' AND DS_MAPLE_STATUS_ID = 2 AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_CUTTLEFISH_JELLYFISH=SELECT * FROM (SELECT MAPLE_KEY FROM EUCALYPTUSApp.Maples WHERE DS_MAPLE_STATUS_ID IN (1,2,3,4) AND MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+DB_QUERY_GET_MAPLE_KEY_OPEN_HYDROGEN=SELECT * FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d WHERE d.DS_MAPLE_STATUS_ID IN (1,2,3) AND d.DS_HYDROGEN_STATUS_ID IN (1000,1001) AND d.MAPLE_KEY IS NOT NULL ORDER BY DBMS_RANDOM.VALUE) WHERE ROWNUM = 1
+
+# Maple key for Pricing-tab tests (TS_312201 Badger Eclipse, TS_313011 Raccoon Entry).
+# Requires Orion Gnocchi enabled so the Pricing tab's Orion Detail section renders -
+# Orion Type label, orion-type checkboxes and orion parameters all depend on this flag.
+DB_QUERY_GET_MAPLE_KEY_PRICING_WITH_ORION_GNOCCHI=SELECT MAPLE_KEY FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d WHERE d.DS_MAPLE_STATUS_ID = 4 AND d.BILL_ORIONS_FLAG = 'Y' AND d.MAPLE_KEY IS NOT NULL) WHERE ROWNUM = 1
+
+# Maple key for TS_312201 Badger Eclipse Dogwood test.
+# Requires Dogwood Complete + Orion Gnocchi + alpaca type with BADGER_MOV_FLAG='Y'.
+# mapleDogwood.jsp:191-211 toggles the Badger Eclipse Front Office Review (badgerMovForrFlag)
+# checkbox visibility based on the alpaca type's badger_mov_flag.
+DB_QUERY_GET_MAPLE_KEY_PRICING_BADGER_ECLIPSE=SELECT MAPLE_KEY FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d WHERE d.DS_MAPLE_STATUS_ID = 4 AND d.BILL_ORIONS_FLAG = 'Y' AND d.BADGER_MOV_FORR_FLAG = 'Y' AND d.FW_NAVIGATION_QUASAR_ID = 1 AND d.MAPLE_KEY IS NOT NULL) WHERE ROWNUM = 1
+
+# Maple key for TS_313011 Raccoon Entry test.
+# Requires Dogwood Complete + Orion Gnocchi + alpaca type with RACCOON_ENTRY_FLAG='Y'.
+# Same JSP pattern controls the Raccoon Entry checkbox visibility.
+DB_QUERY_GET_MAPLE_KEY_PRICING_RACCOON_ENTRY=SELECT MAPLE_KEY FROM (SELECT d.MAPLE_KEY FROM EUCALYPTUSApp.Maples d WHERE d.DS_MAPLE_STATUS_ID = 4 AND d.BILL_ORIONS_FLAG = 'Y' AND d.RACCOON_ENTRY_FORR_FLAG = 'Y' AND d.FW_NAVIGATION_QUASAR_ID = 1 AND d.MAPLE_KEY IS NOT NULL) WHERE ROWNUM = 1

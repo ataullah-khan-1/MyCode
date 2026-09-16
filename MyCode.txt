@@ -1,1 +1,11 @@
-test
+function xpathLiteral(s: string): string {
+    if (!s.includes("'")) return `'${s}'`;
+    if (!s.includes('"')) return `"${s}"`;
+    const parts = s.split("'");
+    const args: string[] = [];
+    for (let i = 0; i < parts.length; i++) {
+        if (parts[i]) args.push(`'${parts[i]}'`);
+        if (i < parts.length - 1) args.push(`"'"`);
+    }
+    return `concat(${args.join(', ')})`;
+}

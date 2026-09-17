@@ -1,11 +1,19 @@
-function xpathLiteral(s: string): string {
-    if (!s.includes("'")) return `'${s}'`;
-    if (!s.includes('"')) return `"${s}"`;
-    const parts = s.split("'");
-    const args: string[] = [];
-    for (let i = 0; i < parts.length; i++) {
-        if (parts[i]) args.push(`'${parts[i]}'`);
-        if (i < parts.length - 1) args.push(`"'"`);
-    }
-    return `concat(${args.join(', ')})`;
-}
+if (autoSavedPath) {
+            const dir = path.dirname(autoSavedPath);
+            const base = path.basename(autoSavedPath);
+            const alreadyPrefixed = base.toLowerCase().startsWith(`${prefix}-`);
+            if (alreadyPrefixed) {
+                CSReporter.info(`${prefix} download resolved via framework auto-save: ${autoSavedPath}`);
+                return autoSavedPath;
+            }
+            const renamed = path.resolve(dir, `${prefix}-${base}`);
+            try {
+                fs.renameSync(autoSavedPath, renamed);
+                mgr.addDownloadedFile(renamed, path.basename(renamed), suggested);
+                CSReporter.info(`${prefix} download renamed to avoid clobber: ${renamed}`);
+                return renamed;
+            } catch (e) {
+                CSReporter.warn(`${prefix} rename failed (${(e as Error).message}); returning auto-saved path as-is`);
+                return autoSavedPath;
+            }
+        }

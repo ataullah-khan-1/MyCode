@@ -1,1 +1,38 @@
-test
+node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt"
+node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" headers.csv --csv
+node --experimental-strip-types src/cli.ts headers "C:\reports" all-headers.csv --csv
+node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" --json
+node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" --all
+
+1. .rpt → JSON
+node --experimental-strip-types src/cli.ts to-json "C:\reports\Sales.rpt" "C:\out\Sales.json"
+
+2. JSON → .rpt
+node --experimental-strip-types src/cli.ts to-rpt "C:\out\Sales.json" "C:\out\Sales-rebuilt.rpt"
+
+3. .rpt → .rdl
+node --experimental-strip-types src/cli.ts to-rdl "C:\reports\Sales.rpt" "C:\out\rdl"
+This creates C:\out\rdl\Sales.rdl and C:\out\rdl\Sales.review.md.
+
+4. JSON → .rdl
+node --experimental-strip-types src/cli.ts to-rdl "C:\out\Sales.json" "C:\out\rdl-from-json"
+This gives the same result as command 3.
+
+5. .rdl → JSON: not supported
+
+6. .rdl → .rpt: not supported
+
+The round trip that is supported, with a check that nothing changed, is .rpt → JSON → .rpt (commands 1 and 2). To confirm the rebuilt report has the same content as the original:
+
+node --experimental-strip-types src/cli.ts verify "C:\reports\Sales.rpt"
+Expected output:
+OK   Sales.rpt: 10 streams identical, re-encryption verified ...
+"streams identical" means every part of the report came back exactly the same.
+
+You can also check the file you rebuilt with command 2:
+
+node --experimental-strip-types src/cli.ts verify "C:\out\Sales-rebuilt.rpt"
+One thing to know: the rebuilt file can differ from the original in size. The report content is the same; only how the file packs that content can differ (in my test, 48,640 vs 47,616 bytes). verify checks the content, which is what matters.
+All reports in a folder at once:
+
+node --experimental-strip-types src/cli.ts to-rdl "C:\reports" "C:\out\rdl"

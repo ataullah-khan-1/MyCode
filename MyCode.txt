@@ -1,38 +1,26 @@
-node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt"
-node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" headers.csv --csv
-node --experimental-strip-types src/cli.ts headers "C:\reports" all-headers.csv --csv
-node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" --json
-node --experimental-strip-types src/cli.ts headers "C:\reports\Sales.rpt" --all
+const framed = !!obj?.border && obj.border.sides.every((side) => side > 0);
 
-1. .rpt → JSON
-node --experimental-strip-types src/cli.ts to-json "C:\reports\Sales.rpt" "C:\out\Sales.json"
+// Crystal keeps a text object's text a little inside its own border.
+el('PaddingLeft', `${((padding?.left ?? 0) / 20 + (framed ? 2 : 0)).toFixed(1)}pt`), el('PaddingRight', `${((padding?.right ?? 0) / 20 + (framed ? 2 : 0)).toFixed(1)}pt`),
+el('PaddingTop', framed ? '1pt' : '0pt'), el('PaddingBottom', '0pt')));
 
-2. JSON → .rpt
-node --experimental-strip-types src/cli.ts to-rpt "C:\out\Sales.json" "C:\out\Sales-rebuilt.rpt"
 
-3. .rpt → .rdl
-node --experimental-strip-types src/cli.ts to-rdl "C:\reports\Sales.rpt" "C:\out\rdl"
-This creates C:\out\rdl\Sales.rdl and C:\out\rdl\Sales.review.md.
+// Crystal stretches a picture to its frame.
+      el('Sizing', obj.size ? 'Fit' : 'FitProportional'),
 
-4. JSON → .rdl
-node --experimental-strip-types src/cli.ts to-rdl "C:\out\Sales.json" "C:\out\rdl-from-json"
-This gives the same result as command 3.
+private tableRow(columns: Column[], section: SectionInfo, rowName: string, area: string, minHeight = MIN_ROW_HEIGHT, outerOnly = false, splitDone = false): { row: XmlElement; height: number; hidden?: string; more?: { row: XmlElement; height: number }[] } {
+    // Split once, at the first rule (the one under the heading's title); a rule lower down closes the headings.
+    const split = splitDone ? null : this.splitAtRule(columns, section);
+    if (split) {
+      // A line across the middle of the section (a rule under a heading): two rows, the upper ending at the line
+      // (its bottom border), the lower starting there; the lines running down from it are the lower row's cell
+      // borders, drawn as in the rows below it.
+      const upper = this.tableRow(columns, split.upper, rowName, area, minHeight, true, true);
+      const lower = this.tableRow(columns, split.lower, `${rowName}_Lower`, area, minHeight, false, true);
+      return { row: upper.row, height: upper.height + lower.height, hidden: upper.hidden, more: [{ row: lower.row, height: lower.height }] };
+    }
 
-5. .rdl → JSON: not supported
-
-6. .rdl → .rpt: not supported
-
-The round trip that is supported, with a check that nothing changed, is .rpt → JSON → .rpt (commands 1 and 2). To confirm the rebuilt report has the same content as the original:
-
-node --experimental-strip-types src/cli.ts verify "C:\reports\Sales.rpt"
-Expected output:
-OK   Sales.rpt: 10 streams identical, re-encryption verified ...
-"streams identical" means every part of the report came back exactly the same.
-
-You can also check the file you rebuilt with command 2:
-
-node --experimental-strip-types src/cli.ts verify "C:\out\Sales-rebuilt.rpt"
-One thing to know: the rebuilt file can differ from the original in size. The report content is the same; only how the file packs that content can differ (in my test, 48,640 vs 47,616 bytes). verify checks the content, which is what matters.
-All reports in a folder at once:
-
-node --experimental-strip-types src/cli.ts to-rdl "C:\reports" "C:\out\rdl"
+if (!obj.size || obj.size.height < lineHeight * 1.8) return text.replace(/\u00a0/g, ' ');
+  const centred = obj.align === 'center';
+  // Runs of spaces, non-breaking ones included (SSRS keeps those together on one line).
+  const lines = text.replace(/\u00a0/g, ' ').split(/\r?\n/).map((line) => line.replace(/ {3,}/g, '\n')).join('\n').split('\n')

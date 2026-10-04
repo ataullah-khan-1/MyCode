@@ -1,24 +1,50 @@
-// The text is placed as in the column's other rows (so a heading lines up with the values under it); a line
-          // under it moves with it, by as far as the text is from its place in Crystal.
-          const cellWidth = columnEnd - columnLeft;
-          let moved = 0;
-          if (obj?.position && obj.size && padding) {
-            const ownLeft = obj.position.x - columnLeft;
-            const ownRight = ownLeft + obj.size.width;
-            const textLeft = padding.left;
-            const textRight = cellWidth - padding.right;
-            moved = obj.align === 'center' ? (textLeft + textRight - ownLeft - ownRight) / 2
-              : obj.align === 'right' || (!leftAligned && obj.align !== 'left') ? textRight - ownRight
-                : textLeft - ownLeft;
-          }
-          const under = (line: ReportObject) => !!obj?.position && !!obj.size
-            && (line.position?.x ?? 0) < obj.position.x + obj.size.width && (line.position?.x ?? 0) + (line.size?.width ?? 0) > obj.position.x;
-          const items = partLines.map((line) => {
-            const shift = under(line) ? moved : 0;
-            const width = Math.min(line.size?.width ?? 0, cellWidth);
-            const x = Math.min(Math.max((line.position?.x ?? 0) + shift, columnLeft), columnEnd - Math.max(width, 60));
-            const right = Math.max(Math.min(x + width, columnEnd), x + 60);
+this.noteTopRule(row, section, tableWidth);
 
 
-const text = obj || ruled.top || ruled.bottom || ruled.left || ruled.right || background
-            ? this.textbox(name, value, this.ruledBorderObject(cellObj, ruled), format, 'row', { top: 0, left: 0, width: columnWidth, height }, undefined, ruled, padding)
+return el('TablixCell', el('CellContents', this.textbox(name, value, this.ruledBorderObject(cellObj, ruled), format, 'row', undefined, undefined, ruled, padding)));
+      })));
+    this.noteTopRule(row, section, tableWidth);
+    return { row, height, hidden };
+  }
+
+  /** Rows whose top border is a line along the row, with the line's width (twips). */
+  private readonly topRules = new WeakMap<XmlElement, number>();
+
+  private noteTopRule(row: XmlElement, section: SectionInfo, tableWidth: number): void {
+    const widths = section.objects
+      .filter((o) => o.kind === 'line' && !this.runOn.has(o) && !(o.size?.height)
+        && (!o.size?.width || o.size.width >= inchesToTwips(tableWidth) * 0.8)
+        && (!section.height || (o.position?.y ?? 0) <= section.height / 2))
+      .map((o) => o.border?.width ?? 20);
+    if (widths.length) this.topRules.set(row, Math.max(...widths));
+  }
+
+
+// A line along the rows reaching past the outer columns (a rule across the page, under a table set in from its
+    // edges): the table reaches out to its ends, with an empty column on either side, so the row's border is as wide.
+    {
+      const tableLeft = columns[0].x;
+      const last = columns[columns.length - 1];
+      const tableRight = last.x + inchesToTwips(last.width);
+      const rowLines = [...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
+        .filter((o) => o.kind === 'line' && !this.runOn.has(o) && !(o.size?.height) && (o.size?.width ?? 0) >= (tableRight - tableLeft) * 0.8);
+      const lineLeft = Math.min(...rowLines.map((o) => o.position?.x ?? 0));
+      const lineRight = Math.max(...rowLines.map((o) => (o.position?.x ?? 0) + (o.size?.width ?? 0)));
+      // Only where nothing else of the table would fall in the new column (it holds the line alone).
+      const others = [...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
+        .filter((o) => o.kind !== 'line');
+      const clearLeft = others.every((o) => (o.position?.x ?? 0) >= tableLeft - 144);
+      const clearRight = others.every((o) => (o.position?.x ?? 0) + (o.size?.width ?? 0) <= tableRight + 144);
+      if (rowLines.length && clearLeft && tableLeft - lineLeft > 144) columns = [{ x: lineLeft, width: twipsToInches(tableLeft - lineLeft) }, ...columns];
+      if (rowLines.length && clearRight && lineRight - tableRight > 144) columns = [...columns, { x: tableRight, width: twipsToInches(lineRight - tableRight) }];
+    }
+
+
+// A cell's border is drawn across its edge: a line along the top of the first row would lose its upper half
+    // above the table. The table starts half the line lower, as Crystal draws the whole line below its top.
+    const firstRule = rows.length ? this.topRules.get(rows[0]) : undefined;
+    const ruleOffset = firstRule ? Math.round(twipsToInches((firstRule + 10) / 2) * 1000) / 1000 : 0;
+    top += ruleOffset;
+
+
+return { tablix, height: height + ruleOffset, width, left };

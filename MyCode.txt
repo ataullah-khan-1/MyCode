@@ -1,50 +1,32 @@
-this.noteTopRule(row, section, tableWidth);
+// A line style formula on a field narrower than its column (a rule under a total): Crystal draws the line under
+        // the field only, so it is a line of its own there rather than the cell's border.
+        const ruleFormulas = obj?.position && obj.size && !fillsCell && !ruled.top && !ruled.bottom
+          ? (['topLine', 'bottomLine'] as const).filter((key) => obj.conditions?.[key]) : [];
+        if (partLines.length || ruleFormulas.length) {
 
+const items: (XmlElement | null)[] = partLines.map((line) => {
 
-return el('TablixCell', el('CellContents', this.textbox(name, value, this.ruledBorderObject(cellObj, ruled), format, 'row', undefined, undefined, ruled, padding)));
-      })));
-    this.noteTopRule(row, section, tableWidth);
-    return { row, height, hidden };
-  }
-
-  /** Rows whose top border is a line along the row, with the line's width (twips). */
-  private readonly topRules = new WeakMap<XmlElement, number>();
-
-  private noteTopRule(row: XmlElement, section: SectionInfo, tableWidth: number): void {
-    const widths = section.objects
-      .filter((o) => o.kind === 'line' && !this.runOn.has(o) && !(o.size?.height)
-        && (!o.size?.width || o.size.width >= inchesToTwips(tableWidth) * 0.8)
-        && (!section.height || (o.position?.y ?? 0) <= section.height / 2))
-      .map((o) => o.border?.width ?? 20);
-    if (widths.length) this.topRules.set(row, Math.max(...widths));
-  }
-
-
-// A line along the rows reaching past the outer columns (a rule across the page, under a table set in from its
-    // edges): the table reaches out to its ends, with an empty column on either side, so the row's border is as wide.
-    {
-      const tableLeft = columns[0].x;
-      const last = columns[columns.length - 1];
-      const tableRight = last.x + inchesToTwips(last.width);
-      const rowLines = [...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
-        .filter((o) => o.kind === 'line' && !this.runOn.has(o) && !(o.size?.height) && (o.size?.width ?? 0) >= (tableRight - tableLeft) * 0.8);
-      const lineLeft = Math.min(...rowLines.map((o) => o.position?.x ?? 0));
-      const lineRight = Math.max(...rowLines.map((o) => (o.position?.x ?? 0) + (o.size?.width ?? 0)));
-      // Only where nothing else of the table would fall in the new column (it holds the line alone).
-      const others = [...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
-        .filter((o) => o.kind !== 'line');
-      const clearLeft = others.every((o) => (o.position?.x ?? 0) >= tableLeft - 144);
-      const clearRight = others.every((o) => (o.position?.x ?? 0) + (o.size?.width ?? 0) <= tableRight + 144);
-      if (rowLines.length && clearLeft && tableLeft - lineLeft > 144) columns = [{ x: lineLeft, width: twipsToInches(tableLeft - lineLeft) }, ...columns];
-      if (rowLines.length && clearRight && lineRight - tableRight > 144) columns = [...columns, { x: tableRight, width: twipsToInches(lineRight - tableRight) }];
-    }
-
-
-// A cell's border is drawn across its edge: a line along the top of the first row would lose its upper half
-    // above the table. The table starts half the line lower, as Crystal draws the whole line below its top.
-    const firstRule = rows.length ? this.topRules.get(rows[0]) : undefined;
-    const ruleOffset = firstRule ? Math.round(twipsToInches((firstRule + 10) / 2) * 1000) / 1000 : 0;
-    top += ruleOffset;
-
-
-return { tablix, height: height + ruleOffset, width, left };
+for (const key of ruleFormulas) {
+            const style = this.conditionExpression(obj!.conditions![key]!, false, `${obj!.kind} object "${obj!.name}"`, 'row');
+            if (!style) continue;
+            // Where the text is: moved with it, unless formulas moving the field place the text from the field's own place.
+            const shift = obj!.conditions?.deltaX || obj!.conditions?.deltaWidth ? 0 : moved;
+            const x = Math.min(Math.max(obj!.position!.x - columnLeft + shift, 0), cellWidth - 60);
+            const right = Math.max(Math.min(x + obj!.size!.width, cellWidth), x + 60);
+            const y = key === 'topLine' ? obj!.position!.y : obj!.position!.y + obj!.size!.height;
+            const sides = obj!.border?.sides ?? [0, 0, 0, 0];
+            const own = BORDER_STYLES[key === 'topLine' ? sides[2] : sides[3]] ?? 'None';
+            items.push(el('Line', { Name: this.itemNames.make(`${name}_${key === 'topLine' ? 'Above' : 'Below'}`) },
+              el('Top', inches(Math.min(twipsToInches(y), height))), el('Left', inches(twipsToInches(x))),
+              el('Height', '0in'), el('Width', inches(twipsToInches(right - x))),
+              el('Style', el('Border',
+                el('Color', obj!.border?.color ?? 'Black'),
+                el('Style', `=IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)})`),
+                el('Width', `${Math.max(0.25, (obj!.border?.width ?? 20) / 20).toFixed(2)}pt`)))));
+          }
+          // The text without the line formulas drawn here.
+          const textObj = ruleFormulas.length && cellObj
+            ? { ...cellObj, conditions: Object.fromEntries(Object.entries(cellObj.conditions ?? {}).filter(([key]) => !(ruleFormulas as readonly string[]).includes(key))) }
+            : cellObj;
+          const text = obj || ruled.top || ruled.bottom || ruled.left || ruled.right || background
+            ? this.textbox(name, value, this.ruledBorderObject(textObj, ruled), format, 'row', { top: 0, left: 0, width: columnWidth, height }, undefined, ruled, padding)

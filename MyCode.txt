@@ -1,25 +1,24 @@
-private textbox(name: string, value: string, obj: ReportObject | undefined, format: string | undefined, scope: Scope, box?: Box, hidden?: string, lines: { top?: boolean; bottom?: boolean; left?: boolean; right?: boolean } = {}, padding?: { left: number; right: number; top?: number; exact?: { left: number; right: number } }): XmlElement {
+// The text is placed as in the column's other rows (so a heading lines up with the values under it); a line
+          // under it moves with it, by as far as the text is from its place in Crystal.
+          const cellWidth = columnEnd - columnLeft;
+          let moved = 0;
+          if (obj?.position && obj.size && padding) {
+            const ownLeft = obj.position.x - columnLeft;
+            const ownRight = ownLeft + obj.size.width;
+            const textLeft = padding.left;
+            const textRight = cellWidth - padding.right;
+            moved = obj.align === 'center' ? (textLeft + textRight - ownLeft - ownRight) / 2
+              : obj.align === 'right' || (!leftAligned && obj.align !== 'left') ? textRight - ownRight
+                : textLeft - ownLeft;
+          }
+          const under = (line: ReportObject) => !!obj?.position && !!obj.size
+            && (line.position?.x ?? 0) < obj.position.x + obj.size.width && (line.position?.x ?? 0) + (line.size?.width ?? 0) > obj.position.x;
+          const items = partLines.map((line) => {
+            const shift = under(line) ? moved : 0;
+            const width = Math.min(line.size?.width ?? 0, cellWidth);
+            const x = Math.min(Math.max((line.position?.x ?? 0) + shift, columnLeft), columnEnd - Math.max(width, 60));
+            const right = Math.max(Math.min(x + width, columnEnd), x + 60);
 
 
-// Formulas moving the object across (X position) and changing its width, in twips from its own place and size
-    // (DefaultAttribute leaves them): the text moves within its box by as much (its left edge with X, its right edge
-    // with X and the width), from where the object is in its cell (not the capped padding), in whole points (a size
-    // written with a decimal comma on some servers would not be one).
-    const deltaX = formulaOf(conditions.deltaX);
-    const deltaWidth = formulaOf(conditions.deltaWidth);
-    const shift = (formula: string | undefined) => (formula ? `IIf(IsNothing(${formula}), 0, CDbl(${formula}))` : '0');
-    const placeLeft = padding?.exact?.left ?? padding?.left ?? 0;
-    const placeRight = padding?.exact?.right ?? padding?.right ?? 0;
-
-
-el('PaddingLeft', deltaX
-          ? `=CStr(CInt(Math.Max(0, ${placeLeft + (framed ? 80 : 0)} + ${shift(deltaX)}) / 20)) & "pt"`
-          : `${((padding?.left ?? 0) / 20 + (framed ? 4 : 0)).toFixed(1)}pt`),
-        el('PaddingRight', deltaX || deltaWidth
-          ? `=CStr(CInt(Math.Max(0, ${placeRight + (framed ? 80 : 0)} - ${shift(deltaX)}${deltaWidth ? ` - ${shift(deltaWidth)}` : ''}) / 20)) & "pt"`
-
-
-// Its whole distance from the column's edges, which formulas moving or widening it start from.
-          exact: { left: Math.max(obj.position.x - columns[i].x, 0), right: leftAligned ? 0 : Math.max(columnRight - (obj.position.x + obj.size.width), 0) },
-
- let textPadding: typeof padding | { left: number; right: number; top: number } = padding;
+const text = obj || ruled.top || ruled.bottom || ruled.left || ruled.right || background
+            ? this.textbox(name, value, this.ruledBorderObject(cellObj, ruled), format, 'row', { top: 0, left: 0, width: columnWidth, height }, undefined, ruled, padding)

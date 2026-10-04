@@ -1,26 +1,25 @@
-const framed = !!obj?.border && obj.border.sides.every((side) => side > 0);
-
-// Crystal keeps a text object's text a little inside its own border.
-el('PaddingLeft', `${((padding?.left ?? 0) / 20 + (framed ? 2 : 0)).toFixed(1)}pt`), el('PaddingRight', `${((padding?.right ?? 0) / 20 + (framed ? 2 : 0)).toFixed(1)}pt`),
-el('PaddingTop', framed ? '1pt' : '0pt'), el('PaddingBottom', '0pt')));
+private textbox(name: string, value: string, obj: ReportObject | undefined, format: string | undefined, scope: Scope, box?: Box, hidden?: string, lines: { top?: boolean; bottom?: boolean; left?: boolean; right?: boolean } = {}, padding?: { left: number; right: number; top?: number; exact?: { left: number; right: number } }): XmlElement {
 
 
-// Crystal stretches a picture to its frame.
-      el('Sizing', obj.size ? 'Fit' : 'FitProportional'),
+// Formulas moving the object across (X position) and changing its width, in twips from its own place and size
+    // (DefaultAttribute leaves them): the text moves within its box by as much (its left edge with X, its right edge
+    // with X and the width), from where the object is in its cell (not the capped padding), in whole points (a size
+    // written with a decimal comma on some servers would not be one).
+    const deltaX = formulaOf(conditions.deltaX);
+    const deltaWidth = formulaOf(conditions.deltaWidth);
+    const shift = (formula: string | undefined) => (formula ? `IIf(IsNothing(${formula}), 0, CDbl(${formula}))` : '0');
+    const placeLeft = padding?.exact?.left ?? padding?.left ?? 0;
+    const placeRight = padding?.exact?.right ?? padding?.right ?? 0;
 
-private tableRow(columns: Column[], section: SectionInfo, rowName: string, area: string, minHeight = MIN_ROW_HEIGHT, outerOnly = false, splitDone = false): { row: XmlElement; height: number; hidden?: string; more?: { row: XmlElement; height: number }[] } {
-    // Split once, at the first rule (the one under the heading's title); a rule lower down closes the headings.
-    const split = splitDone ? null : this.splitAtRule(columns, section);
-    if (split) {
-      // A line across the middle of the section (a rule under a heading): two rows, the upper ending at the line
-      // (its bottom border), the lower starting there; the lines running down from it are the lower row's cell
-      // borders, drawn as in the rows below it.
-      const upper = this.tableRow(columns, split.upper, rowName, area, minHeight, true, true);
-      const lower = this.tableRow(columns, split.lower, `${rowName}_Lower`, area, minHeight, false, true);
-      return { row: upper.row, height: upper.height + lower.height, hidden: upper.hidden, more: [{ row: lower.row, height: lower.height }] };
-    }
 
-if (!obj.size || obj.size.height < lineHeight * 1.8) return text.replace(/\u00a0/g, ' ');
-  const centred = obj.align === 'center';
-  // Runs of spaces, non-breaking ones included (SSRS keeps those together on one line).
-  const lines = text.replace(/\u00a0/g, ' ').split(/\r?\n/).map((line) => line.replace(/ {3,}/g, '\n')).join('\n').split('\n')
+el('PaddingLeft', deltaX
+          ? `=CStr(CInt(Math.Max(0, ${placeLeft + (framed ? 80 : 0)} + ${shift(deltaX)}) / 20)) & "pt"`
+          : `${((padding?.left ?? 0) / 20 + (framed ? 4 : 0)).toFixed(1)}pt`),
+        el('PaddingRight', deltaX || deltaWidth
+          ? `=CStr(CInt(Math.Max(0, ${placeRight + (framed ? 80 : 0)} - ${shift(deltaX)}${deltaWidth ? ` - ${shift(deltaWidth)}` : ''}) / 20)) & "pt"`
+
+
+// Its whole distance from the column's edges, which formulas moving or widening it start from.
+          exact: { left: Math.max(obj.position.x - columns[i].x, 0), right: leftAligned ? 0 : Math.max(columnRight - (obj.position.x + obj.size.width), 0) },
+
+ let textPadding: typeof padding | { left: number; right: number; top: number } = padding;

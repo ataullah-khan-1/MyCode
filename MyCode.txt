@@ -1,11 +1,17 @@
-// is drawn in short pieces across the cell, each drawn where it falls within the line the formulas give. The
-            // pieces outside it are drawn with no line rather than hidden: SSRS moves what is beside a hidden item in a
-            // rectangle across into its place, so the pieces left would slide to the start of the cell.
-
-const pieces: { x: number; right: number; within?: string }[] = [];
-
-pieces.push({ x, right, within: `(${start} <= ${middle} AndAlso ${middle} <= ${end})` });
-
-el('Style', piece.within
-                    ? `=IIf(${piece.within}, IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)}), "None")`
-                    : `=IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)})`),
+// The cut comes off the last column, and off the ones before it where the last is too narrow to take it all
+        // (a table reaching out to a rule across the page ends in a narrow empty column): a table left wider than the
+        // page would print its overflow on a page of its own after every page.
+        const columns = e.children.filter((c): c is XmlElement => typeof c === 'object' && c !== null);
+        const widths = new Map(columns.map((c) => [c, itemNumber(c, 'Width')]));
+        let left = cut;
+        for (let i = columns.length - 1; i >= 0 && left > 0.0005; i--) {
+          const width = widths.get(columns[i])!;
+          const take = Math.min(left, Math.max(width - 0.05, 0));
+          widths.set(columns[i], width - take);
+          left -= take;
+        }
+        return { ...e, children: e.children.map((c) => {
+          if (typeof c !== 'object' || c === null || !widths.has(c as XmlElement)) return c;
+          const column = c as XmlElement;
+          return { ...column, children: column.children.map((x) => (typeof x === 'object' && x !== null && (x as XmlElement).name === 'Width' ? el('Width', inches(widths.get(column)!)) : x)) };
+        }) };

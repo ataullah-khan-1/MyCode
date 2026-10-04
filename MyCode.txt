@@ -1,22 +1,11 @@
-/** Whether every bracket in a text closes in order. */
-function balanced(text: string): boolean {
-  let depth = 0;
-  for (const c of text) {
-    if (c === '(') depth++;
-    else if (c === ')' && --depth < 0) return false;
-  }
-  return depth === 0;
-}
+const lefts = new Map(order.map((key) => [key, Math.min(...sections.flatMap((s) => s.objects).filter((o) => moving(o) && text(o.conditions!.deltaX) === key).map((o) => o.position!.x))]));
 
-// The same formula written a little differently (spacing, brackets, case, a table name before the field) is the
-  // same column.
-  const text = (ref: { index: number } | undefined) => {
-    if (!ref) return '';
-    let t = (definition.formulaTexts?.[ref.index] ?? definition.formulas.find((f) => f.index === ref.index)?.text ?? '')
-      .toLowerCase().replace(/\{[^}.]*\.([^}]*)\}/g, '{$1}').replace(/\s+/g, '');
-    while (/^\(.*\)$/.test(t) && balanced(t.slice(1, -1))) t = t.slice(1, -1);
-    // Above all, the fields it reads its place from.
-    const read = [...new Set([...t.matchAll(/\{([^}]*)\}/g)].map((m) => m[1]))].sort();
-    return read.length ? read.join('|') : t;
-  };
-
+if (!moving(o)) return o;
+        const key = text(o.conditions!.deltaX);
+        const place = xs.get(key)!;
+        const { deltaX: _x, deltaWidth: _w, ...conditions } = o.conditions!;
+        // Each keeps its own width and its place in the column (a heading narrower than its values wraps as in Crystal,
+        // totals each keep their own rule with a gap between them).
+        const offset = Math.max(o.position!.x - (lefts.get(key) ?? o.position!.x), 0);
+        const width = Math.min(o.size!.width, place.width);
+        return { ...o, position: { ...o.position!, x: place.x + Math.min(offset, place.width - width) }, size: { ...o.size!, width }, conditions };

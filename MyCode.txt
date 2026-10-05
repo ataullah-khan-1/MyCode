@@ -1,36 +1,26 @@
-const objects = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects);
-
-const rowLines = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
-
-const others = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
-
- // Where page headings laid out in the table would fall in the new column, the outer column reaches out to the
-      // line instead.
-      const widen = !!areas.headingSections;
-      if (rowLines.length && tableLeft - lineLeft > 144 && (clearLeft || widen)) {
-        columns = clearLeft
-          ? [{ x: lineLeft, width: twipsToInches(tableLeft - lineLeft) }, ...columns]
-          : [{ x: lineLeft, width: columns[0].width + twipsToInches(tableLeft - lineLeft) }, ...columns.slice(1)];
+const messages = messageRows.get(section);
+    if (messages && !section.objects.some((o) => o.kind === 'text' && !o.suppressed && (o.text ?? '').trim())) {
+      // The row a message was laid over, showing nothing else where the message shows: the message's row stands
+      // in for it (Crystal prints the message on its line), so it is not left as a blank line above.
+      const blank = (o: ReportObject) => {
+        const { value } = this.objectValue(o, 'row');
+        return value.startsWith('=') ? `Len(Trim(CStr(${value.slice(1)}))) = 0` : undefined;
+      };
+      const shows = messages.map(blank);
+      const empty = section.objects.filter((o) => o.kind === 'field' && !o.suppressed).map(blank);
+      if (shows.every(Boolean) && empty.every(Boolean)) {
+        const own = [`Not (${shows.join(' AndAlso ')})`, ...empty].join(' AndAlso ');
+        hidden = hidden ? `=(${hidden.slice(1)}) OrElse (${own})` : `=${own}`;
       }
-      if (rowLines.length && lineRight - tableRight > 144 && (clearRight || widen)) {
-        const last = columns[columns.length - 1];
-        columns = clearRight
-          ? [...columns, { x: tableRight, width: twipsToInches(lineRight - tableRight) }]
-          : [...columns.slice(0, -1), { ...last, width: last.width + twipsToInches(lineRight - tableRight) }];
-      }
+    }
 
-// A rule along the top of a heading section is the bottom border of a thin row of its own (a table's top border
-      // is drawn half outside it, so thinner than the other rules).
-      areas.headingSections = sections.slice(pageOneAt + 1).flatMap((section) => {
-        const rule = section.objects.find((o) => o.kind === 'line' && !(o.size?.height) && (o.position?.y ?? 0) <= 60 && (o.size?.width ?? 0) > 0);
-        if (!rule) return [{ section, repeat: true }];
-        const cut = Math.max((rule.position?.y ?? 0) + Math.ceil((rule.border?.width ?? 20) / 2), 44);
-        const ruleRow: SectionInfo = { name: `${section.name}_Rule`, height: cut, objects: [{ ...rule, position: { x: rule.position?.x ?? 0, y: cut } }] };
-        const rest: SectionInfo = {
-          ...section,
-          height: Math.max((section.height ?? cut) - cut, 44),
-          objects: section.objects.filter((o) => o !== rule).map((o) => ({ ...o, position: { x: o.position?.x ?? 0, y: Math.max((o.position?.y ?? 0) - cut, 0) } })),
-        };
-        return [{ section: ruleRow, repeat: true }, { section: rest, repeat: true }];
-      });
 
+const rest: SectionInfo = { ...section, objects: section.objects.filter((o) => !spanning.includes(o)) };
+  const messages = spanning.filter((o) => !o.conditions?.suppress);
+  if (messages.length) messageRows.set(rest, messages);
+  return [
+    rest,
+
+
+/** The row a message was laid over, and the message: Crystal prints the message on that row's line. */
+const messageRows = new WeakMap<SectionInfo, ReportObject[]>();

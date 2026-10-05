@@ -1,11 +1,28 @@
-const lefts = new Map(order.map((key) => [key, Math.min(...sections.flatMap((s) => s.objects).filter((o) => moving(o) && text(o.conditions!.deltaX) === key).map((o) => o.position!.x))]));
+/** The section's New Page After box is ticked. */
+  newPageAfter?: boolean;
+  /** The section format record's flag bytes, as hex (byte 6 is the Suppress box, byte 10 New Page Before, byte 12 New Page After). */
 
-if (!moving(o)) return o;
-        const key = text(o.conditions!.deltaX);
-        const place = xs.get(key)!;
-        const { deltaX: _x, deltaWidth: _w, ...conditions } = o.conditions!;
-        // Each keeps its own width and its place in the column (a heading narrower than its values wraps as in Crystal,
-        // totals each keep their own rule with a gap between them).
-        const offset = Math.max(o.position!.x - (lefts.get(key) ?? o.position!.x), 0);
-        const width = Math.min(o.size!.width, place.width);
-        return { ...o, position: { ...o.position!, x: place.x + Math.min(offset, place.width - width) }, size: { ...o.size!, width }, conditions };
+
+// Byte 12 is 1 when New Page After is ticked.
+      if (section && flags && flags.length > 12 && flags[12] === 1) section.newPageAfter = true;
+
+
+// New Page After likewise ends the page after the section's items.
+    const afterFormula = section.conditions?.newPageAfter
+      ? this.conditionExpression(section.conditions.newPageAfter, false, `Section ${section.name}`, 'body')
+      : undefined;
+    const before = !!(section.newPageBefore || breakFormula);
+    const after = !!(section.newPageAfter || afterFormula);
+    if (scope === 'body' && (before || after) && items.length) {
+      const sectionHeight = Math.max(section.height !== undefined ? twipsToInches(section.height) : 0, bottom);
+      // One break element: where both are formulas, each side is decided by its own (a break that is off is disabled).
+      const both = before && after;
+      const switchedOff = both
+        ? (breakFormula && afterFormula ? `=Not (${breakFormula.slice(1)}) AndAlso Not (${afterFormula.slice(1)})` : undefined)
+        : before ? (breakFormula ? `=Not (${breakFormula.slice(1)})` : undefined) : (afterFormula ? `=Not (${afterFormula.slice(1)})` : undefined);
+      const wrapper = el('Rectangle', { Name: this.itemNames.make(`${section.name || 'Section'}_Page`) },
+        el('ReportItems', ...items.map((item) => moveItem(item, -top, 0))),
+        el('PageBreak', el('BreakLocation', both ? 'StartAndEnd' : before ? 'Start' : 'End'), switchedOff ? el('Disabled', switchedOff) : null),
+
+
+const after = [...(sections ?? []), ...(footer ?? [])].some((s) => s.conditions?.newPageAfter || s.newPageAfter);

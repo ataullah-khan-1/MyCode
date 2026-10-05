@@ -1,28 +1,27 @@
-/** The section's New Page After box is ticked. */
-  newPageAfter?: boolean;
-  /** The section format record's flag bytes, as hex (byte 6 is the Suppress box, byte 10 New Page Before, byte 12 New Page After). */
+/** Fields of the groups kept together on a page (Keep Group Together), by their option byte. */
+  groupsKeptTogether?: string[];
+
+/** The group options byte: the one after the last ff ff 00 00 00 01 00 00 ff ff in a group record. */
+export function groupOptionByte(bytes: Uint8Array, from: number): number | undefined {
+  const marker = [0xff, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0xff, 0xff];
+  let found: number | undefined;
+  for (let i = from; i + marker.length < bytes.length; i++) {
+    if (marker.every((b, k) => bytes[i + k] === b) && bytes[i + marker.length] !== 0xff) found = i + marker.length;
+  }
+  return found === undefined ? undefined : bytes[found];
+}
+
+ // Near the record's end, after the marker ffff 00000001 0000 ffff, a byte of group options: 0 normally; 2 on a
+    // group Crystal moves whole to the next page when it does not fit (Keep Group Together).
+    const options = groupOptionByte(bytes, field.length);
+    if (options !== undefined && (options & 2)) (report.groupsKeptTogether ??= []).push(field.text);
 
 
-// Byte 12 is 1 when New Page After is ticked.
-      if (section && flags && flags.length > 12 && flags[12] === 1) section.newPageAfter = true;
+for (const field of this.definition.groupsKeptTogether ?? []) {
+      this.note(`Group on ${field}`, 'is kept together on a page (Crystal Keep Group Together, read from the group record); check where its pages break');
+    }
 
+el('TablixMembers', ...headerMembers[level - 1], member, ...footerMembers[level - 1]),
+        // Keep Group Together: a group that does not fit in what is left of the page starts on the next.
+        this.definition.groupsKeptTogether?.some((g) => g.toLowerCase() === field.toLowerCase()) ? el('KeepTogether', 'true') : null);
 
-// New Page After likewise ends the page after the section's items.
-    const afterFormula = section.conditions?.newPageAfter
-      ? this.conditionExpression(section.conditions.newPageAfter, false, `Section ${section.name}`, 'body')
-      : undefined;
-    const before = !!(section.newPageBefore || breakFormula);
-    const after = !!(section.newPageAfter || afterFormula);
-    if (scope === 'body' && (before || after) && items.length) {
-      const sectionHeight = Math.max(section.height !== undefined ? twipsToInches(section.height) : 0, bottom);
-      // One break element: where both are formulas, each side is decided by its own (a break that is off is disabled).
-      const both = before && after;
-      const switchedOff = both
-        ? (breakFormula && afterFormula ? `=Not (${breakFormula.slice(1)}) AndAlso Not (${afterFormula.slice(1)})` : undefined)
-        : before ? (breakFormula ? `=Not (${breakFormula.slice(1)})` : undefined) : (afterFormula ? `=Not (${afterFormula.slice(1)})` : undefined);
-      const wrapper = el('Rectangle', { Name: this.itemNames.make(`${section.name || 'Section'}_Page`) },
-        el('ReportItems', ...items.map((item) => moveItem(item, -top, 0))),
-        el('PageBreak', el('BreakLocation', both ? 'StartAndEnd' : before ? 'Start' : 'End'), switchedOff ? el('Disabled', switchedOff) : null),
-
-
-const after = [...(sections ?? []), ...(footer ?? [])].some((s) => s.conditions?.newPageAfter || s.newPageAfter);

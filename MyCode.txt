@@ -1,10 +1,5 @@
-// Text in a group's header or footer set further left than the first column (a group name standing out to the left
-    // of the rows under it): the table starts there, with a column of its own, so the text keeps its place.
-    {
-      const outdented = [...areas.groupHeaders.values(), ...areas.groupFooters.values()].flat()
-        .filter((s) => !s.suppressed).flatMap((s) => s.objects)
-        .filter((o) => (o.kind === 'field' || o.kind === 'text') && !o.suppressed && o.position)
-        .map((o) => o.position!.x);
-      const left = Math.min(...outdented);
-      if (outdented.length && columns[0].x - left > 144) columns = [{ x: left, width: twipsToInches(columns[0].x - left) }, ...columns];
-    }
+ // Below the first rule, any further rule across the middle splits the rest again (a rule between a block of figures
+    // and the column headings under it).
+    const atRule = splitDone === true ? null : this.splitAtRule(columns, section);
+
+const upper = this.tableRow(columns, split.upper, rowName, area, minHeight, !!atRule && !splitDone, true);

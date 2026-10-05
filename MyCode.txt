@@ -1,8 +1,10 @@
-this.note(`Group on ${field}`, 'is kept together on a page (Crystal Keep Group Together, read from the group record): each of its values starts on a new page, as SSRS does not reliably move a group that does not fit; check where its pages break');
-
-// A group kept together (Keep Group Together) starts each of its values on a new page: SSRS honours a group's
-    // KeepTogether only now and then (not where outer groups repeat their headers on each page).
-    const pageBreak = (sections: SectionInfo[] | undefined, footer?: SectionInfo[], keptTogether = false) => {
-      const before = keptTogether || (sections ?? []).some((s) => s.conditions?.newPageBefore || s.newPageBefore);
-
-pageBreak(areas.groupHeaders.get(level), areas.groupFooters.get(level), this.definition.groupsKeptTogether?.some((g) => g.toLowerCase() === field.toLowerCase())),
+// Text in a group's header or footer set further left than the first column (a group name standing out to the left
+    // of the rows under it): the table starts there, with a column of its own, so the text keeps its place.
+    {
+      const outdented = [...areas.groupHeaders.values(), ...areas.groupFooters.values()].flat()
+        .filter((s) => !s.suppressed).flatMap((s) => s.objects)
+        .filter((o) => (o.kind === 'field' || o.kind === 'text') && !o.suppressed && o.position)
+        .map((o) => o.position!.x);
+      const left = Math.min(...outdented);
+      if (outdented.length && columns[0].x - left > 144) columns = [{ x: left, width: twipsToInches(columns[0].x - left) }, ...columns];
+    }

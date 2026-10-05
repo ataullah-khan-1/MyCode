@@ -1,26 +1,33 @@
-const messages = messageRows.get(section);
-    if (messages && !section.objects.some((o) => o.kind === 'text' && !o.suppressed && (o.text ?? '').trim())) {
-      // The row a message was laid over, showing nothing else where the message shows: the message's row stands
-      // in for it (Crystal prints the message on its line), so it is not left as a blank line above.
-      const blank = (o: ReportObject) => {
-        const { value } = this.objectValue(o, 'row');
-        return value.startsWith('=') ? `Len(Trim(CStr(${value.slice(1)}))) = 0` : undefined;
-      };
-      const shows = messages.map(blank);
-      const empty = section.objects.filter((o) => o.kind === 'field' && !o.suppressed).map(blank);
-      if (shows.every(Boolean) && empty.every(Boolean)) {
-        const own = [`Not (${shows.join(' AndAlso ')})`, ...empty].join(' AndAlso ');
-        hidden = hidden ? `=(${hidden.slice(1)}) OrElse (${own})` : `=${own}`;
+else if (name !== '') this.note(`aggregates over a group that could not be matched (${ref ?? 'expression'}); check the scope`);
+
+ // The outer group on a constant holds every record: no group of its own, its scope is the whole table.
+    if (level === 0 && this.isConstantGroup(this.groupFields[0])) return '';
+
+/** Building table rows outside every group (a constant outer group's header and footer). */
+  private ungroupedRows = false;
+
+// Outside the table, fields need a dataset scope; table rows outside every group read the first record.
+    const outside = scope !== 'row';
+    if (!outside && !this.ungroupedRows) return t.expression;
+    const scoped = outside ? scopeOutsideRegion(t.expression.slice(1), this.dataset) : t.expression.slice(1);
+
+return `=(${outside ? scopeOutsideRegion(present.expression.slice(1), this.dataset) : present.expression.slice(1)}) AndAlso (${scoped})`;
+
+this.ungroupedRows = level === 1 && this.isConstantGroup(this.groupFields[0]);
+
+this.ungroupedRows = false;
+
+this.ungroupedRows = level === 1 && this.isConstantGroup(this.groupFields[0]);
+
+this.ungroupedRows = false;
+
+let outer: XmlElement[] | undefined;
+
+if (level === 1 && this.isConstantGroup(field) && !filters.length) {
+        // A group on a constant holds every record: its header and footer are the table's own rows, printed (as in
+        // Crystal) even when there is no data, where a group's rows are not.
+        outer = [...headerMembers[0], member, ...footerMembers[0]];
+        continue;
       }
-    }
 
-
-const rest: SectionInfo = { ...section, objects: section.objects.filter((o) => !spanning.includes(o)) };
-  const messages = spanning.filter((o) => !o.conditions?.suppress);
-  if (messages.length) messageRows.set(rest, messages);
-  return [
-    rest,
-
-
-/** The row a message was laid over, and the message: Crystal prints the message on that row's line. */
-const messageRows = new WeakMap<SectionInfo, ReportObject[]>();
+el('TablixRowHierarchy', el('TablixMembers', ...headingMembers, ...(outer ?? [member]))),

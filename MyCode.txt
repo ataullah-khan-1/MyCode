@@ -1,9 +1,36 @@
-// all else printed on every page: the sections before it stay the page header; it starts the body (printed once,
-    // above the table) and those after it become the table's heading rows, whole (rules too), repeated on every page.
-    // (SSRS wants a table's heading rows all repeated or none: the block cannot be one of them.)
-    const pageOneAt = this.pageOneSection(areas.pageHeader);
-    if (pageOneAt >= 0 && areas.detail.some((s) => s.objects.length)) {
-      const sections = areas.pageHeader;
-      const { suppress: _, ...conditions } = sections[pageOneAt].conditions ?? {};
-      areas.reportHeader = [{ ...sections[pageOneAt], conditions }, ...areas.reportHeader];
-      areas.headingSections = sections.slice(pageOneAt + 1).map((section) => ({ section, repeat: true }));
+const objects = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects);
+
+const rowLines = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
+
+const others = [...(areas.headingSections ?? []).map((h) => h.section), ...areas.groupHeaders.values(), ...areas.groupFooters.values(), areas.detail].flat().flatMap((s) => s.objects)
+
+ // Where page headings laid out in the table would fall in the new column, the outer column reaches out to the
+      // line instead.
+      const widen = !!areas.headingSections;
+      if (rowLines.length && tableLeft - lineLeft > 144 && (clearLeft || widen)) {
+        columns = clearLeft
+          ? [{ x: lineLeft, width: twipsToInches(tableLeft - lineLeft) }, ...columns]
+          : [{ x: lineLeft, width: columns[0].width + twipsToInches(tableLeft - lineLeft) }, ...columns.slice(1)];
+      }
+      if (rowLines.length && lineRight - tableRight > 144 && (clearRight || widen)) {
+        const last = columns[columns.length - 1];
+        columns = clearRight
+          ? [...columns, { x: tableRight, width: twipsToInches(lineRight - tableRight) }]
+          : [...columns.slice(0, -1), { ...last, width: last.width + twipsToInches(lineRight - tableRight) }];
+      }
+
+// A rule along the top of a heading section is the bottom border of a thin row of its own (a table's top border
+      // is drawn half outside it, so thinner than the other rules).
+      areas.headingSections = sections.slice(pageOneAt + 1).flatMap((section) => {
+        const rule = section.objects.find((o) => o.kind === 'line' && !(o.size?.height) && (o.position?.y ?? 0) <= 60 && (o.size?.width ?? 0) > 0);
+        if (!rule) return [{ section, repeat: true }];
+        const cut = Math.max((rule.position?.y ?? 0) + Math.ceil((rule.border?.width ?? 20) / 2), 44);
+        const ruleRow: SectionInfo = { name: `${section.name}_Rule`, height: cut, objects: [{ ...rule, position: { x: rule.position?.x ?? 0, y: cut } }] };
+        const rest: SectionInfo = {
+          ...section,
+          height: Math.max((section.height ?? cut) - cut, 44),
+          objects: section.objects.filter((o) => o !== rule).map((o) => ({ ...o, position: { x: o.position?.x ?? 0, y: Math.max((o.position?.y ?? 0) - cut, 0) } })),
+        };
+        return [{ section: ruleRow, repeat: true }, { section: rest, repeat: true }];
+      });
+

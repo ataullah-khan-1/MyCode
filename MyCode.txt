@@ -1,2 +1,19 @@
-// So is a field's own line in a row printed with or without records (no value when there are none).
-    const total = obj?.kind === 'field' && (/^=\s*(Sum|Count|CountDistinct|Avg|Min|Max)\(/i.test(value) || (this.ungroupedRows && value.startsWith('='))) ? value.slice(1) : undefined;
+// Unless the column's values end where it does (or are all set to the left): it stays where it is.
+              const ends = this.detailValueEnds(columns, p.first);
+              if (objectRight <= columnRight && columnRight - objectRight > 288 && ends.length && !ends.some((end) => Math.abs(end - objectRight) <= 60)) {
+
+
+// Text set to the right keeps its place (as far as SSRS's 1in of padding goes), unless the column's values
+          // are moved across by a formula: then it ends at most 288 twips short of the column's edge, as they do.
+          right: leftAligned ? 0 : Math.min(Math.max(columnRight - (obj.position.x + obj.size.width), 0), this.detailValueEnds(columns, i).length ? 288 : 1440),
+
+
+ /** Right edges (twips) of the detail values in a column moved across by a formula (not drawn where Crystal has them). */
+  private detailValueEnds(columns: Column[], index: number): number[] {
+    return this.definition.layout.filter((a) => /^Detail/i.test(a.name)).flatMap((a) => a.sections).flatMap((s) => s.objects)
+      .filter((o) => o.kind === 'field' && o.position && o.size && !o.suppressed && !!o.conditions?.deltaX
+        && this.columnIndex(columns, o.position.x) === index)
+      .map((o) => o.position!.x + o.size!.width);
+  }
+
+

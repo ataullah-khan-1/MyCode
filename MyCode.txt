@@ -1,6 +1,25 @@
-const formulaOff = both
 
-// A hidden section breaks no page (SSRS may still apply a hidden item's break).
-      const switchedOff = hidden && hidden !== '=True'
-        ? `=(${hidden.slice(1)})${formulaOff ? ` OrElse (${formulaOff.slice(1)})` : ''}`
-        : formulaOff;
+import { readFileSync } from 'node:fs';
+const xml = readFileSync(process.argv[2], 'utf8');
+const tag = (s, name) => { const m = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(s); return m ? m[1].replace(/\s+/g, ' ').trim() : ''; };
+const page = tag(xml, 'Page');
+console.log('page', tag(page, 'PageWidth'), 'x', tag(page, 'PageHeight'), '| margins T', tag(page, 'TopMargin'), 'B', tag(page, 'BottomMargin'));
+const ph = /<PageHeader>([\s\S]*?)<\/PageHeader>/.exec(xml); const pf = /<PageFooter>([\s\S]*?)<\/PageFooter>/.exec(xml);
+console.log('page header height', ph ? tag(ph[1], 'Height') : '-', '| page footer height', pf ? (/<Height>([^<]*)<\/Height>/.exec(pf[1]) || [])[1] : '-');
+const body = /<Body>([\s\S]*)<\/Body>/.exec(xml)[1];
+const items = /^\s*<ReportItems>([\s\S]*)<\/ReportItems>/.exec(body)[1];
+console.log('body height', /<\/ReportItems>\s*<Height>([^<]*)<\/Height>\s*[^]*$/.exec(body)?.[1], '| ConsumeContainerWhitespace', tag(xml, 'ConsumeContainerWhitespace') || 'not set');
+// Top-level items: walk the XML keeping depth.
+const re = /<(\/?)(Rectangle|Tablix|Textbox|Line|Image|Subreport|Chart)\b([^>]*)>/g;
+let depth = 0, m, start = -1, name = '', kind = '';
+while ((m = re.exec(items))) {
+  if (!m[1]) { if (depth === 0) { start = m.index; kind = m[2]; name = (/Name="([^"]*)"/.exec(m[3]) || [])[1]; } if (!m[3].endsWith('/')) depth++; }
+  else { depth--; if (depth === 0) {
+    const el = items.slice(start, re.lastIndex);
+    // The item's own Top/Height/Visibility/PageBreak: the last ones at its end (after its children).
+    const tail = el.slice(el.lastIndexOf('</ReportItems>') + 1 || 0);
+    const own = (n) => { const all = [...tail.matchAll(new RegExp(`<${n}>([\\s\\S]*?)</${n}>`, 'g'))]; return all.length ? all[all.length - 1][1].replace(/\s+/g, ' ').trim() : ''; };
+    const hidden = own('Hidden'); const brk = /<PageBreak>[\s\S]*?<\/PageBreak>/.test(tail) ? `break ${own('BreakLocation')}${/<Disabled>/.test(tail) ? ' (switchable)' : ''}` : '';
+    console.log(`${kind} ${name} top=${own('Top')} height=${own('Height')} width=${own('Width')}${hidden ? ` hidden=${hidden.slice(0, 90).replace(/Fields!\w+/g, 'Fields!x')}` : ''} ${brk}`);
+  } }
+}

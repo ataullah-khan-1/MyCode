@@ -1,26 +1,6 @@
-private placeSection(section: SectionInfo, top: number, scope: Scope, area: string, pageLike = false, afterOff?: string): { items: XmlElement[]; height: number } {
-
-
-// The break after it is off, too, where nothing prints after it (afterOff).
-      const afterIsOff = afterFormula && afterOff ? `(Not (${afterFormula.slice(1)}) OrElse (${afterOff}))` : afterFormula ? `Not (${afterFormula.slice(1)})` : afterOff ? `(${afterOff})` : undefined;
-      const switchedOff = both
-        ? (breakFormula && afterIsOff ? `=Not (${breakFormula.slice(1)}) AndAlso ${afterIsOff}` : undefined)
-        : before ? (breakFormula ? `=Not (${breakFormula.slice(1)})` : undefined) : (afterIsOff ? `=${afterIsOff}` : undefined);
-
-
-for (const [i, original] of areas.reportFooter.entries()) {
-      // Crystal prints no page after the report's last section: New Page After there breaks no page. Followed only
-      // by sections a formula can hide, it breaks none where they are all hidden.
-      let section = original;
-      let afterOff: string | undefined;
-      if (section.newPageAfter || section.conditions?.newPageAfter) {
-        const following = areas.reportFooter.slice(i + 1).filter((s) => !s.suppressed && (s.objects.length || s.height));
-        if (!following.length) {
-          const { newPageAfter: _formula, ...conditions } = section.conditions ?? {};
-          section = { ...section, newPageAfter: false, conditions };
-        } else if (following.every((s) => s.conditions?.suppress)) {
-          const hidden = following.map((s) => this.conditionExpression(s.conditions!.suppress!, false, `Section ${s.name}`, 'body'));
-          if (hidden.every(Boolean)) afterOff = hidden.map((h) => `(${h!.slice(1)})`).join(' AndAlso ');
-        }
-      }
-      const placed = this.placeSection(section, top, 'body', 'Report Footer', false, afterOff);
+// With no records Crystal gives a formula reading a database field no result: the condition does not hold, so
+    // what it suppresses still prints. A field that is merely empty on a record counts as 0 (or ""), as SSRS has it.
+    // Unless the formula tests IsNull itself.
+    const fields = [...new Set([...text.matchAll(/\{([^}@?#][^}]*\.[^}]*)\}/g)].map((m) => m[1]))];
+    if (boolean && fields.length && !/\bisnull\b/i.test(text)) {
+      return `=(CountRows(${vbString(this.dataset)}) > 0) AndAlso (${scoped})`;

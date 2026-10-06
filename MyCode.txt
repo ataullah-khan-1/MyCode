@@ -1,21 +1,6 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-const [input, output] = process.argv.slice(2);
-let xml = readFileSync(input, 'utf8');
-let removed = 0;
-// Each table: count its spacer cells per row (they come first in every row), then drop that many columns and members.
-xml = xml.replace(/<Tablix\b[\s\S]*?<\/Tablix>/g, (t) => {
-  const firstRow = /<TablixRow>[\s\S]*?<\/TablixRow>/.exec(t);
-  if (!firstRow) return t;
-  const n = (firstRow[0].match(/<Textbox Name="Spacer[^"]*">/g) || []).length;
-  if (!n) return t;
-  removed += n;
-  t = t.replace(/<TablixCell>\s*<CellContents>\s*<Textbox Name="Spacer[^"]*">[\s\S]*?<\/Textbox>\s*<\/CellContents>\s*<\/TablixCell>\s*/g, '');
-  t = t.replace(/<TablixColumns>\s*/, (m) => m + '\u0000');
-  for (let i = 0; i < n; i++) t = t.replace(/\u0000<TablixColumn>[\s\S]*?<\/TablixColumn>\s*/, '\u0000');
-  t = t.replace('\u0000', '');
-  t = t.replace(/<TablixColumnHierarchy>\s*<TablixMembers>\s*/, (m) => m + '\u0000');
-  for (let i = 0; i < n; i++) t = t.replace(/\u0000<TablixMember>[\s\S]*?<\/TablixMember>\s*/, '\u0000');
-  return t.replace('\u0000', '');
-});
-writeFileSync(output, xml);
-console.log(`removed ${removed} blank columns`);
+const formulaOff = both
+
+// A hidden section breaks no page (SSRS may still apply a hidden item's break).
+      const switchedOff = hidden && hidden !== '=True'
+        ? `=(${hidden.slice(1)})${formulaOff ? ` OrElse (${formulaOff.slice(1)})` : ''}`
+        : formulaOff;

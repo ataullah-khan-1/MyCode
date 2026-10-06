@@ -1,17 +1,11 @@
-import { allGroupRecords, groupRecords, textRecords, type FormulaRef, type NumberFormatInfo, type ReportDefinition, type ReportObject, type SectionInfo } from './model.ts';
+// A subreport's rectangle keeps its Crystal height and grows with its table: the space SSRS would keep below
+      // it as well (and a blank page at the end) is given up, as Crystal prints the next section straight after.
+      el('ConsumeContainerWhitespace', 'true'),
 
-// Its number formats (the first and second stored): negative style, symbol shown, decimals.
-    if (o.format?.currency || o.format?.number) {
-      const n = (f: NumberFormatInfo | undefined) => (f ? `neg${f.negative}/sym${f.symbolType}${f.symbolPosition}/dec${f.decimals}` : '-');
-      parts.push(`fmt=${o.format.systemDefault ? 'default' : 'custom'}:${n(o.format.currency)},${n(o.format.number)}`);
+case 'currency': {
+      // Crystal shows currency values with the second number format it stores, as other numbers (the first holds
+      // its currency style, a symbol and brackets), whether or not the field keeps the default format.
+      const f = format.number ?? format.currency;
+      return f && numberFormatString(f);
     }
-
-// So it does under a rule a line style formula draws along its top.
-    const ruleAbove = !framed && ((!!box && !!obj?.border && obj.border.sides[2] > 0) || !!conditions.topLine);
-
- // Crystal keeps the text a little below a rule drawn along the field's top (2pt).
-          const textPadding = ruleFormulas.includes('topLine') && padding ? { ...padding, top: (padding.top ?? 0) + 40 } : padding;
-          const text = obj || ruled.top || ruled.bottom || ruled.left || ruled.right || background
-            ? this.textbox(name, value, this.ruledBorderObject(textObj, ruled), format, 'row', { top: 0, left: 0, width: columnWidth, height }, undefined, ruled, textPadding)
-
 

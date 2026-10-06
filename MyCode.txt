@@ -1,11 +1,26 @@
-// A subreport's rectangle keeps its Crystal height and grows with its table: the space SSRS would keep below
-      // it as well (and a blank page at the end) is given up, as Crystal prints the next section straight after.
-      el('ConsumeContainerWhitespace', 'true'),
+private placeSection(section: SectionInfo, top: number, scope: Scope, area: string, pageLike = false, afterOff?: string): { items: XmlElement[]; height: number } {
 
-case 'currency': {
-      // Crystal shows currency values with the second number format it stores, as other numbers (the first holds
-      // its currency style, a symbol and brackets), whether or not the field keeps the default format.
-      const f = format.number ?? format.currency;
-      return f && numberFormatString(f);
-    }
 
+// The break after it is off, too, where nothing prints after it (afterOff).
+      const afterIsOff = afterFormula && afterOff ? `(Not (${afterFormula.slice(1)}) OrElse (${afterOff}))` : afterFormula ? `Not (${afterFormula.slice(1)})` : afterOff ? `(${afterOff})` : undefined;
+      const switchedOff = both
+        ? (breakFormula && afterIsOff ? `=Not (${breakFormula.slice(1)}) AndAlso ${afterIsOff}` : undefined)
+        : before ? (breakFormula ? `=Not (${breakFormula.slice(1)})` : undefined) : (afterIsOff ? `=${afterIsOff}` : undefined);
+
+
+for (const [i, original] of areas.reportFooter.entries()) {
+      // Crystal prints no page after the report's last section: New Page After there breaks no page. Followed only
+      // by sections a formula can hide, it breaks none where they are all hidden.
+      let section = original;
+      let afterOff: string | undefined;
+      if (section.newPageAfter || section.conditions?.newPageAfter) {
+        const following = areas.reportFooter.slice(i + 1).filter((s) => !s.suppressed && (s.objects.length || s.height));
+        if (!following.length) {
+          const { newPageAfter: _formula, ...conditions } = section.conditions ?? {};
+          section = { ...section, newPageAfter: false, conditions };
+        } else if (following.every((s) => s.conditions?.suppress)) {
+          const hidden = following.map((s) => this.conditionExpression(s.conditions!.suppress!, false, `Section ${s.name}`, 'body'));
+          if (hidden.every(Boolean)) afterOff = hidden.map((h) => `(${h!.slice(1)})`).join(' AndAlso ');
+        }
+      }
+      const placed = this.placeSection(section, top, 'body', 'Report Footer', false, afterOff);

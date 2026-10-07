@@ -1,29 +1,45 @@
-let owed: string | undefined;
+// Text objects show only the lines their height holds, as in Crystal.
+    this.definition = { ...spread.definition, layout: spread.definition.layout.map((area) => ({ ...area,
+      sections: area.sections.map((section) => ({ ...section, objects: section.objects.map(clippedText) })) })) };
 
-const printsHere = !section.suppressed && (section.objects.length > 0 || (section.height ?? 0) > 0);
-      const own = printsHere && section.conditions?.suppress
-        ? this.conditionExpression(section.conditions.suppress, false, `Section ${section.name}`, 'body') : undefined;
-      // A page break owed by a hidden section above (see below): this section starts the new page, where it shows.
-      if (owed && printsHere && placed.items.length) {
-        const off = `Not (${owed})${own ? ` OrElse (${own.slice(1)})` : ''}`;
-        items.push(el('Rectangle', { Name: this.itemNames.make(`${section.name || 'Section'}_Owed_Page`) },
-          el('ReportItems', ...placed.items.map((item) => moveItem(item, -top, 0))),
-          el('PageBreak', el('BreakLocation', 'Start'), el('Disabled', `=${off}`)),
-          el('KeepTogether', 'false'),
-          el('Top', inches(top)), el('Left', '0in'), el('Height', inches(Math.max(placed.height, MIN_DESIGN_HEIGHT))),
-          el('Width', inches(Math.max(...placed.items.map(itemRight), MIN_DESIGN_HEIGHT))),
-          el('Style', el('Border', el('Style', 'None')))));
-        // Where this section is hidden, the break is still owed to the one after it.
-        owed = own && own !== '=True' ? `(${owed}) AndAlso (${own.slice(1)})` : undefined;
-      } else {
-        items.push(...placed.items);
-      }
-      // Crystal breaks the page after a section ticked New Page After even where its formula hides it, unless the
-      // page was just broken there (no empty page): the next section shown starts a new page.
-      const hidden = section.newPageAfter && !section.suppressed && section.conditions?.suppress
-        ? this.conditionExpression(section.conditions.suppress, false, `Section ${section.name}`, 'body') : undefined;
-      if (hidden && hidden !== '=True' && justBroken !== 'True') {
-        const owedHere = [`(${hidden.slice(1)})`, ...(justBroken ? [`Not (${justBroken})`] : [])].join(' AndAlso ');
-        owed = owed ? `(${owed}) OrElse (${owedHere})` : owedHere;
+// A table grouped on a constant prints its outer header and footer even with no data; Crystal prints the
+    // sections between them once too, blank (the band under the headings, with its column lines). Rows of their own,
+    // shown only where there is no data (kept aside until the table is laid out, as they come last).
+    const rowsBefore = rows.length;
+    const heightBefore = height;
+    const emptyMembers = levels >= 1 && this.isConstantGroup(this.groupFields[0])
+      ? [...Array.from({ length: levels - 1 }, (_, i) => areas.groupHeaders.get(i + 2) ?? []).flat(), ...areas.detail,
+        ...Array.from({ length: levels - 1 }, (_, i) => areas.groupFooters.get(levels - i) ?? []).flat()]
+        .filter((section) => !section.suppressed && section.objects.length > 0)
+        .flatMap((section, i) => addRows([section], `NoData_${i + 1}`, 'No data', null))
+        .map((m) => {
+          const own = (m.children.find((c) => typeof c === 'object' && c !== null && (c as XmlElement).name === 'Visibility') as XmlElement | undefined)
+            ?.children.map((c) => (typeof c === 'object' && c !== null ? String((c as XmlElement).children[0] ?? '') : '')).find(Boolean);
+          const hidden = own && own.startsWith('=') ? `=CountRows() > 0 OrElse (${own.slice(1)})` : '=CountRows() > 0';
+          return { ...m, children: [el('Visibility', el('Hidden', hidden)), ...m.children.filter((c) => !(typeof c === 'object' && c !== null && (c as XmlElement).name === 'Visibility'))] };
+        })
+      : [];
+    const emptyRows = rows.splice(rowsBefore);
+    const emptyHeight = height - heightBefore;
+    height = heightBefore;
 
-else if (printsHere) justBroken = own && justBroken ? (justBroken === 'True' ? `(${own.slice(1)})` : `(${own.slice(1)}) AndAlso ${justBroken}`) : undefined;
+outer = [...headerMembers[0], member, ...footerMembers[0], ...emptyMembers];
+        rows.push(...emptyRows);
+        height += emptyHeight;
+
+/**
+ * A text object of lines broken by hand, more than its height shows: Crystal prints only the lines that fit (a
+ * text object does not grow by itself), where SSRS would grow it to show them all.
+ */
+function clippedText(obj: ReportObject): ReportObject {
+  if (obj.kind !== 'text' || obj.embeddedFields?.length || obj.runs?.some((r) => 'field' in r) || !obj.size) return obj;
+  const text = obj.runs ? obj.runs.map((r) => ('text' in r ? r.text : '')).join('') : obj.text ?? '';
+  const parts = text.replace(/\n+$/, '').split('\n');
+  // A line is the font's size and a seventh again (11pt: 253 twips); one shown at least half is counted.
+  const line = (obj.style?.size ?? 10) * 20 * 1.15;
+  const fit = Math.max(1, Math.floor((obj.size.height + line / 2) / line));
+  if (parts.length <= fit) return obj;
+  const kept = parts.slice(0, fit).join('\n');
+  return { ...obj, text: kept, ...(obj.runs ? { runs: [{ text: kept }] } : {}),
+    ...(obj.paragraphAligns ? { paragraphAligns: obj.paragraphAligns.slice(0, fit) } : {}) };
+}

@@ -1,29 +1,20 @@
-// A condition reading a database field that is empty on the record has no result in Crystal (it converts no
-    // empty value to a default unless told to): the condition does not hold, so what it would suppress still prints.
-    // SSRS would compare the empty value as 0 or "". Unless the formula tests IsNull itself.
-    const fields = [...new Set([...text.matchAll(/\{([^}@?#][^}]*\.[^}]*)\}/g)].map((m) => m[1]))];
-    const nullable = boolean && fields.length > 0 && !/\bisnull\b/i.test(text);
-    const expression = nullable ? `=${this.unlessEmpty(t.expression.slice(1))}` : t.expression;
+ /** Whether the chart's style record ends with an empty text and five zero bytes (some charts' records do, others not). */
+  styleTail?: boolean;
+
+/** Whether a chart's style record ends with an empty text and five zero bytes. */
+export function chartStyleTail(bytes: Uint8Array): boolean {
+  const [text, last] = tokenize(bytes).slice(-2);
+  return !!text && 'text' in text && text.text === '' && !!last && 'bytes' in last && last.bytes.length === 5 && last.bytes.every((x) => x === 0);
+}
+
+object.chart.styleTail = chartStyleTail(b);
 
 
-/** A True/False expression that holds only where none of the database fields it reads is empty on the record. */
-  private unlessEmpty(expression: string): string {
-    const types = new Map([...this.fields.values()].map((f) => [f.name, f.type]));
-    // Summaries leave empty values out (in Crystal too): only the fields read outside them count.
-    const summarized: [number, number][] = [];
-    for (const m of expression.matchAll(/\b(?:Sum|Avg|Min|Max|Count|CountDistinct|RunningValue|Aggregate|StDev|StDevP|Var|VarP)\(/g)) {
-      let depth = 0;
-      let end = m.index! + m[0].length - 1;
-      for (; end < expression.length; end++) {
-        if (expression[end] === '(') depth++;
-        else if (expression[end] === ')' && --depth === 0) break;
-      }
-      summarized.push([m.index!, end]);
-    }
-    const reads = new Set<string>();
-    for (const m of expression.matchAll(/(?:First|Last)\(Fields!(\w+)\.Value(?:, "[^"]*")?\)|Fields!(\w+)\.Value/g)) {
-      if (summarized.some(([from, to]) => m.index! > from && m.index! < to)) continue;
-      if (['integer', 'number', 'currency', 'string', 'memo'].includes(types.get(m[1] ?? m[2]) ?? '')) reads.add(m[0]);
-    }
-    return reads.size ? `${[...reads].map((r) => `Not IsNothing(${r})`).join(' AndAlso ')} AndAlso (${expression})` : expression;
-  }
+// Crystal draws no slice for 0 (SSRS would draw a sliver, pulled out on a 3D pie).
+          el('ChartDataPointValues', el('Y', isPie ? `=IIf(CDbl(IIf(IsNothing(${value.expression}), 0, ${value.expression})) = 0, Nothing, ${value.expression})` : `=${value.expression}`)),
+
+
+// A pie whose style record has no tail starts at Crystal's second colour (orange), as Crystal draws it.
+      el('ChartCustomPaletteColors', ...(isPie ? (chart.styleTail === false && chart.family === 3 ? [...CRYSTAL_PIE_PALETTE.slice(1), CRYSTAL_PIE_PALETTE[0]] : CRYSTAL_PIE_PALETTE)
+        : isLine ? CRYSTAL_LINE_PALETTE : CRYSTAL_PALETTE).map((c) => el('ChartCustomPaletteColor', c))),
+

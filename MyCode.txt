@@ -1,14 +1,60 @@
-* a hair high (taking up no room down the page), shown where the item is hidden: SSRS moves the items to the right of
- * a hidden item into its room, where Crystal leaves the room empty.
 
-const hiddenBy = (item: XmlElement) => {
+import { readFileSync } from 'node:fs';
+const raw = readFileSync(process.argv[2]);
+// UTF-16 files (as saved by some editors) start with a byte-order mark.
+const xml = (raw[0] === 0xff && raw[1] === 0xfe ? raw.toString('utf16le') : raw.toString('utf8')).replace(/^\uFEFF/, '');
+const maxDepth = Number(process.argv[3] ?? 3);
+// A small XML tree: elements with children and text.
+function parse(s) {
+  const root = { name: '#root', kids: [], text: '' }; const stack = [root];
+  const re = /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<![^>]*>|<\?[\s\S]*?\?>|<(\/?)([\w:.-]+)((?:[^>"']|"[^"]*"|'[^']*')*?)(\/?)>|([^<]+)/g; let m;
+  while ((m = re.exec(s))) {
+    if (m[5] !== undefined) { stack[stack.length - 1].text += m[5]; continue; }
+    if (!m[2]) continue;
+    if (m[1]) { if (stack.length > 1) stack.pop(); continue; }
+    const name = (/\bName="([^"]*)"/.exec(m[3]) || [])[1];
+    const el = { name: m[2], attr: name, kids: [], text: '' };
+    stack[stack.length - 1].kids.push(el);
+    if (!m[4]) stack.push(el);
+  }
+  return root;
+}
+const find = (el, name) => el.kids.find((k) => k.name === name);
+const val = (el, name) => (find(el, name)?.text ?? '').trim();
+const ITEMS = new Set(['Rectangle', 'Tablix', 'Textbox', 'Line', 'Image', 'Subreport', 'Chart']);
+const root = parse(xml);
+// The first element of a name anywhere below (RDL 2008 and later keep Body and Page in ReportSections, 2005 in Report).
+const deep = (el, name) => { for (const k of el.kids) { if (k.name === name) return k; const f = deep(k, name); if (f) return f; } return undefined; };
+const body = deep(root, 'Body');
+if (!body) { console.log('No <Body> found: is this an .rdl file?'); process.exit(1); }
+const page = deep(root, 'Page');
+console.log(`page ${page ? `${val(page, 'PageWidth')} x ${val(page, 'PageHeight')}` : '?'}, body height ${val(body, 'Height')}`);
+function walk(container, depth, indent) {
+  const items = find(container, 'ReportItems');
+  if (!items) return;
+  for (const it of items.kids.filter((k) => ITEMS.has(k.name))) {
+    const vis = find(it, 'Visibility');
+    const hidden = vis ? val(vis, 'Hidden') : '';
+    const brk = find(it, 'PageBreak');
+    const kt = val(it, 'KeepTogether');
+    console.log(`${indent}${it.name} ${it.attr ?? ''} top=${val(it, 'Top') || '-'} left=${val(it, 'Left') || '-'} h=${val(it, 'Height') || '-'} w=${val(it, 'Width') || '-'}`
+      + `${hidden ? ` hidden=${hidden.startsWith('=') ? 'formula' : hidden}` : ''}${brk ? ` break=${val(brk, 'BreakLocation')}` : ''}${kt ? ` keep=${kt}` : ''}`);
+    if (depth < maxDepth && (it.name === 'Rectangle')) walk(it, depth + 1, indent + '  ');
+  }
+}
+walk(body, 1, '');
+// The page header: its height and what it holds (where its lines sit).
+const header = deep(root, 'PageHeader');
+if (header) {
+  console.log(`page header height ${val(header, 'Height')}`);
+  walk(header, 1, '  ');
+}
 
-const expression = String(hidden?.children[0] ?? '');
-    return expression.startsWith('=') ? expression : undefined;
 
-const hidden = hiddenBy(item);
-    const beside = !!hidden && items.some((other) => other !== item && itemNumber(other, 'Left') >= right - 0.01
+if (a === b) continue;
+      // A box a formula can hide may not draw the side they share: the other meets it but keeps its own border.
+      const own = canHide(a);
 
-// Only where the item is hidden: over a shown item it would cover its border.
-        el('Visibility', el('Hidden', `=Not (${hidden!.slice(1)})`)),
+changes.set(b, { ...c, left: c.right !== undefined ? c.left : pa.right, sides: own ? c.sides : [...c.sides, 'LeftBorder'] });
 
+ changes.set(b, { ...c, top: final.bottom, left: final.left, right: final.right, sides: own ? c.sides : [...c.sides, 'TopBorder'] });

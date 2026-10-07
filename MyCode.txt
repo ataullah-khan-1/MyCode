@@ -1,22 +1,14 @@
-/** Placing the report footer: conditions read the last record, as in Crystal. */
-  private lastRecord = false;
+* a hair high (taking up no room down the page), shown where the item is hidden: SSRS moves the items to the right of
+ * a hidden item into its room, where Crystal leaves the room empty.
 
-// Crystal reads a report footer's conditions on the last record.
-    const scoped = outside ? scopeOutsideRegion(expression.slice(1), this.dataset, this.lastRecord ? 'Last' : 'First') : expression.slice(1);
+const hiddenBy = (item: XmlElement) => {
 
-// Crystal's single bar: six steps from 0.4 to 1.6 times its value (every 20% for 100%).
-      kind === 'category' ? el('Interval', '1') : single && kind === 'value' ? el('Interval', scaled(0.2)) : null,
+const expression = String(hidden?.children[0] ?? '');
+    return expression.startsWith('=') ? expression : undefined;
 
-this.lastRecord = true;
+const hidden = hiddenBy(item);
+    const beside = !!hidden && items.some((other) => other !== item && itemNumber(other, 'Left') >= right - 0.01
 
-this.lastRecord = false;
+// Only where the item is hidden: over a shown item it would cover its border.
+        el('Visibility', el('Hidden', `=Not (${hidden!.slice(1)})`)),
 
-export function scopeOutsideRegion(expression: string, dataset: string, record: 'First' | 'Last' = 'First'): string {
-
- out += `${record}(${field[0]}, ${scopeArg})`;
-
-* An item a formula can hide, with items beside it to its right, gets an empty rectangle as wide as it at its top,
- * a hair high (taking up no room down the page): SSRS moves the items to the right of a hidden item into its room,
- * where Crystal leaves the room empty.
-
-el('Top', inches(top)), el('Left', inches(itemNumber(item, 'Left'))), el('Height', inches(MIN_DESIGN_HEIGHT)),

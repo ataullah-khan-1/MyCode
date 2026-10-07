@@ -1,14 +1,44 @@
-// A condition whose formula is empty (or only comments) does nothing in Crystal: the ticked setting stands.
-  const blank = (ref: FormulaRef) => {
-    const text = report.formulaTexts![ref.index];
-    return [...indexed.values()].includes(ref.index) && text !== undefined && !text.replace(/\/\/[^\n]*/g, '').trim();
-  };
-  for (const holder of report.layout.flatMap((a) => a.sections.flatMap((s): { conditions?: Record<string, FormulaRef> }[] => [s, ...s.objects]))) {
-    if (!holder.conditions) continue;
-    for (const [kind, ref] of Object.entries(holder.conditions)) if (blank(ref)) delete holder.conditions[kind];
-    if (!Object.keys(holder.conditions).length) delete holder.conditions;
+// Lists the report items of a .rdl body as a tree: kind, name, position and size, hide condition (shortened).
+// Structure only: no field names, expressions or text values are printed.
+// Usage: node rdl-items.mjs report.rdl [depth]
+import { readFileSync } from 'node:fs';
+const xml = readFileSync(process.argv[2], 'utf8');
+const maxDepth = Number(process.argv[3] ?? 3);
+// A small XML tree: elements with children and text.
+function parse(s) {
+  const root = { name: '#root', kids: [], text: '' }; const stack = [root];
+  const re = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<(\/?)([\w:]+)([^>]*?)(\/?)>|([^<]+)/g; let m;
+  while ((m = re.exec(s))) {
+    if (m[5] !== undefined) { stack[stack.length - 1].text += m[5]; continue; }
+    if (!m[2]) continue;
+    if (m[1]) { stack.pop(); continue; }
+    const name = (/\bName="([^"]*)"/.exec(m[3]) || [])[1];
+    const el = { name: m[2], attr: name, kids: [], text: '' };
+    stack[stack.length - 1].kids.push(el);
+    if (!m[4]) stack.push(el);
   }
-
-
- if (!used && f.text.replace(/\/\/[^\n]*/g, '').trim()) this.note(`Formula {@${f.name}}`, 'is a formatting formula that no object uses in a decoded property; check whether it is still needed');
-    }
+  return root;
+}
+const find = (el, name) => el.kids.find((k) => k.name === name);
+const val = (el, name) => (find(el, name)?.text ?? '').trim();
+const ITEMS = new Set(['Rectangle', 'Tablix', 'Textbox', 'Line', 'Image', 'Subreport', 'Chart']);
+const root = parse(xml);
+const report = find(root, 'Report');
+const section = find(find(report, 'ReportSections'), 'ReportSection');
+const body = find(section, 'Body');
+const page = find(section, 'Page');
+console.log(`page ${val(page, 'PageWidth')} x ${val(page, 'PageHeight')}, body height ${val(body, 'Height')}`);
+function walk(container, depth, indent) {
+  const items = find(container, 'ReportItems');
+  if (!items) return;
+  for (const it of items.kids.filter((k) => ITEMS.has(k.name))) {
+    const vis = find(it, 'Visibility');
+    const hidden = vis ? val(vis, 'Hidden') : '';
+    const brk = find(it, 'PageBreak');
+    const kt = val(it, 'KeepTogether');
+    console.log(`${indent}${it.name} ${it.attr ?? ''} top=${val(it, 'Top') || '-'} left=${val(it, 'Left') || '-'} h=${val(it, 'Height') || '-'} w=${val(it, 'Width') || '-'}`
+      + `${hidden ? ` hidden=${hidden.startsWith('=') ? 'formula' : hidden}` : ''}${brk ? ` break=${val(brk, 'BreakLocation')}` : ''}${kt ? ` keep=${kt}` : ''}`);
+    if (depth < maxDepth && (it.name === 'Rectangle')) walk(it, depth + 1, indent + '  ');
+  }
+}
+walk(body, 1, '');

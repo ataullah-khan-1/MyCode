@@ -1,44 +1,22 @@
-// Lists the report items of a .rdl body as a tree: kind, name, position and size, hide condition (shortened).
-// Structure only: no field names, expressions or text values are printed.
-// Usage: node rdl-items.mjs report.rdl [depth]
-import { readFileSync } from 'node:fs';
-const xml = readFileSync(process.argv[2], 'utf8');
-const maxDepth = Number(process.argv[3] ?? 3);
-// A small XML tree: elements with children and text.
-function parse(s) {
-  const root = { name: '#root', kids: [], text: '' }; const stack = [root];
-  const re = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<(\/?)([\w:]+)([^>]*?)(\/?)>|([^<]+)/g; let m;
-  while ((m = re.exec(s))) {
-    if (m[5] !== undefined) { stack[stack.length - 1].text += m[5]; continue; }
-    if (!m[2]) continue;
-    if (m[1]) { stack.pop(); continue; }
-    const name = (/\bName="([^"]*)"/.exec(m[3]) || [])[1];
-    const el = { name: m[2], attr: name, kids: [], text: '' };
-    stack[stack.length - 1].kids.push(el);
-    if (!m[4]) stack.push(el);
+ el('Body', el('ReportItems', ...clearRoundingOverlaps(fitInside(joinBoxes(clearLineOverlaps(bodyItems))))), el('Height', inches(top > 0 ? top : DEFAULT_HEIGHT)), el('Style')),
+
+/**
+ * Items that start a rounding step (up to 0.002in) above the bottom of an item above them start at its bottom
+ * instead: SSRS keeps an item that overlaps the one above it at its place beside that one (it is not pushed down
+ * when the one above grows or moves to a new page), so rows meant to follow each other would be drawn over each other.
+ */
+function clearRoundingOverlaps(items: XmlElement[]): XmlElement[] {
+  const out = [...items];
+  const order = out.map((item, i) => i).sort((a, b) => itemNumber(out[a], 'Top') - itemNumber(out[b], 'Top'));
+  for (const [n, i] of order.entries()) {
+    const top = itemNumber(out[i], 'Top');
+    let push = 0;
+    for (const j of order.slice(0, n)) {
+      const above = out[j];
+      const bottom = itemNumber(above, 'Top') + itemNumber(above, 'Height');
+      if (itemNumber(above, 'Top') < top && bottom > top && bottom - top <= 0.002 + 1e-9) push = Math.max(push, bottom - top);
+    }
+    if (push > 0) out[i] = moveItem(out[i], push, 0);
   }
-  return root;
+  return out;
 }
-const find = (el, name) => el.kids.find((k) => k.name === name);
-const val = (el, name) => (find(el, name)?.text ?? '').trim();
-const ITEMS = new Set(['Rectangle', 'Tablix', 'Textbox', 'Line', 'Image', 'Subreport', 'Chart']);
-const root = parse(xml);
-const report = find(root, 'Report');
-const section = find(find(report, 'ReportSections'), 'ReportSection');
-const body = find(section, 'Body');
-const page = find(section, 'Page');
-console.log(`page ${val(page, 'PageWidth')} x ${val(page, 'PageHeight')}, body height ${val(body, 'Height')}`);
-function walk(container, depth, indent) {
-  const items = find(container, 'ReportItems');
-  if (!items) return;
-  for (const it of items.kids.filter((k) => ITEMS.has(k.name))) {
-    const vis = find(it, 'Visibility');
-    const hidden = vis ? val(vis, 'Hidden') : '';
-    const brk = find(it, 'PageBreak');
-    const kt = val(it, 'KeepTogether');
-    console.log(`${indent}${it.name} ${it.attr ?? ''} top=${val(it, 'Top') || '-'} left=${val(it, 'Left') || '-'} h=${val(it, 'Height') || '-'} w=${val(it, 'Width') || '-'}`
-      + `${hidden ? ` hidden=${hidden.startsWith('=') ? 'formula' : hidden}` : ''}${brk ? ` break=${val(brk, 'BreakLocation')}` : ''}${kt ? ` keep=${kt}` : ''}`);
-    if (depth < maxDepth && (it.name === 'Rectangle')) walk(it, depth + 1, indent + '  ');
-  }
-}
-walk(body, 1, '');

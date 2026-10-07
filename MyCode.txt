@@ -1,25 +1,7 @@
-/** Subreports drawn with an empty frame where their own formula hides them: they hold their own place. */
-  private readonly framed = new Set<string>();
-
-// Crystal still draws the frame of a bordered subreport its own formula hides (its section shown): an empty
-        // box at its place, shown just where the subreport is hidden.
-        if (inline && own && own !== '=True' && obj.border?.sides.some((side) => side > 0)) {
-          const name = inline.item.attributes.Name ?? obj.name;
-          const frame = el('Rectangle', { Name: this.itemNames.make(`${name}_Frame`) },
-            el('KeepTogether', 'true'),
-            el('Top', inches(itemNumber(inline.item, 'Top'))), el('Left', inches(itemNumber(inline.item, 'Left'))),
-            el('Height', inches(itemNumber(inline.item, 'Height'))), el('Width', inches(itemNumber(inline.item, 'Width'))),
-            el('Visibility', el('Hidden', hidden ? `=(${hidden.slice(1)}) OrElse Not (${own.slice(1)})` : `=Not (${own.slice(1)})`)),
-            el('Style', ...this.borderStyle(obj.border)));
-          items.push(frame);
-          this.framed.add(name).add(frame.attributes.Name);
-        }
-
-el('Body', el('ReportItems', ...holdPlaces(clearRoundingOverlaps(fitInside(joinBoxes(clearLineOverlaps(bodyItems)))), this.itemNames, this.framed)), el('Height', inches(top > 0 ? top : DEFAULT_HEIGHT)), el('Style')),
-
-function holdPlaces(items: XmlElement[], names: { make(name: string): string }, framed: Set<string> = new Set()): XmlElement[] {
-
-? { ...(c as XmlElement), children: holdPlaces((c as XmlElement).children.filter((x): x is XmlElement => typeof x === 'object' && x !== null), names, framed) } : c)) };
-
-// A framed subreport and its frame: one of them shows wherever their section does.
-    const hidden = framed.has(item.attributes.Name ?? '') ? undefined : hiddenBy(item);
+// Crystal still draws the frame of a bordered subreport its own formula hides (its section shown), in a column
+        // of its own: an empty box at its place, shown just where the subreport is hidden. Subreports sharing a column
+        // are alternatives (one shows in place of the others), and those that do not show leave nothing.
+        const x = obj.position?.x ?? 0;
+        const right = x + (obj.size?.width ?? 0);
+        const ownColumn = !section.objects.some((o) => o !== obj && (o.position?.x ?? 0) < right && (o.position?.x ?? 0) + (o.size?.width ?? 0) > x);
+        if (inline && own && own !== '=True' && ownColumn && obj.border?.sides.some((side) => side > 0)) {

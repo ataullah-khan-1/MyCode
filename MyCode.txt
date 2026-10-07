@@ -1,22 +1,29 @@
- el('Body', el('ReportItems', ...clearRoundingOverlaps(fitInside(joinBoxes(clearLineOverlaps(bodyItems))))), el('Height', inches(top > 0 ? top : DEFAULT_HEIGHT)), el('Style')),
+// A condition reading a database field that is empty on the record has no result in Crystal (it converts no
+    // empty value to a default unless told to): the condition does not hold, so what it would suppress still prints.
+    // SSRS would compare the empty value as 0 or "". Unless the formula tests IsNull itself.
+    const fields = [...new Set([...text.matchAll(/\{([^}@?#][^}]*\.[^}]*)\}/g)].map((m) => m[1]))];
+    const nullable = boolean && fields.length > 0 && !/\bisnull\b/i.test(text);
+    const expression = nullable ? `=${this.unlessEmpty(t.expression.slice(1))}` : t.expression;
 
-/**
- * Items that start a rounding step (up to 0.002in) above the bottom of an item above them start at its bottom
- * instead: SSRS keeps an item that overlaps the one above it at its place beside that one (it is not pushed down
- * when the one above grows or moves to a new page), so rows meant to follow each other would be drawn over each other.
- */
-function clearRoundingOverlaps(items: XmlElement[]): XmlElement[] {
-  const out = [...items];
-  const order = out.map((item, i) => i).sort((a, b) => itemNumber(out[a], 'Top') - itemNumber(out[b], 'Top'));
-  for (const [n, i] of order.entries()) {
-    const top = itemNumber(out[i], 'Top');
-    let push = 0;
-    for (const j of order.slice(0, n)) {
-      const above = out[j];
-      const bottom = itemNumber(above, 'Top') + itemNumber(above, 'Height');
-      if (itemNumber(above, 'Top') < top && bottom > top && bottom - top <= 0.002 + 1e-9) push = Math.max(push, bottom - top);
+
+/** A True/False expression that holds only where none of the database fields it reads is empty on the record. */
+  private unlessEmpty(expression: string): string {
+    const types = new Map([...this.fields.values()].map((f) => [f.name, f.type]));
+    // Summaries leave empty values out (in Crystal too): only the fields read outside them count.
+    const summarized: [number, number][] = [];
+    for (const m of expression.matchAll(/\b(?:Sum|Avg|Min|Max|Count|CountDistinct|RunningValue|Aggregate|StDev|StDevP|Var|VarP)\(/g)) {
+      let depth = 0;
+      let end = m.index! + m[0].length - 1;
+      for (; end < expression.length; end++) {
+        if (expression[end] === '(') depth++;
+        else if (expression[end] === ')' && --depth === 0) break;
+      }
+      summarized.push([m.index!, end]);
     }
-    if (push > 0) out[i] = moveItem(out[i], push, 0);
+    const reads = new Set<string>();
+    for (const m of expression.matchAll(/(?:First|Last)\(Fields!(\w+)\.Value(?:, "[^"]*")?\)|Fields!(\w+)\.Value/g)) {
+      if (summarized.some(([from, to]) => m.index! > from && m.index! < to)) continue;
+      if (['integer', 'number', 'currency', 'string', 'memo'].includes(types.get(m[1] ?? m[2]) ?? '')) reads.add(m[0]);
+    }
+    return reads.size ? `${[...reads].map((r) => `Not IsNothing(${r})`).join(' AndAlso ')} AndAlso (${expression})` : expression;
   }
-  return out;
-}

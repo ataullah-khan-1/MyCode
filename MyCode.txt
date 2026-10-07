@@ -1,23 +1,25 @@
+/** Subreports drawn with an empty frame where their own formula hides them: they hold their own place. */
+  private readonly framed = new Set<string>();
 
-import { readFileSync, writeFileSync } from 'node:fs';
-const [input, name, output = input.replace(/\.rdl$/i, '') + '_shown.rdl'] = process.argv.slice(2);
-if (!input || !name) { console.error('Usage: node unhide.mjs <input.rdl> <ItemName> [output.rdl]'); process.exit(1); }
-const buf = readFileSync(input);
-const utf16 = buf[0] === 0xff && buf[1] === 0xfe;
-let text = (utf16 ? buf.toString('utf16le') : buf.toString('utf8')).replace(/^﻿/, '');
-const start = text.search(new RegExp(`<\\w+ Name="${name}"\\s*>`));
-if (start < 0) { console.error(`Item ${name} not found`); process.exit(1); }
-// Walk the tags to find the item's direct <Visibility> child and its end.
-const tag = /<!\[CDATA\[[\s\S]*?\]\]>|<!--[\s\S]*?-->|<(\/?)([\w:]+)[^>]*?(\/?)>/g;
-tag.lastIndex = start;
-let depth = 0, visStart = -1, visEnd = -1, m;
-while ((m = tag.exec(text))) {
-  if (!m[2]) continue;
-  if (m[1]) { depth--; if (depth === 1 && m[2] === 'Visibility' && visStart >= 0 && visEnd < 0) visEnd = tag.lastIndex; if (depth === 0) break; }
-  else if (!m[3]) { if (depth === 1 && m[2] === 'Visibility') visStart = m.index; depth++; }
-}
-if (visStart < 0) { console.error(`${name} has no Visibility setting; it is already always shown`); process.exit(1); }
-console.log('Old:', text.slice(visStart, visEnd).replace(/\s+/g, ' '));
-text = text.slice(0, visStart) + '<Visibility><Hidden>false</Hidden></Visibility>' + text.slice(visEnd);
-writeFileSync(output, utf16 ? Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]) : text);
-console.log('Written:', output);
+// Crystal still draws the frame of a bordered subreport its own formula hides (its section shown): an empty
+        // box at its place, shown just where the subreport is hidden.
+        if (inline && own && own !== '=True' && obj.border?.sides.some((side) => side > 0)) {
+          const name = inline.item.attributes.Name ?? obj.name;
+          const frame = el('Rectangle', { Name: this.itemNames.make(`${name}_Frame`) },
+            el('KeepTogether', 'true'),
+            el('Top', inches(itemNumber(inline.item, 'Top'))), el('Left', inches(itemNumber(inline.item, 'Left'))),
+            el('Height', inches(itemNumber(inline.item, 'Height'))), el('Width', inches(itemNumber(inline.item, 'Width'))),
+            el('Visibility', el('Hidden', hidden ? `=(${hidden.slice(1)}) OrElse Not (${own.slice(1)})` : `=Not (${own.slice(1)})`)),
+            el('Style', ...this.borderStyle(obj.border)));
+          items.push(frame);
+          this.framed.add(name).add(frame.attributes.Name);
+        }
+
+el('Body', el('ReportItems', ...holdPlaces(clearRoundingOverlaps(fitInside(joinBoxes(clearLineOverlaps(bodyItems)))), this.itemNames, this.framed)), el('Height', inches(top > 0 ? top : DEFAULT_HEIGHT)), el('Style')),
+
+function holdPlaces(items: XmlElement[], names: { make(name: string): string }, framed: Set<string> = new Set()): XmlElement[] {
+
+? { ...(c as XmlElement), children: holdPlaces((c as XmlElement).children.filter((x): x is XmlElement => typeof x === 'object' && x !== null), names, framed) } : c)) };
+
+// A framed subreport and its frame: one of them shows wherever their section does.
+    const hidden = framed.has(item.attributes.Name ?? '') ? undefined : hiddenBy(item);

@@ -1,8 +1,29 @@
-// SSRS applies no page break of an empty rectangle: it holds an empty text box.
-        const name = this.itemNames.make(`${section.name || 'Section'}_Break`);
-        items.push(el('Rectangle', { Name: name },
-          el('ReportItems', el('Textbox', { Name: this.itemNames.make(`${name}_Text`) },
-            el('CanGrow', 'false'), el('KeepTogether', 'true'),
-            el('Paragraphs', el('Paragraph', el('TextRuns', el('TextRun', el('Value', ''), el('Style'))), el('Style'))),
-            el('Top', '0in'), el('Left', '0in'), el('Height', inches(MIN_DESIGN_HEIGHT)), el('Width', inches(MIN_DESIGN_HEIGHT)),
-            el('Style', el('Border', el('Style', 'None'))))),
+let owed: string | undefined;
+
+const printsHere = !section.suppressed && (section.objects.length > 0 || (section.height ?? 0) > 0);
+      const own = printsHere && section.conditions?.suppress
+        ? this.conditionExpression(section.conditions.suppress, false, `Section ${section.name}`, 'body') : undefined;
+      // A page break owed by a hidden section above (see below): this section starts the new page, where it shows.
+      if (owed && printsHere && placed.items.length) {
+        const off = `Not (${owed})${own ? ` OrElse (${own.slice(1)})` : ''}`;
+        items.push(el('Rectangle', { Name: this.itemNames.make(`${section.name || 'Section'}_Owed_Page`) },
+          el('ReportItems', ...placed.items.map((item) => moveItem(item, -top, 0))),
+          el('PageBreak', el('BreakLocation', 'Start'), el('Disabled', `=${off}`)),
+          el('KeepTogether', 'false'),
+          el('Top', inches(top)), el('Left', '0in'), el('Height', inches(Math.max(placed.height, MIN_DESIGN_HEIGHT))),
+          el('Width', inches(Math.max(...placed.items.map(itemRight), MIN_DESIGN_HEIGHT))),
+          el('Style', el('Border', el('Style', 'None')))));
+        // Where this section is hidden, the break is still owed to the one after it.
+        owed = own && own !== '=True' ? `(${owed}) AndAlso (${own.slice(1)})` : undefined;
+      } else {
+        items.push(...placed.items);
+      }
+      // Crystal breaks the page after a section ticked New Page After even where its formula hides it, unless the
+      // page was just broken there (no empty page): the next section shown starts a new page.
+      const hidden = section.newPageAfter && !section.suppressed && section.conditions?.suppress
+        ? this.conditionExpression(section.conditions.suppress, false, `Section ${section.name}`, 'body') : undefined;
+      if (hidden && hidden !== '=True' && justBroken !== 'True') {
+        const owedHere = [`(${hidden.slice(1)})`, ...(justBroken ? [`Not (${justBroken})`] : [])].join(' AndAlso ');
+        owed = owed ? `(${owed}) OrElse (${owedHere})` : owedHere;
+
+else if (printsHere) justBroken = own && justBroken ? (justBroken === 'True' ? `(${own.slice(1)})` : `(${own.slice(1)}) AndAlso ${justBroken}`) : undefined;

@@ -1,138 +1,54 @@
-/** An item's left (or top) edge from the page's body, through the rectangles it sits in. */
-function offsetOf(item: XmlElement, parents: Map<XmlElement, XmlElement>, side: 'Left' | 'Top' = 'Left'): number {
-  let at = lengthInPoints(textOf(child(item, side))) ?? 0;
-  for (let up = parents.get(item); up; up = parents.get(up)) if (up.name === 'Rectangle') at += lengthInPoints(textOf(child(up, side))) ?? 0;
-  return at;
-}
-const ITEMS = new Set(['Rectangle', 'Textbox', 'Line', 'Chart', 'Tablix', 'Subreport', 'Image']);
+// (or in a rectangle without a border) reaches the rule itself. Nothing ends past the rule.
 
-// What is a little short of a rule across the page, at its right: as wide as the rule (a box with what is in it).
-  const inCell = (e: XmlElement) => {
-    for (let up = parents.get(e); up; up = parents.get(up)) if (up.name === 'CellContents') return true;
-    return false;
-  };
-  const len = (e: XmlElement, name: string) => lengthInPoints(textOf(child(e, name))) ?? 0;
-  const placed = all.filter((e) => ITEMS.has(e.name) && !inCell(e) && parents.get(e)?.name === 'ReportItems');
-  const boxOf = (e: XmlElement) => {
-    const left = offsetOf(e, parents, 'Left');
-    const top = offsetOf(e, parents, 'Top');
-    return { left, top, right: left + len(e, 'Width'), bottom: top + len(e, 'Height') };
-  };
-  const boxes = new Map(placed.map((e) => [e, boxOf(e)]));
-  const isFrame = (e: XmlElement) => e.name === 'Rectangle' && !/^none$/i.test(textOf(child(e, 'Style/Border/Style')) || 'None');
-  const painted = (e: XmlElement) => {
-    const fill = textOf(child(ownStyle(e), 'BackgroundColor'));
-    return !!fill && !/^transparent$/i.test(fill);
-  };
-  const rules = placed.filter((e) => e.name === 'Line' && Math.abs(len(e, 'Height')) < 1).map((e) => boxes.get(e)!).filter((r) => r.right - r.left > 144);
-  const end = Math.max(...rules.map((r) => r.right), 0);
-  const ruleLeft = Math.min(...rules.filter((r) => r.right === end).map((r) => r.left));
-  const thin = (e: XmlElement) => e.name === 'Line' && Math.abs(len(e, 'Width')) < 1;
-  const stretchable = (e: XmlElement) => {
-    const b = boxes.get(e)!;
-    // Plain text stays where it is (only a band or a framed text is part of the layout's edge).
-    const framed = !/^(none)?$/i.test(textOf(child(ownStyle(e), 'Border/Style')));
-    if (thin(e) || e.name === 'Image' || (e.name === 'Textbox' && !painted(e) && !framed)) return false;
-    return b.left >= ruleLeft - 2 && b.right < end - 0.5 && b.right >= end - 54;
-  };
-  const besides = (e: XmlElement) => {
-    const b = boxes.get(e)!;
-    return childElements(parents.get(e)!).some((o) => {
-      if (o === e || !boxes.has(o) || thin(o)) return false;
-      const ob = boxes.get(o)!;
-      return ob.left >= b.right - 0.5 && ob.top < b.bottom && ob.bottom > b.top;
-    });
-  };
-  const grows = new Map<XmlElement, number>();
-  const candidates = placed.filter((e) => stretchable(e) && !besides(e));
-  // Frames first (the largest first): what is in one keeps its distance from the frame's right side.
-  const area = (e: XmlElement) => { const b = boxes.get(e)!; return (b.right - b.left) * (b.bottom - b.top); };
-  candidates.sort((x, y) => Number(isFrame(y)) - Number(isFrame(x)) || area(y) - area(x));
-  const within = (inner: { left: number; top: number; right: number; bottom: number }, outer: { left: number; top: number; right: number; bottom: number }) =>
-    inner.left >= outer.left - 1 && inner.right <= outer.right + 1 && inner.top >= outer.top - 1 && inner.bottom <= outer.bottom + 1;
-  // A frame holds what lies on it (beside it in its container) or in it.
-  const holds = (frame: XmlElement, e: XmlElement) => {
-    if (parents.get(frame) === parents.get(e)) return true;
-    for (let up = parents.get(e); up; up = parents.get(up)) if (up === frame) return true;
-    return false;
-  };
-  for (const e of candidates) {
-    const b = boxes.get(e)!;
-    const frame = [...grows.keys()].find((f) => f.name === 'Rectangle' && f !== e && holds(f, e) && within(b, boxes.get(f)!));
-    const grow = Math.min(frame ? grows.get(frame)! : end - b.right, end - b.right);
-    if (grow > 0.5) grows.set(e, grow);
-  }
-  // Lines down a frame's right side move with it.
-  for (const e of placed.filter(thin)) {
-    const b = boxes.get(e)!;
-    const moved = [...grows.entries()].find(([f]) => holds(f, e) && Math.abs(boxes.get(f)!.right - b.left) <= 3 && b.top >= boxes.get(f)!.top - 1 && b.bottom <= boxes.get(f)!.bottom + 1);
-    if (moved) setChild(e, 'Left', inches(len(e, 'Left') + moved[1]));
-  }
-  for (const [e, grow] of grows) {
-    const width = len(e, 'Width');
-    if (e.name === 'Tablix') {
-      const columns = childElements(child(e, 'TablixBody/TablixColumns') ?? el('TablixColumns'), 'TablixColumn');
-      const last = columns[columns.length - 1];
-      if (!last) continue;
-      setChild(last, 'Width', inches(len(last, 'Width') + grow));
+
+ // A rectangle drawn without a border (a subreport without a frame, a section's holder) lying in no frame is none:
+    // what is in it reaches the rule as what lies in none does.
+    const framedAround = (r: XmlElement | undefined): boolean => !!r && (isFrame(r) || framedAround(encloser(r)));
+    const outer = [encloser(e)].find(framedAround);
+
+
+ // Its height too: the lines as tall as the box allows (or as Crystal's one line was, where it already filled it;
+      // SSRS clips a second line overflowing the box, even where Crystal's own lines did).
+
+const allowed = linesAfter > 1 ? tall : Math.max(tall, linesBefore * size * lineHeight(old.font));
+
+
+
+ // SSRS gives up the space of items hidden at a rectangle's foot: an empty mark there keeps the row's height.
+      const foot = el('Line', { Name: this.itemNames.make(`${item.attributes.Name}_RowFoot`) },
+        el('Top', inches(Math.max(0, tallest - 0.01))), el('Left', '0in'), el('Height', '0in'), el('Width', '0.01in'),
+        el('Style', el('Border', el('Style', 'None'))));
+      const holder = child(item, 'ReportItems');
+      if (holder) holder.children.push(foot);
+      else item.children.unshift(el('ReportItems', foot));
+      bottom = Math.max(bottom, itemNumber(item, 'Top') - top + tallest);
     }
-    setChild(e, 'Width', inches(width + grow));
-    // Its containers widened with it where they would now cut it off.
-    let right = len(e, 'Left') + width + grow;
-    for (let up = parents.get(e); up; up = parents.get(up)) {
-      if (up.name !== 'Rectangle' && up.name !== 'ReportSection') continue;
-      const w = len(up, 'Width');
-      if (w < right) setChild(up, 'Width', inches(right));
-      if (up.name === 'ReportSection') break;
-      right = len(up, 'Left') + Math.max(w, right);
-    }
-  }
 
-  // A painted title along a frame's top: across the frame, side to side.
-  const bands = placed.filter((e) => e.name === 'Textbox' && painted(e) && isFixed(e));
-  for (const band of bands) {
-    const b = boxOf(band);
-    const frame = placed.filter((f) => isFrame(f) && parents.get(f) === parents.get(band) && within(b, boxOf(f)))
-      .map((f) => ({ f, fb: boxOf(f) }))
-      .filter(({ fb }) => b.top - fb.top <= 36 && b.left - fb.left <= 25 && fb.right - b.right <= 25 && (b.right - b.left) >= (fb.right - fb.left) * 0.6)
-      .sort((x, y) => (x.fb.right - x.fb.left) - (y.fb.right - y.fb.left))[0];
-    if (!frame) continue;
-    setChild(band, 'Left', textOf(child(frame.f, 'Left')));
-    setChild(band, 'Width', textOf(child(frame.f, 'Width')));
-  }
-  // Painted titles side by side (a row of charts' titles): on one line, at the lowest one's place.
-  const rowsOf: XmlElement[][] = [];
-  for (const band of bands.filter((e) => (textSize(e) ?? 10) < usual + 6)) {
-    const t = len(band, 'Top');
-    const row = rowsOf.find((r) => parents.get(r[0]) === parents.get(band) && r.every((o) => Math.abs(len(o, 'Top') - t) <= 14
-      && (len(o, 'Left') + len(o, 'Width') <= len(band, 'Left') + 1 || len(band, 'Left') + len(band, 'Width') <= len(o, 'Left') + 1)));
-    if (row) row.push(band);
-    else rowsOf.push([band]);
-  }
-  for (const row of rowsOf.filter((r) => r.length > 1)) {
-    const top = Math.max(...row.map((e) => len(e, 'Top')));
-    const bottom = Math.max(...row.map((e) => len(e, 'Top') + len(e, 'Height')));
-    for (const e of row) {
-      setChild(e, 'Top', inches(top));
-      setChild(e, 'Height', inches(bottom - top));
+// Crystal lays a bar chart's category labels flat where they fit side by side, angles them where each still has
+    // room at 45 degrees, and turns them upright where even that would overlap (about 0.04in a character, 0.13in a
+    // label at 45 degrees, at 5.5pt, over the plot without its value axis).
+    const turned = flat && style.type === 'Column' && categoryExpression && categoryExpression !== 'Nothing'
+      ? (() => {
+        const n = `CountDistinct(${categoryExpression})`;
+        const slot = `${Math.max(0.5, box.width - 0.6).toFixed(2)} / IIf(${n} < 1, 1, ${n})`;
+        return `=IIf(Max(Len(CStr(${categoryExpression}))) * 0.04 + 0.04 <= ${slot}, 0, IIf(${slot} >= 0.13, -45, -90))`;
+      })()
+      : undefined;
 
 
-
-// Crystal frames a flat chart's plot on all four sides: the axes' lines repeated opposite them, unlabelled.
-    const frame = isPie || style.threeD ? null : el('ChartAxis', { Name: 'Secondary' },
-      el('Visible', 'True'), el('Style', el('FontSize', '5.5pt')), el('ChartAxisTitle', el('Caption', ''), el('Style')),
-      el('ChartMajorGridLines', el('Enabled', 'False'), el('Style')), el('ChartMinorGridLines', el('Style')),
-      el('ChartMajorTickMarks', el('Enabled', 'False'), el('Style')), el('ChartMinorTickMarks', el('Style')),
-      el('CrossAt', 'NaN'), el('Location', 'Opposite'), el('HideLabels', 'true'), el('ChartAxisScaleBreak', el('Style')));
+ kind === 'category' && turned ? el('Angle', turned) : null,
+      ...(kind === 'category' && flat && !turned ? [el('PreventFontGrow', 'true'), el('PreventLabelOffset', 'true'), el('PreventWordWrap', 'true'),
+        ...(isLine ? [el('AllowLabelRotation', 'None'), el('MinFontSize', '5pt')] : [el('PreventFontShrink', 'true'), el('AllowLabelRotation', 'Rotate90')])] : []),
+      // SSRS would otherwise resize axis text to fit (up to 10pt); Crystal keeps its size.
+      el('LabelsAutoFitDisabled', kind === 'category' && flat && !turned ? 'false' : 'true'),
 
 
+// A format of the chart's own that .NET cannot read as a number (no digit in it) would print as it is, in place of
+    // the value: whole numbers with thousands separators, as Crystal shows them.
+    const ownFormat = chart.dataLabels?.custom;
+    const unreadable = ownFormat !== undefined && !/[0#]/.test(ownFormat);
+    const custom = unreadable ? '#,##0' : ownFormat;
 
-el('ChartCategoryAxes', axis(chart.categoryTitle, 'category'), frame),
-        el('ChartValueAxes', axis(chart.valueTitle, 'value', labelFormat ?? (isPie ? undefined : this.options.chartAxisFormat)), frame),
 
-
-
-el('AutoFitTextDisabled', 'true'),
-        // Each entry on one line, as Crystal prints it (SSRS leaves a wrapped entry's last line against the frame).
-        el('TextWrapThreshold', '0'))),
+ const axisFormat = custom ? (custom.includes('%') || unreadable ? custom : '#,##0.00') : listFormat;
 

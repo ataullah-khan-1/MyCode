@@ -1,9 +1,4 @@
-// (A padding worked out per record, placing the text by a formula, is left to it.)
-      if (textOf(child(own, side)).startsWith('=')) continue;
-
-// Lines placed record by record (Crystal's X position formulas: a statement's labels indented by their level) are
-    // a statement laid out in lines, not rows of a table: printed plain, as in Crystal.
-    const statement = rows.some((row, i) => kinds[i] === 'detail'
-      && descendants(row).some((e) => e.name === 'Textbox' && textOf(child(ownStyle(e), 'PaddingLeft')).startsWith('=')));
-
-else if (kind === 'detail' && !statement && style.rowBands && (style.rowBands.odd || style.rowBands.even)) {
+// A row holding no text (only a line drawn along it, as its border) is not a band: painted, the line would become
+      // a bar as tall as the row, with no space left under it.
+      const blank = inRow.every((tb) => descendants(tb).filter((e) => e.name === 'Value').every((v) => !textOf(v).trim()));
+      if (blank && kind !== 'detail') return;

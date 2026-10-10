@@ -1,154 +1,19 @@
-: convertDocumentToSsrs(doc, name, { connectionString, sharedDataSource, separateSubreports, pageNumber, parameterValues, chartAxisFormat, restyle, reshape, simpleRules: !!reshape }));
-
-
-// The other tables' and charts' datasets: the same pattern, numbered after the report's name (2, 3, ...).
-    let n = 1;
-    const taken = new Set(dataSets.map((d) => (d.attributes.Name ?? '').toLowerCase()));
-    for (const region of descendants(report).filter((e) => (e.name === 'Tablix' || e.name === 'Chart') && child(e, 'DataSetName'))) {
-      const old = textOf(child(region, 'DataSetName'));
-      const ds = dataSets.find((d) => d.attributes.Name === old);
-      if (!ds || ds === main || scopeRenames.has(old)) continue;
-      let other: string;
-      do other = conv.dataset.includes('{S}') ? conv.dataset.replace(/\{S\}/g, `${S}_${++n}`) : `${name}_${++n}`;
-      while (taken.has(other.toLowerCase()));
-      taken.add(other.toLowerCase());
-      scopeRenames.set(old, other);
-      ds.attributes.Name = other;
+ // Crystal's blank band where there is no data (copies of the data rows, shown only then): the team's message row
+    // takes its place, as in their templates (the copies would read as doubled rows in the designer).
+    {
+      const blank = rowLeaves(tablix).map((l, i) => ({ ...l, i })).filter((l) => l.kind === 'noData');
+      if (blank.length) {
+        const rowsEl = child(tablix, 'TablixBody/TablixRows')!;
+        const all = rowsOf(tablix);
+        let dropped = 0;
+        for (const l of blank) {
+          const holder = descendants(child(tablix, 'TablixRowHierarchy')!).find((e) => e.name === 'TablixMembers' && e.children.includes(l.member));
+          // (Only where the row's member is not the last of its list: a list may not be left empty.)
+          if (!holder || childElements(holder, 'TablixMember').length < 2) continue;
+          holder.children = holder.children.filter((c) => c !== l.member);
+          dropped += len(all[l.i]!, 'Height');
+          rowsEl.children = rowsEl.children.filter((c) => c !== all[l.i]);
+        }
+        setChild(tablix, 'Height', inch(Math.max(0.01, len(tablix, 'Height') - dropped)));
+      }
     }
-
-
- let reportWidth = len(section ?? el('x'), 'Width');
-
-// What the body holds decides (the report may be drawn wider than what is in it).
-    const content = Math.max(0, ...childElements(child(body, 'ReportItems') ?? el('x')).filter((e) => ITEMS.has(e.name)).map((e) => len(e, 'Left') + len(e, 'Width')));
-    if (content <= usable + 0.01) {
-      reportWidth = Math.floor(usable * 100000) / 100000;
-      setChild(section!, 'Width', inch(reportWidth));
-
- review.push({ item: 'Page', message: `the report is ${inch(content)} wide, wider than the standard page leaves room for; Crystal's page size is kept` });
-
-let inner = childElements(child(item, 'ReportItems') ?? el('x')).filter((e) => ITEMS.has(e.name));
-          // A text with a line drawn just under it (Crystal's underlined heading): the text underlined.
-          const texts = inner.filter((e) => e.name === 'Textbox');
-          const lines = inner.filter((e) => e.name === 'Line');
-          if (texts.length === 1 && lines.length && lines.length + 1 === inner.length) {
-            const tb = texts[0]!;
-            const top = len(tb, 'Top');
-            const bottom = top + len(tb, 'Height');
-            const under = lines.every((l) => len(l, 'Height') === 0 && len(l, 'Top') >= top + (bottom - top) / 2 && len(l, 'Top') <= bottom + 0.1
-              && len(l, 'Left') < len(tb, 'Left') + len(tb, 'Width') && len(l, 'Left') + len(l, 'Width') > len(tb, 'Left')
-              && /^(solid|dashed|dotted|double)$/i.test(textOf(child(l, 'Style/Border/Style'))));
-            const decorated = descendants(tb).some((e) => e.name === 'TextDecoration' && textOf(e).startsWith('='));
-            if (under && !decorated) {
-              for (const run of runStyles(tb)) setChild(run, 'TextDecoration', 'Underline');
-              const holder = child(item, 'ReportItems')!;
-              holder.children = holder.children.filter((x) => !lines.includes(x as XmlElement));
-              inner = [tb];
-            }
-          }
-
-
-dropUnused(report, conv, review);
-  // Custom code is part of this report alone.
-  if (child(report, 'Code')) review.push({ item: 'Custom code', message: 'the report uses custom code (Code.*); where reports are combined, its functions must go with it' });
-
-
-/**
- * What nothing reads any more (the page header's dataset, its custom code, its pictures, a placeholder dataset, a
- * parameter only those read) is left out.
- */
-function dropUnused(report: XmlElement, conv: Conventions, review: ReviewNote[]): void {
-  const texts = () => descendants(report).flatMap((e) => [textOf(e), ...Object.values(e.attributes)]).join('\n');
-  const quoted = (name: string) => new RegExp(`"${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'i');
-  // Datasets: read by a table or chart, a parameter's values, or by name in an expression.
-  const dataSets = child(report, 'DataSets');
-  for (let changed = true; changed;) {
-    changed = false;
-    for (const ds of childElements(dataSets ?? el('x'), 'DataSet')) {
-      const name = ds.attributes.Name ?? '';
-      if (name === conv.style?.dataset) continue;
-      const others = descendants(report).filter((e) => !descendants(ds).includes(e));
-      const read = others.some((e) => (e.name === 'DataSetName' && textOf(e) === name) || (textOf(e).startsWith('=') && quoted(name).test(textOf(e))));
-      if (read) continue;
-      dataSets!.children = dataSets!.children.filter((c) => c !== ds);
-      review.push({ item: `Dataset ${name}`, message: 'left out: nothing in the template reads it (it served the page header or no data)' });
-      changed = true;
-    }
-  }
-  // Parameters only the dropped datasets passed on (the team's standard ones stay).
-  const params = child(report, 'ReportParameters');
-  const all = texts();
-  for (const p of childElements(params ?? el('x'), 'ReportParameter')) {
-    const name = p.attributes.Name ?? '';
-    if (conv.parameters.some((s) => s.name.toLowerCase() === name.toLowerCase())) continue;
-    if (new RegExp(`Parameters!${name}\\b`).test(all)) continue;
-    params!.children = params!.children.filter((c) => c !== p);
-    review.push({ item: `Parameter ${name}`, message: 'left out: nothing in the template uses it' });
-  }
-  if (params && !childElements(params, 'ReportParameter').length) report.children = report.children.filter((c) => c !== params);
-  const layout = child(report, 'ReportParametersLayout');
-  if (layout) {
-    const names = childElements(params ?? el('x'), 'ReportParameter').map((p) => p.attributes.Name ?? '');
-    const fresh = parametersLayout(names);
-    report.children = report.children.flatMap((c) => (c === layout ? (fresh ? [fresh] : []) : [c]));
-  }
-  // Custom code nothing calls; pictures nothing shows.
-  const code = child(report, 'Code');
-  if (code && !/\bCode\./.test(descendants(report).filter((e) => e !== code).map(textOf).join('\n'))) {
-    report.children = report.children.filter((c) => c !== code);
-    review.push({ item: 'Custom code', message: 'left out: nothing in the template calls it' });
-  }
-  const images = child(report, 'EmbeddedImages');
-  if (images) {
-    const shown = new Set(descendants(report).filter((e) => e.name === 'Image' && textOf(child(e, 'Source')) === 'Embedded').map((e) => textOf(child(e, 'Value'))));
-    const before = childElements(images, 'EmbeddedImage').length;
-    images.children = images.children.filter((c) => !(c && typeof c === 'object' && (c as XmlElement).name === 'EmbeddedImage' && !shown.has((c as XmlElement).attributes.Name ?? '')));
-    if (!childElements(images, 'EmbeddedImage').length) report.children = report.children.filter((c) => c !== images);
-    const dropped = before - childElements(images, 'EmbeddedImage').length;
-    if (dropped) review.push({ item: 'Pictures', message: `${dropped} left out: nothing in the template shows them (the page header's logo)` });
-  }
-}
-
-
-/** Lines along fields that formulas move: drawn as the field's underline (see RdlOptions.simpleRules). */
-  simpleRules?: boolean;
-
-
-
-simpleRules: options.simpleRules,
-
-
-/**
-   * A line along a field that formulas move or widen (a statement's underline under an indented figure) is drawn as
-   * the field's own underline (or overline) instead of short line pieces across the cell: simpler to edit, the line
-   * then as long as the figure rather than the field.
-   */
-  simpleRules?: boolean;
-
-
-const decorations: { over: boolean; shown: string }[] = [];
-
-if (moving && this.options.simpleRules) {
-              decorations.push({ over: key === 'topLine', shown: `IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)})` });
-              continue;
-            }
-
-
-// Lines drawn as the text's own underline or overline (where Crystal would draw them).
-          if (text && decorations.length) {
-            const under = decorations.find((d) => !d.over) ?? decorations[0]!;
-            const decoration = `=IIf(${under.shown} = "None", "None", "${under.over ? 'Overline' : 'Underline'}")`;
-            const runs: XmlElement[] = [];
-            const walk = (e: XmlElement) => {
-              if (e.name === 'TextRun') runs.push(e);
-              for (const c of e.children) if (c && typeof c === 'object') walk(c as XmlElement);
-            };
-            walk(text);
-            for (const run of runs) {
-              let style = run.children.find((c): c is XmlElement => !!c && typeof c === 'object' && (c as XmlElement).name === 'Style');
-              if (!style) run.children.push((style = el('Style')));
-              style.children = style.children.filter((c) => !(c && typeof c === 'object' && (c as XmlElement).name === 'TextDecoration'));
-              style.children.push(el('TextDecoration', decoration));
-            }
-          }
-

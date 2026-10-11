@@ -1,91 +1,22 @@
- // A box inside the report's box (a subreport's frame, a band) runs on to the next page as Crystal's subreport
-    // does, rather than moving whole to the next page and leaving the rest of this one blank.
-    for (const box of descendants(child(body, 'ReportItems') ?? el('x')).filter((e) => e.name === 'Rectangle' && child(e, 'Top')
-      && descendants(e).some((d) => d.name === 'Tablix'))) removeChildren(box, ['KeepTogether']);
+const m = /^=\s*(?:\w+\(\s*)?Fields!(\w+)\.Value(?:\s*(?:,\s*"[^"]*"\s*)?\))?\s*$/i.exec(v)
+    // (A field shown in one of the places it can stand: "IIf(<its place> = k, Fields!X.Value, Nothing)".)
+    ?? /^=\s*IIf\([\s\S]*,\s*Fields!(\w+)\.Value\s*,\s*Nothing\s*\)\s*$/i.exec(v);
 
-// Each wide enough to be seen and picked (0.15in): taken from the empty last column first, then from the widest
-    // column where it keeps an inch; the table keeps its width.
-    let each = emptyLast ? Math.max(SPARE_SEEN, Math.floor(len(last, 'Width') / (spare + 1) * 1000) / 1000) : SPARE_SEEN;
-    const fromLast = emptyLast ? Math.max(0, len(last, 'Width') - each) : 0;
-    const widest = (emptyLast ? columns.slice(0, -1) : columns).reduce<XmlElement | undefined>((w, c) => (!w || len(c, 'Width') > len(w, 'Width') ? c : w), undefined);
-    const rest = spare * each - Math.min(fromLast, spare * each);
-    if (rest > 0.001 && (!widest || len(widest, 'Width') - rest < 1)) each = SPARE_WIDTH;
-    if (each === SPARE_WIDTH) setChild(last, 'Width', inch(len(last, 'Width') - spare * each));
-    else {
-      if (fromLast) setChild(last, 'Width', inch(len(last, 'Width') - Math.min(fromLast, spare * each)));
-      if (rest > 0.001) setChild(widest!, 'Width', inch(len(widest!, 'Width') - rest));
-    }
-
- return (lines * size * (worked ? designLeading : 1.2)) / 72 + padding;
-
-const kinds = rowLeaves(tablix).map((l) => l.kind);
-  for (const [r, row] of rowsOf(tablix).entries()) {
-    const height = len(row, 'Height');
-    let need = 0;
-    // Rows printed once (titles, headings, totals) are drawn with room round the designer's default size; rows printed
-    // for each record or group just hold a line of it, so that a page holds about as many as Crystal's does.
-    designLeading = ['detail', 'groupHeading', 'subtotal'].includes(kinds[r] ?? 'detail') ? DESIGN_TIGHT : DESIGN_LEADING;
-
-designLeading = DESIGN_LEADING;
-
-/** The line spacing a row printed for each record is given: one line of the designer's default size, no more. */
-const DESIGN_TIGHT = 1.15;
-let designLeading = DESIGN_LEADING;
-
-/** The width a spare column is given where the table has room for it (inches): seen and picked in the designer. */
-const SPARE_SEEN = 0.15;
-
-
-let places: { key: string; line: string; step: number; start: number; width: number; last: number; at: string } | undefined;
-
-
- const shown = simple ? args[0]!.trim() : `IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)}) <> "None"`;
-              // Moved by whole steps (an indent level times a fixed width): the figure stands in one of a few places
-              // across the cell. A text box of its own at each, side by side, showing the figure (and drawing its rule,
-              // as wide and as thick as Crystal's) where the record's level puts it there.
-              const dx = obj!.conditions?.deltaX ? this.conditionExpression(obj!.conditions.deltaX, false, `${obj!.kind} object "${obj!.name}"`, 'row')?.slice(1) : undefined;
-              const step = obj!.conditions?.deltaWidth ? undefined : stepOf(dx, undefined);
-              const start = obj!.position!.x - columnLeft;
-              const width = obj!.size!.width;
-              const last = step ? Math.floor((cellWidth - 15 - start - width) / step) : -1;
-              if (step && dx && start >= 0 && last >= 0 && last < 8) {
-                places = { key, line: simple ? `IIf(${args[0]!.trim()}, ${args[1]!.trim()}, "None")` : `IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)})`, step, start, width, last, at: `IIf(IsNothing(${dx}), 0, CDbl(${dx}))` };
-                continue;
-              }
-              decorations.push({ key, shown });
-
- if (places && !items.some(Boolean)) {
-            const p = places;
-            // (Its place: the step the record's level gives, from the first to the last that fits in the cell.)
-            // (Read off the level field itself where the step is its value times a width.)
-            const level = /Fields!\w+\.Value/.exec(p.at)?.[0];
-            const index = level
-              ? `IIf(IsNothing(${level}) OrElse ${level} <= 0, 0, IIf(${level} >= ${p.last}, ${p.last}, Round(${level})))`
-              : `IIf(${p.at} <= 0, 0, IIf(Round(${p.at} / ${Math.round(p.step)}) >= ${p.last}, ${p.last}, Round(${p.at} / ${Math.round(p.step)})))`;
-            const plain = { ...textObj!, conditions: Object.fromEntries(Object.entries(textObj!.conditions ?? {}).filter(([k]) => k !== 'deltaX' && k !== 'deltaWidth')) };
-            const boxes = Array.from({ length: p.last + 1 }, (_, k) => {
-              const tb = this.textbox(this.itemNames.make(`${name}_At${k + 1}`), value, plain, format, 'row',
-                { top: 0, left: twipsToInches(p.start + k * p.step), width: twipsToInches(p.width), height }, undefined, {}, undefined);
-              const here = `${index} = ${k}`;
-              const walk = (e: XmlElement) => {
-                for (const c of e.children) {
-                  if (typeof c !== 'object' || c === null) continue;
-                  const x = c as XmlElement;
-                  if (x.name === 'Value') x.children = [`=IIf(${here}, ${String(x.children[0] ?? '').replace(/^=/, '') || 'Nothing'}, Nothing)`];
-                  else walk(x);
-                }
-              };
-              walk(tb);
-              const tbStyle = tb.children.find((c) => typeof c === 'object' && c !== null && (c as XmlElement).name === 'Style') as XmlElement | undefined;
-              const rule = el(p.key === 'topLine' ? 'TopBorder' : 'BottomBorder',
-                el('Color', obj!.border?.color ?? 'Black'),
-                el('Style', `=IIf(${here}, ${p.line}, "None")`),
-                el('Width', `${Math.max(0.25, (obj!.border?.width ?? 20) / 20).toFixed(2)}pt`));
-              if (tbStyle) tbStyle.children.push(rule);
-              else tb.children.push(el('Style', rule));
-              return tb;
-            });
-            return el('TablixCell', el('CellContents', el('Rectangle', { Name: this.itemNames.make(`${name}_Area`) },
-              el('ReportItems', ...boxes), el('KeepTogether', 'true'), el('Style', el('Border', el('Style', 'None'))))));
+// (A rule or band drawn along the row, a border or fill of its last cell, runs on through the spare cells to the
+        // table's edge, as it did across the space they are taken from.)
+        const lastItem = cellsOf(row)[at] ? cellItem(cellsOf(row)[at]!) : undefined;
+        if (lastItem) {
+          const from = ownStyle(lastItem);
+          const to = ownStyle(tb);
+          for (const side of ['TopBorder', 'BottomBorder', 'BackgroundColor']) {
+            const value = child(from, side);
+            if (value) {
+              removeChildren(to, [side]);
+              to.children.push(structuredClone(value));
+            }
           }
-
+          const all = child(from, 'Border');
+          if (all && !/^none$/i.test(textOf(child(all, 'Style')))) {
+            for (const side of ['TopBorder', 'BottomBorder']) if (!child(to, side)) to.children.push(el(side, ...structuredClone(all.children)));
+          }
+        }

@@ -1,22 +1,18 @@
-const m = /^=\s*(?:\w+\(\s*)?Fields!(\w+)\.Value(?:\s*(?:,\s*"[^"]*"\s*)?\))?\s*$/i.exec(v)
-    // (A field shown in one of the places it can stand: "IIf(<its place> = k, Fields!X.Value, Nothing)".)
-    ?? /^=\s*IIf\([\s\S]*,\s*Fields!(\w+)\.Value\s*,\s*Nothing\s*\)\s*$/i.exec(v);
-
-// (A rule or band drawn along the row, a border or fill of its last cell, runs on through the spare cells to the
-        // table's edge, as it did across the space they are taken from.)
-        const lastItem = cellsOf(row)[at] ? cellItem(cellsOf(row)[at]!) : undefined;
-        if (lastItem) {
-          const from = ownStyle(lastItem);
-          const to = ownStyle(tb);
-          for (const side of ['TopBorder', 'BottomBorder', 'BackgroundColor']) {
-            const value = child(from, side);
-            if (value) {
-              removeChildren(to, [side]);
-              to.children.push(structuredClone(value));
-            }
-          }
-          const all = child(from, 'Border');
-          if (all && !/^none$/i.test(textOf(child(all, 'Style')))) {
-            for (const side of ['TopBorder', 'BottomBorder']) if (!child(to, side)) to.children.push(el(side, ...structuredClone(all.children)));
-          }
-        }
+// A table's empty cells numbered in reading order (row by row, left to right), as the designer lists them, rather
+  // than in the order they were made.
+  if (conv.names.blank.includes('{n}')) {
+    const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const t of descendants(report).filter((e) => e.name === 'Tablix')) {
+      const T = t.attributes.Name ?? '';
+      const parts = conv.names.blank.replace(/\{S\}/g, S).replace(/\{T\}/g, T).split('{n}');
+      const shape = new RegExp(`^${parts.map(escape).join('\\d+')}$`);
+      const blanks = rowsOf(t).flatMap((row) => cellsOf(row).flatMap((cell) => {
+        const item = cellItem(cell);
+        return item && item.name === 'Textbox' && shape.test(item.attributes.Name ?? '') ? [item] : [];
+      }));
+      // (Nothing refers to an empty cell by name: the numbers are only shuffled among them.)
+      blanks.forEach((tb, i) => {
+        tb.attributes.Name = parts.join(String(i + 1));
+      });
+    }
+  }

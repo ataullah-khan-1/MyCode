@@ -1,36 +1,27 @@
-const rowCells = cellsOf(row).slice(0, at + 1);
-        let cover: XmlElement | undefined;
-        for (let c = 0, i = 0; i < rowCells.length; i++) {
-          const span = Number(textOf(child(child(rowCells[i]!, 'CellContents') ?? el('x'), 'ColSpan')) || 1);
-          if (child(rowCells[i]!, 'CellContents') && c <= at && at < c + span) cover = rowCells[i];
-          if (child(rowCells[i]!, 'CellContents')) c += span;
-        }
-        const lastItem = cover ? cellItem(cover) : undefined;
+ if (texts.filter((e) => fixedText(e) !== undefined).length < 2 || texts.some((e) => /Fields!|\b(Sum|Count|Avg)\(/i.test(valueOf(e)))) continue;
+    const mids = texts.map((e) => len(e, 'Top') + len(e, 'Height') / 2);
+    const alone = cells.every((cell) => inner(cellItem(cell)).filter((e) => e.name === 'Textbox' && !isBlank(e)).length <= 1);
+    if (alone && texts.every((e) => child(e, 'Top')) && Math.max(...mids) - Math.min(...mids) < 0.25) {
 
-
-const hiddenBy = new Map<XmlElement, string>();
-  for (const t of descendants(report).filter((e) => e.name === 'Tablix')) {
-    const rows = rowsOf(t);
-    let r = 0;
-    const walk = (members: XmlElement | undefined, conds: string[]) => {
-      for (const m of childElements(members ?? el('TablixMembers'), 'TablixMember')) {
-        const hidden = textOf(child(m, 'Visibility/Hidden')).trim();
-        const own = hidden.startsWith('=') && !/CountRows\(\)/.test(hidden) ? [...conds, `(${hidden.slice(1)})`] : conds;
-        const nested = child(m, 'TablixMembers');
-        if (nested) walk(nested, own);
-        else {
-          const row = rows[r++];
-          if (row && own.length) for (const tb of descendants(row).filter((e) => e.name === 'Textbox')) hiddenBy.set(tb, own.join(' OrElse '));
-        }
+for (let i = 0, c = 0, now = cellsOf(row); i < now.length; i++) {
+      if (!child(now[i]!, 'CellContents')) continue;
+      const span = spanOf(now[i]!);
+      const room = widths.slice(c, c + span).reduce((a, b) => a + b, 0);
+      const parts = inner(cellItem(now[i]!));
+      const only = parts.length === 1 && parts[0]!.name === 'Textbox' ? parts[0]! : undefined;
+      if (only && fixedText(only) !== undefined && descendants(only).some((e) => e.name === 'TextAlign' && /^center$/i.test(textOf(e)))) {
+        setChild(only, 'Left', '0in');
+        setChild(only, 'Width', inch(room));
       }
-    };
-    walk(child(t, 'TablixRowHierarchy/TablixMembers'), []);
+      c += span;
+    }
+
+ const skip = ruled.length ? Math.max(0, Math.min(...ruled.map((e) => len(e, 'Top'))) - 0.028) : 0;
+
+const lower = el('TablixRow', el('Height', inch(Math.max(height - cut, lowerBottom - cut + 0.2))), el('TablixCells', ...lowerCells));
+
+for (const box of descendants(report).filter((e) => e.name === 'Rectangle')) {
+    const heads = childElements(child(box, 'ReportItems') ?? box).filter((e) => e.name === 'Textbox' && /_ColTxt$/i.test(e.attributes.Name ?? ''));
+    if (heads.length > 1) out.push({ kind: 'merge', item: box.attributes.Name ?? 'Rectangle', message: `holds ${heads.length} column headings (${heads.map((e) => e.attributes.Name).join(', ')}): the merge takes one heading per column` });
   }
-
-if (style.rowBands && !unbanded.has(tb)) {
-          const counted = hiddenBy.has(tb) ? `RunningValue(IIf(${hiddenBy.get(tb)}, 0, 1), Sum, Nothing)` : 'RowNumber(Nothing)';
-          setChild(own, 'BackgroundColor', `=IIF(${counted} Mod 2, ${expr(field(style.rowBands.odd, fillWord))}, ${expr(field(style.rowBands.even, fillWord))})`);
-        }
-
-const painted = descendants(row).filter((e) => e.name === 'Textbox').map((c) => textOf(child(ownStyle(c), 'BackgroundColor'))).find((v) => v.startsWith('=First(') || v.startsWith('=IIF(RowNumber') || v.startsWith('=IIF(RunningValue'));
 

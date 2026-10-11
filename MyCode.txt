@@ -1,8 +1,36 @@
-const ownTitle = descendants(tablix).find((e) => e.name === 'Textbox' && roles.get(e) === 'title');
-      const what = ((ownTitle && fixedText(ownTitle)) ?? titleText ?? reportName.replace(/_/g, ' ')).trim();
+const rowCells = cellsOf(row).slice(0, at + 1);
+        let cover: XmlElement | undefined;
+        for (let c = 0, i = 0; i < rowCells.length; i++) {
+          const span = Number(textOf(child(child(rowCells[i]!, 'CellContents') ?? el('x'), 'ColSpan')) || 1);
+          if (child(rowCells[i]!, 'CellContents') && c <= at && at < c + span) cover = rowCells[i];
+          if (child(rowCells[i]!, 'CellContents')) c += span;
+        }
+        const lastItem = cover ? cellItem(cover) : undefined;
 
-const each = SPARE_WIDTH;
-    const widest = columns.reduce<XmlElement | undefined>((w, c) => (!w || len(c, 'Width') > len(w, 'Width') ? c : w), undefined)!;
-    const from = len(widest, 'Width') - spare * each >= 1 ? widest : last;
-    setChild(from, 'Width', inch(len(from, 'Width') - spare * each));
+
+const hiddenBy = new Map<XmlElement, string>();
+  for (const t of descendants(report).filter((e) => e.name === 'Tablix')) {
+    const rows = rowsOf(t);
+    let r = 0;
+    const walk = (members: XmlElement | undefined, conds: string[]) => {
+      for (const m of childElements(members ?? el('TablixMembers'), 'TablixMember')) {
+        const hidden = textOf(child(m, 'Visibility/Hidden')).trim();
+        const own = hidden.startsWith('=') && !/CountRows\(\)/.test(hidden) ? [...conds, `(${hidden.slice(1)})`] : conds;
+        const nested = child(m, 'TablixMembers');
+        if (nested) walk(nested, own);
+        else {
+          const row = rows[r++];
+          if (row && own.length) for (const tb of descendants(row).filter((e) => e.name === 'Textbox')) hiddenBy.set(tb, own.join(' OrElse '));
+        }
+      }
+    };
+    walk(child(t, 'TablixRowHierarchy/TablixMembers'), []);
+  }
+
+if (style.rowBands && !unbanded.has(tb)) {
+          const counted = hiddenBy.has(tb) ? `RunningValue(IIf(${hiddenBy.get(tb)}, 0, 1), Sum, Nothing)` : 'RowNumber(Nothing)';
+          setChild(own, 'BackgroundColor', `=IIF(${counted} Mod 2, ${expr(field(style.rowBands.odd, fillWord))}, ${expr(field(style.rowBands.even, fillWord))})`);
+        }
+
+const painted = descendants(row).filter((e) => e.name === 'Textbox').map((c) => textOf(child(ownStyle(c), 'BackgroundColor'))).find((v) => v.startsWith('=First(') || v.startsWith('=IIF(RowNumber') || v.startsWith('=IIF(RunningValue'));
 

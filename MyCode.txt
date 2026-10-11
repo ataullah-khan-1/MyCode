@@ -1,46 +1,101 @@
-: convertDocumentToSsrs(doc, name, { connectionString, sharedDataSource, separateSubreports, pageNumber, parameterValues, chartAxisFormat, restyle, reshape }));
+: convertDocumentToSsrs(doc, name, { connectionString, sharedDataSource, separateSubreports, pageNumber, parameterValues, chartAxisFormat, restyle, reshape, formulasInQuery: !!conventionsPath, rulesAsText: !!conventionsPath }));
 
-// (Each subreport's frame stays: when the report runs, a frame growing with its table pushes the next frame down,
-    // which items side by side in one box, touching, would not do.)
+// A last column left empty in every row (Crystal's space at the table's right) is shared out with the spare
+    // columns, so that each is wide enough to be seen and picked in the designer; otherwise they are thin slivers.
+    const at = columns.length - 1;
+    const emptyLast = rowsOf(t).every((row) => {
+      const cells = cellsOf(row);
+      const item = cells[at] ? cellItem(cells[at]!) : undefined;
+      return !cells[at] || !item || (item.name === 'Textbox' && isBlank(item) && !drawnAs(item));
+    }) && rowsOf(t).every((row) => cellsOf(row).length === columns.length);
+    const each = emptyLast && len(last, 'Width') / (spare + 1) >= 0.05 ? Math.floor(len(last, 'Width') / (spare + 1) * 1000) / 1000 : SPARE_WIDTH;
+    setChild(last, 'Width', inch(len(last, 'Width') - spare * each));
+    const T = t.attributes.Name ?? '';
+    for (let k = 0; k < spare; k++) {
+      child(t, 'TablixBody/TablixColumns')!.children.push(el('TablixColumn', el('Width', inch(each))));
 
-if (len(e, 'Top') >= oldBottom - 0.001 && len(e, 'Left') < right && len(e, 'Left') + len(e, 'Width') > left) setChild(e, 'Top', inchUp(len(e, 'Top') + by));
 
-if (e.name === 'Rectangle') setChild(e, 'Height', inchUp(len(e, 'Height') + g));
+/** Rules moved by formulas with a field are drawn as the text's underline or overline. */
+  rulesAsText?: boolean;
 
-setChild(j, 'Top', inchUp(bj.top + s));
+ rulesAsText: options.rulesAsText,
 
 
 /**
- * The step (twips) a field's X position formula moves it by, where it moves it by whole steps only: a whole number
- * (an indent level, Nothing as 0) times a fixed width in inches, times 1440. Undefined for any other formula.
- */
-function stepOf(dx: string | undefined, dw: string | undefined): number | undefined {
-  if (!dx || dw) return undefined;
-  const text = dx.trim();
-  // Null-safe either way: IIf(IsNothing(x), 0, x) * w * 1440, or IIf(IsNothing(x), Nothing, x * w * 1440).
-  const guarded = /^IIf\(IsNothing\(Fields!(\w+)\.Value\), Nothing, \(\(Fields!\1\.Value \* ([\d.]+)\) \* 1440\)\)$/.exec(text);
-  const plain = /^\(*\s*(IIf\(IsNothing\(Fields!(\w+)\.Value\), 0, (?:Fields!\2\.Value|\d+)\)|Fields!\w+\.Value)\s*\*\s*([\d.]+)\s*\)\s*\*\s*1440\s*\)*$/.exec(text);
-  const width = guarded ? Number(guarded[2]) : plain ? Number(plain[3]) : NaN;
-  const step = width * 1440;
-  return Number.isFinite(step) && step >= 60 ? step : undefined;
-}
+   * Rules a formula moves with a field (an underline indented with its figure) are the text's own underline or
+   * overline, shown by the same formula, as a team's templates draw them, instead of a line drawn in pieces.
+   */
+  rulesAsText?: boolean;
 
-// A field moved by whole steps (an indent level times a fixed width: Crystal's "level * 1.15 * 1440")
-              // starts and ends only at known places: the line is cut there, a few pieces each drawn whole or not at
-              // all. Otherwise it is cut in short pieces all along the cell.
-              const step = stepOf(dxValue, dwValue);
-              const cuts = new Set<number>([0, inside]);
-              if (step) {
-                for (let k = 0; ownLeft + k * step < inside && k < 200; k++) {
-                  for (const x of [ownLeft + k * step, ownLeft + k * step + obj!.size!.width]) if (x > 0 && x < inside) cuts.add(Math.round(x));
-                }
-              } else {
-                for (let x = RULE_PIECE; x < inside; x += RULE_PIECE) cuts.add(x);
+ rulesAsText: this.options.rulesAsText,
+
+ // (In a team's template, a rule moved with the field: the text's own underline or overline, shown where the rule
+          // would be drawn.)
+          const decorations: { key: string; shown: string }[] = [];
+          const movedRules = obj!.conditions?.deltaX || obj!.conditions?.deltaWidth ? ruleFormulas : [];
+          for (const key of ruleFormulas) {
+            const style = this.conditionExpression(obj!.conditions![key]!, false, `${obj!.kind} object "${obj!.name}"`, 'row');
+            if (!style) continue;
+            if (this.options.rulesAsText && movedRules.length === 1 && movedRules.includes(key)) {
+              const sides = obj!.border?.sides ?? [0, 0, 0, 0];
+              const own = BORDER_STYLES[key === 'topLine' ? sides[2] : sides[3]] ?? 'None';
+              // (A formula choosing a line or none, "if ... then crSingleLine else crNoLine": shown on its condition.)
+              const args = topLevelArgs(style.slice(1));
+              const simple = args && args.length === 3 && /^"(?!None")\w+"$/.test(args[1]!.trim()) && args[2]!.trim() === '"None"';
+              decorations.push({ key, shown: simple ? args[0]!.trim() : `IIf(IsNothing(${style.slice(1)}), "${own}", ${style.slice(1)}) <> "None"` });
+              continue;
+            }
+
+
+const decorate = (tb: XmlElement) => {
+            for (const d of decorations) {
+              const runs: XmlElement[] = [];
+              const walk = (e: XmlElement) => {
+                for (const c of e.children) if (typeof c === 'object' && c !== null) (c as XmlElement).name === 'TextRun' ? runs.push(c as XmlElement) : walk(c as XmlElement);
+              };
+              walk(tb);
+              for (const run of runs) {
+                let runStyle = run.children.find((c) => typeof c === 'object' && c !== null && (c as XmlElement).name === 'Style') as XmlElement | undefined;
+                if (!runStyle) run.children.push(runStyle = el('Style'));
+                runStyle.children = runStyle.children.filter((c) => !(typeof c === 'object' && c !== null && (c as XmlElement).name === 'TextDecoration'));
+                runStyle.children.push(el('TextDecoration', `=IIf(${d.shown}, "${d.key === 'topLine' ? 'Overline' : 'Underline'}", "None")`));
               }
-              const sorted = [...cuts].sort((a, b) => a - b);
-              for (let i = 0; i + 1 < sorted.length; i++) {
-                const x = sorted[i]!;
-                const right = sorted[i + 1]!;
-                if (right - x < 1) continue;
+            }
+            return tb;
+          };
+          // Only the text left in the cell: the cell holds it alone.
+          if (decorations.length && !items.some(Boolean)) {
+            return el('TablixCell', el('CellContents', decorate(this.textbox(name, value, this.ruledBorderObject(textObj, ruled), format, 'row', undefined, undefined, ruled, textPadding))));
+          }
+          const text = obj || ruled.top || ruled.bottom || ruled.left || ruled.right || background
+            ? this.textbox(name, value, this.ruledBorderObject(textObj, ruled), format, 'row', { top: 0, left: 0, width: columnWidth, height }, undefined, ruled, textPadding)
+            : null;
+          if (text) decorate(text);
 
+
+/** The arguments of a call written "IIf(a, b, c)" (split at its own commas), or undefined for anything else. */
+function topLevelArgs(expression: string): string[] | undefined {
+  const m = /^IIf\(([\s\S]*)\)$/.exec(expression.trim());
+  if (!m) return undefined;
+  const args: string[] = [];
+  let depth = 0;
+  let quoted = false;
+  let start = 0;
+  const body = m[1]!;
+  for (let i = 0; i < body.length; i++) {
+    const c = body[i];
+    if (c === '"') quoted = !quoted;
+    else if (quoted) continue;
+    else if (c === '(') depth++;
+    else if (c === ')') {
+      if (--depth < 0) return undefined;
+    } else if (c === ',' && depth === 0) {
+      args.push(body.slice(start, i));
+      start = i + 1;
+    }
+  }
+  if (depth !== 0 || quoted) return undefined;
+  args.push(body.slice(start));
+  return args;
+}
 

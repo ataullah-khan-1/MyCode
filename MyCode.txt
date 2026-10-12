@@ -1,27 +1,9 @@
- if (texts.filter((e) => fixedText(e) !== undefined).length < 2 || texts.some((e) => /Fields!|\b(Sum|Count|Avg)\(/i.test(valueOf(e)))) continue;
-    const mids = texts.map((e) => len(e, 'Top') + len(e, 'Height') / 2);
-    const alone = cells.every((cell) => inner(cellItem(cell)).filter((e) => e.name === 'Textbox' && !isBlank(e)).length <= 1);
-    if (alone && texts.every((e) => child(e, 'Top')) && Math.max(...mids) - Math.min(...mids) < 0.25) {
-
-for (let i = 0, c = 0, now = cellsOf(row); i < now.length; i++) {
-      if (!child(now[i]!, 'CellContents')) continue;
-      const span = spanOf(now[i]!);
-      const room = widths.slice(c, c + span).reduce((a, b) => a + b, 0);
-      const parts = inner(cellItem(now[i]!));
-      const only = parts.length === 1 && parts[0]!.name === 'Textbox' ? parts[0]! : undefined;
-      if (only && fixedText(only) !== undefined && descendants(only).some((e) => e.name === 'TextAlign' && /^center$/i.test(textOf(e)))) {
-        setChild(only, 'Left', '0in');
-        setChild(only, 'Width', inch(room));
+if (this.ungroupedRows) {
+        footerMembers[0] = footerMembers[0].map((m) => {
+          const own = (m.children.find((c) => typeof c === 'object' && c !== null && (c as XmlElement).name === 'Visibility') as XmlElement | undefined)
+            ?.children.map((c) => (typeof c === 'object' && c !== null ? String((c as XmlElement).children[0] ?? '') : '')).find(Boolean);
+          if (own === 'true') return m;
+          const hidden = own && own.startsWith('=') ? `=CountRows() = 0 OrElse (${own.slice(1)})` : '=CountRows() = 0';
+          return { ...m, children: [el('Visibility', el('Hidden', hidden)), ...m.children.filter((c) => !(typeof c === 'object' && c !== null && (c as XmlElement).name === 'Visibility'))] };
+        });
       }
-      c += span;
-    }
-
- const skip = ruled.length ? Math.max(0, Math.min(...ruled.map((e) => len(e, 'Top'))) - 0.028) : 0;
-
-const lower = el('TablixRow', el('Height', inch(Math.max(height - cut, lowerBottom - cut + 0.2))), el('TablixCells', ...lowerCells));
-
-for (const box of descendants(report).filter((e) => e.name === 'Rectangle')) {
-    const heads = childElements(child(box, 'ReportItems') ?? box).filter((e) => e.name === 'Textbox' && /_ColTxt$/i.test(e.attributes.Name ?? ''));
-    if (heads.length > 1) out.push({ kind: 'merge', item: box.attributes.Name ?? 'Rectangle', message: `holds ${heads.length} column headings (${heads.map((e) => e.attributes.Name).join(', ')}): the merge takes one heading per column` });
-  }
-

@@ -1,17 +1,6 @@
-if (st && /solid/i.test(textOf(child(child(st, 'BottomBorder') ?? el('x'), 'Style') ?? el('x')))) {
+if (st && widths[k]! > it.w * 1.5 && fixedText(it.t) !== undefined && /solid/i.test(textOf(child(child(st, 'BottomBorder') ?? el('x'), 'Style') ?? el('x')))) {
+        removeChildren(st, ['BottomBorder']);
+        for (const run of descendants(it.t).filter((e) => e.name === 'TextRun')) setChild(ownStyle(run), 'TextDecoration', 'Underline');
         setChild(st, 'VerticalAlign', 'Bottom');
-        setChild(st, 'PaddingBottom', '1pt');
         underRule.add(it.t);
-      }
-
-if (border && side === 'BottomBorder' && built.length > lines.length) for (const c of cellsOf(built[lines.length - 1]!)) {
-      const t = cellItem(c)!;
-      const st = childElements(t, 'Style')[0];
-      if (!st) continue;
-      removeChildren(st, [side]);
-      if (underRule.has(t)) {
-        underRule.delete(t);
-        removeChildren(st, ['VerticalAlign']);
-        setChild(st, 'PaddingBottom', '2pt');
-      }
-    }
+      } else if (st && /solid/i.test(textOf(child(child(st, 'BottomBorder') ?? el('x'), 'Style') ?? el('x')))) {

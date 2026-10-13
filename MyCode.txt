@@ -1,15 +1,22 @@
-const at = Math.min(...ruled.filter((r) => r).map((r) => len(r!.t, 'Top')));
-        cellsOf(row).forEach((cell, c) => {
-          if (ruled[c]) return;
-          const box = cellItem(cell);
-          const texts = box?.name === 'Textbox' ? [box] : childElements(child(box ?? el('x'), 'ReportItems') ?? el('x')).filter((e) => e.name === 'Textbox');
-          for (const t of texts.filter((x) => !isBlank(x))) {
-            const st = childElements(t, 'Style')[0];
-            if (!st) continue;
-            if (t === box) setChild(st, 'PaddingTop', `${Math.round(at * 720) / 10}pt`);
-            else setChild(t, 'Top', inch(at));
-            if (t !== box) setChild(st, 'PaddingTop', '0pt');
-            setChild(st, 'VerticalAlign', 'Top');
-            underRule.add(t);
+if (span > 1 && !headingRow && headed.some((x) => TOTALLED.test(valueOf(x)))) {
+        const label = (item?.name === 'Rectangle' ? inner(item) : item ? [item] : []).find((x) => x.name === 'Textbox' && /:\s*$/.test(fixedText(x) ?? '') && !isBlank(x));
+        if (label) {
+          const { size } = drawnFont(label, true);
+          dataNeed[c] = Math.max(dataNeed[c]!, arialWidth(fixedText(label)!, size, true) * 1.05 + 0.08);
+        }
+      }
+
+
+} else if (descendants(e).some((x) => x.name === 'Format')) {
+            if (child(e, 'Width')) dataNeed[c] = Math.max(dataNeed[c]!, len(e, 'Left') + len(e, 'Width'));
+            const format = textOf(descendants(e).find((x) => x.name === 'Format'));
+            const decimals = /^[NCP](\d+)$/i.exec(format)?.[1] ?? /\.(0+)/.exec(format)?.[1]?.length;
+            const sample = /^[dDgG]$/.test(format) || /yy|MM|dd/.test(format)
+              ? format.length > 1 ? format.replace(/yyyy/g, '0000').replace(/yy|MM|dd|HH|mm|ss/g, '00').replace(/[Mdy]/g, '00') : '00/00/0000'
+              : decimals !== undefined ? `000.${'0'.repeat(Number(decimals))}` : '';
+            if (sample) {
+              const { size, bold } = drawnFont(e, false);
+              const pads = paddingOf(e, ['PaddingLeft', 'PaddingRight']);
+              dataNeed[c] = Math.max(dataNeed[c]!, (child(e, 'Left') ? len(e, 'Left') : 0) + arialWidth(sample, size, bold) * 1.05 + pads + 0.02);
+            }
           }
-        });

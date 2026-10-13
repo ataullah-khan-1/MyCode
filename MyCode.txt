@@ -1,7 +1,10 @@
-const bottom = child(childElements(item, 'Style')[0] ?? el('x'), 'BottomBorder');
-          for (let k = 0; k < span; k++) {
-            if (c + k === j) { cells[c + k]!.children = moved; continue; }
-            const blank = newTextbox(`__moved_${c + k}`, '', '0pt');
-            if (bottom) childElements(blank, 'Style')[0]!.children.push(structuredClone(bottom));
-            cells[c + k]!.children = [el('CellContents', blank)];
-          }
+if (k === 0 && !it.right && !/center/i.test(textAlignOf(it.t))) pad(it.t, { left: Math.max(0, Math.min(it.x - starts[k]!, widths[k]! / 2)) });
+
+const target = side === 'TopBorder' ? built[0]! : built[built.length - (built.length > lines.length ? 2 : 1)]!;
+
+const gapAfter = rows[block[block.length - 1]! + 1];
+  if (gapAfter && headAt === block[block.length - 1]! + 1) {
+    built.push(el('TablixRow', el('Height', '0.1in'), el('TablixCells', ...widths.map((_, k) => el('TablixCell', el('CellContents', newTextbox(`__summary_gap_${k}`, '', '0pt')))))));
+  }
+
+const key = firstBox ? [...valueOf(firstBox).matchAll(/(\w+\(\s*)?Fields!(\w+)\.Value/g)].find((m) => !m[1] || /^IIf\(/i.test(m[1]))?.[2] : undefined;

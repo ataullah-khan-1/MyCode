@@ -1,56 +1,24 @@
-if (tablix === tablixes[0]) foldLead(tablix, review);
+const boxedHeads = new WeakSet<XmlElement>();
 
-const { size, bold } = drawnFont(it.t, true);
-        const span = Math.max(it.w, arialWidth((fixedText(it.t) ?? '').trim(), size, bold) + 6 / 72);
-        const middle = left + Math.min(it.w, widths[k]! - left) / 2;
-        const padLeft = Math.max(0, Math.min(middle - span / 2, widths[k]! - span));
-        setChild(st, 'PaddingLeft', `${Math.round(padLeft * 720) / 10}pt`);
-        setChild(st, 'PaddingRight', `${Math.round(Math.max(0, widths[k]! - padLeft - span) * 720) / 10}pt`);
+if (item.name === 'Textbox' && cellWidth && fixedText(item) && !boxedHeads.has(item)) roomForWords(item, cellWidth, designText);
 
- else if (k > 0 && st && !underRule.has(it.t)) {
-        const room = Math.max(0, widths[k]! - it.w);
-        const left = Math.min(Math.max(0, it.x - starts[k]!), room);
-        const right = Math.min(Math.max(0, starts[k]! + widths[k]! - it.x - it.w), room);
-        const at = (v: number) => `${Math.max(2, Math.round(v * 720) / 10)}pt`;
-        const align = it.right ? 'right' : /center/i.test(textAlignOf(it.t)) ? 'center' : 'left';
-        if (align !== 'right') setChild(st, 'PaddingLeft', at(left));
-        if (align !== 'left') setChild(st, 'PaddingRight', at(right));
-      }
-    };
-    const valueField = value ? fieldOf(value.t) : undefined;
-    if (label && value) {
-      const end = value.x + value.w;
-      const home = Math.max(1, colOf(value));
-      const taken = (k: number) => headerCols.has(k) || line.some((o) => o !== value && o !== label && colOf(o) === k && !/^\([A-Z]\)$/.test((fixedText(o.t) ?? '').trim()));
-      const mark = line.find((m) => m !== value && /^\([A-Z]\)$/.test((fixedText(m.t) ?? '').trim()) && m.x >= end - 0.05 && m.x - end < 0.4 && colOf(m) === home && taken(home + 1));
-      const para = descendants(value.t).find((e) => e.name === 'TextRuns');
-      const run = para && childElements(para, 'TextRun')[0];
-      if (mark && para && run) {
-        const style = structuredClone(childElements(run, 'Style')[0] ?? el('Style'));
-        removeChildren(style, ['Format']);
-        para.children.push(el('TextRun', el('Value', `\u00a0\u00a0${(fixedText(mark.t) ?? '').trim()}`), style));
-        value.w = mark.x + mark.w - value.x;
-        value.right = true;
-        line.splice(line.indexOf(mark), 1);
-      }
-    }
-    if (label && value) {
-      const field = valueField ?? 'value';
-      summaryNames.set(label.t, `${field}_HdrTxt`);
-      summaryNames.set(value.t, `${field}_HdrVal`);
-      place(label, 0);
+setChild(st, 'PaddingLeft', `${Math.round(left * 720) / 10}pt`);
+        setChild(st, 'PaddingRight', `${Math.round(Math.max(0, widths[k]! - left - it.w) * 720) / 10}pt`);
+        boxedHeads.add(it.t);
 
+if (n < 3 || childElements(members, 'TablixMember').length !== n) return;
+  const aligned = leaves.length === rows.length;
 
-const extra = descendants(e).filter((x) => x.name === 'TextRun').slice(1).map((r) => textOf(child(r, 'Value'))).join('');
-      const need = arialWidth(`000,000,000.00${extra}`, size, true) * 1.05 + 0.1;
-
-
-function foldLead(tablix: XmlElement, review: ReviewNote[]): void {
-
-
-if (!fits) {
-    const blocking = rows.findIndex((row) => { const cells = cellsOf(row); return cells.length > 0 && spanOf(cells[0]!) <= 1 && !empty(cells[0]!) && cells[1] !== undefined && !empty(cells[1]!); });
-    const what = (cell: XmlElement | undefined) => (cell ? descendants(cell).filter((e) => e.name === 'Textbox' || e.name === 'Line').map((e) => e.attributes.Name).join('+') : '');
-    review.push({ item: tablix.attributes.Name ?? 'Table', message: `its first column has no heading and could not be folded into the next: row ${blocking + 1} has ${what(cellsOf(rows[blocking]!)[0])} and ${what(cellsOf(rows[blocking]!)[1])} side by side` });
+const headingLike = (row: XmlElement) => {
+    const items = cellsOf(row).map(shown).filter((t) => t && !isBlank(t));
+    return items.length >= 3 && items.every((t) => t!.name === 'Textbox' && fixedText(t!) !== undefined);
+  };
+  const valueRow = rows.findIndex((row) => cellsOf(row).map(shown).filter((t) => t?.name === 'Textbox' && /Fields!/.test(valueOf(t)) && !TOTALLED.test(valueOf(t))).length >= 3);
+  const head = aligned
+    ? rows.findIndex((row, i) => leaves[i]!.kind === 'heading' && headingLike(row))
+    : Math.max(-1, ...rows.map((row, i) => (i < (valueRow < 0 ? rows.length : valueRow) && headingLike(row) ? i : -1)));
+  if (head < 0) {
+    if (!aligned) review.push({ item: tablix.attributes.Name ?? 'Table', message: 'its first column could not be checked for a heading: no row of column headings found' });
     return;
   }
+

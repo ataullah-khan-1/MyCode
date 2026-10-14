@@ -1,28 +1,45 @@
-for (const tablix of tablixes) { alignTotals(tablix); pairSides(tablix); }
+if (kind === 'total' && !isBlank(tb) && across >= Math.max(2, columns - 1) && !/\b(Sum|Count|CountDistinct|Avg|RunningValue)\s*\(/i.test(valueOf(tb))) {
+            if (footerInTable) return rename(tb, 'text', { T });
 
-const runs = descendants(it.t).filter((e) => e.name === 'TextRun').slice(1).map((r) => textOf(child(r, 'Value'))).join('');
-        const keep = labelAside && it.right && isField(it.t) ? arialWidth(`000,000,000.00${runs}`, 8, true) * 1.05 + 0.1 : 0;
-        const right = Math.min(Math.max(0, starts[k]! + widths[k]! - it.x - it.w), it.right ? Math.max(room, widths[k]! - (labelAside ? Math.max(0.9, keep) : 1.3)) : room);
+} else {
+        const after = line.filter((o) => o.x > it.x && o !== label && o !== value).sort((p, q) => p.x - q.x)[0];
+        const paired = text !== undefined && /[A-Za-z]{3}/.test(text) && after && isField(after.t) && !headerCols.has(colOf(after)) ? fieldOf(after.t) : undefined;
+        summaryNames.set(it.t, paired ? `${paired}_HdrTxt` : `${snake(text ?? 'text') || 'text'}_Txt`);
+      }
 
-const need = text !== undefined ? arialWidth(text, 8, true) * 1.05 + 0.1 : Math.min(Math.max(label.w, 2), 2.5);
-
-function alignTotals(tablix: XmlElement): void {
-  const leaves = rowLeaves(tablix);
-  rowsOf(tablix).forEach((row, i) => {
-    if (leaves[i]?.kind !== 'total' && leaves[i]?.kind !== 'subtotal') return;
-    const texts = cellsOf(row).map((c) => cellItem(c)).filter((t): t is XmlElement => t?.name === 'Textbox' && !isBlank(t));
-    const totals = texts.filter((t) => TOTALLED.test(valueOf(t)));
-    if (!totals.length || totals.length === texts.length) return;
-    const tops = totals.map((t) => textOf(child(childElements(t, 'Style')[0] ?? el('x'), 'PaddingTop')));
-    const top = tops.every((v) => v === tops[0]) ? tops[0] : undefined;
-    if (!top || top.startsWith('=') || totals.some((t) => textOf(child(childElements(t, 'Style')[0] ?? el('x'), 'VerticalAlign')) !== 'Top')) return;
-    for (const t of texts) {
-      const st = childElements(t, 'Style')[0];
-      if (!st || TOTALLED.test(valueOf(t))) continue;
-      setChild(st, 'VerticalAlign', 'Top');
-      setChild(st, 'PaddingTop', top);
+const above = side === 'TopBorder' && block[0]! > 0 ? cellsOf(rows[block[0]! - 1]!) : [];
+    const whole = above.length && Number(textOf(child(child(above[0]!, 'CellContents') ?? el('x'), 'ColSpan')) || 1) >= n ? cellItem(above[0]!) : undefined;
+    const inside = whole?.name === 'Rectangle' ? childElements(child(whole, 'ReportItems') ?? el('x')).filter((e) => ITEMS.has(e.name)) : [];
+    const title = whole?.name === 'Rectangle' ? (inside.length === 1 ? inside[0] : undefined) : whole;
+    if (border && title?.name === 'Textbox' && fixedText(title) !== undefined && !child(childElements(title, 'Style')[0] ?? el('x'), 'BottomBorder')) {
+      const st = childElements(title, 'Style')[0];
+      if (st) { st.children.push({ ...structuredClone(border), name: 'BottomBorder' }); continue; }
     }
-  });
-}
+
+holder.children.splice(where, 0, ...built.map(() => { const copy = structuredClone(member); removeChildren(copy, ['RepeatOnNewPage']); return copy; }));
+
+if (level < 0 && this.foldedGroups.has(ref.toLowerCase())) return '';
+
+return this.foldConstantGroups({
+
+});
+  }
+
+  private readonly foldedGroups = new Set<string>();
+
+  private foldConstantGroups(areas: Classified): Classified {
+    let k = 0;
+    while (k < this.groupFields.length && (this.isConstantGroup(this.groupFields[k]) || this.foldedGroups.has(this.groupFields[k]!.toLowerCase()))) k++;
+    const total = Math.max(k, ...[...areas.groupHeaders.keys(), ...areas.groupFooters.keys()].filter((l) => l <= k));
+    if (k < 2 || total < 2) return areas;
+    const shift = (map: Map<number, SectionInfo[]>, outer: SectionInfo[]) => new Map<number, SectionInfo[]>([[1, outer], ...[...map].filter(([l]) => l > k).map(([l, s]) => [l - k + 1, s] as [number, SectionInfo[]])]);
+    const heads = Array.from({ length: k }, (_, i) => areas.groupHeaders.get(i + 1) ?? []).flat();
+    const foots = Array.from({ length: k }, (_, i) => areas.groupFooters.get(k - i) ?? []).flat();
+    if (this.groupFields.length >= k && !this.foldedGroups.size) {
+      for (const f of this.groupFields.slice(1, k)) this.foldedGroups.add(f.toLowerCase());
+      this.groupFields.splice(1, k - 1);
+      this.groupNames.splice(1, k - 1);
+    }
+    return { ...areas, groupHeaders: shift(areas.groupHeaders, heads), groupFooters: shift(areas.groupFooters, foots) };
 
 

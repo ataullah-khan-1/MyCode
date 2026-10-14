@@ -1,15 +1,10 @@
-return this.totalsInGroup(this.foldConstantGroups({
+const left = Math.max(0, len(t!, 'Left') - shift);
+            const right = Math.min(colWidths[j]!, len(t!, 'Left') + len(t!, 'Width') - shift);
+            setChild(t!, 'Left', inch(left));
+            setChild(t!, 'Width', inch(right - left > 0.05 ? right - left : colWidths[j]! - left));
 
-private totalsInGroup(areas: Classified): Classified {
-    const outer = this.groupFields[0];
-    if (!outer || !this.isConstantGroup(outer) || !areas.groupHeaders.get(1)?.length) return areas;
-    const totals = (s: SectionInfo) => !s.newPageAfter && !s.newPageBefore && !s.conditions?.newPageAfter && !s.conditions?.newPageBefore
-      && s.objects.some((o) => o.kind === 'field' && SUMMARY_NAME.test(o.field ?? '')) && s.objects.every((o) => o.kind === 'field' || o.kind === 'text' || o.kind === 'line');
-    const lead = areas.reportFooter.findIndex((s) => !totals(s));
-    const moved = areas.reportFooter.slice(0, lead < 0 ? areas.reportFooter.length : lead);
-    if (!moved.length) return areas;
-    const groupFooters = new Map(areas.groupFooters);
-    groupFooters.set(1, [...(groupFooters.get(1) ?? []), ...moved.map((s) => splitConditionalSpans(s, (o) => this.isBlankMessage(o))).flat()]);
-    return { ...areas, groupFooters, reportFooter: areas.reportFooter.slice(moved.length) };
-  }
+if (kind === 'detail' && !summaryNames.has(tb) && !statement) {
+            underRule.add(tb);
+            setChild(ownStyle(tb), 'VerticalAlign', 'Top');
+          }
 

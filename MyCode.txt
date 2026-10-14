@@ -1,14 +1,29 @@
-const summaryPads = new WeakMap<XmlElement, [string, string]>();
+const inset = Math.min(Math.max(0, len(tb, 'Left') - starts[within]!), widths[k]! / 2);
+            unplace(tb);
+            if (inset > 0.02 && !/center|right/i.test(textAlignOf(tb))) pad(tb, { left: inset });
 
-for (const tb of descendants(lead).filter((e) => e.name === 'Textbox' && summaryPads.has(e))) {
-      const [padLeft, padRight] = summaryPads.get(tb)!;
-      const st = childElements(tb, 'Style')[0];
-      if (st && padLeft) setChild(st, 'PaddingLeft', padLeft);
-      if (st && padRight) setChild(st, 'PaddingRight', padRight);
-    }
+let labelAside = false;
 
-if (k === 0 && !it.right && !/center/i.test(textAlignOf(it.t))) {
-        pad(it.t, { left: Math.max(0, Math.min(it.x - starts[k]!, widths[k]! / 2)) });
-        if (st) summaryPads.set(it.t, [textOf(child(st, 'PaddingLeft')), textOf(child(st, 'PaddingRight'))]);
+const right = Math.min(Math.max(0, starts[k]! + widths[k]! - it.x - it.w), it.right ? Math.max(room, widths[k]! - (labelAside ? 0.9 : 1.3)) : room);
+
+const at = open.filter((k) => starts[k]! <= label.x + 0.01).pop() ?? 0;
+      const inset = label.x - starts[at]!;
+      let across = 1;
+      while (at > 0 && room(0) < need && at + across < valueCol && widths.slice(at, at + across).reduce((x, y) => x + y, 0) - inset < need) across++;
+      const spans = at > 0 && room(0) < need && across > 1 && widths.slice(at, at + across).reduce((x, y) => x + y, 0) - inset >= need && slots.slice(at, at + across).every((x) => x === undefined);
+      const labelCol = spans ? at : room(0) >= need ? 0 : open.find((k) => starts[k]! + widths[k]! > label.x && room(k) >= need) ?? open.reduce((a, k) => (widths[k]! > widths[a]! ? k : a), 0);
+      place(label, labelCol);
+      labelAside = labelCol > 0;
+      if (spans) {
+        for (let k = at + 1; k < at + across; k++) slots[k] = label.t;
+        const st = childElements(label.t, 'Style')[0];
+        if (st) setChild(st, 'PaddingLeft', `${Math.max(2, Math.round(inset * 720) / 10)}pt`);
       }
 
+const cells = slots.map((t, k) => {
+      if (t && k > 0 && slots[k - 1] === t) return el('TablixCell');
+      if (t) {
+        const width = slots.slice(k).findIndex((x) => x !== t);
+        const span = width < 0 ? slots.length - k : width;
+        return el('TablixCell', el('CellContents', t, span > 1 ? el('ColSpan', String(span)) : null));
+      }

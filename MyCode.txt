@@ -1,29 +1,28 @@
-const inset = Math.min(Math.max(0, len(tb, 'Left') - starts[within]!), widths[k]! / 2);
-            unplace(tb);
-            if (inset > 0.02 && !/center|right/i.test(textAlignOf(tb))) pad(tb, { left: inset });
+for (const tablix of tablixes) { alignTotals(tablix); pairSides(tablix); }
 
-let labelAside = false;
+const runs = descendants(it.t).filter((e) => e.name === 'TextRun').slice(1).map((r) => textOf(child(r, 'Value'))).join('');
+        const keep = labelAside && it.right && isField(it.t) ? arialWidth(`000,000,000.00${runs}`, 8, true) * 1.05 + 0.1 : 0;
+        const right = Math.min(Math.max(0, starts[k]! + widths[k]! - it.x - it.w), it.right ? Math.max(room, widths[k]! - (labelAside ? Math.max(0.9, keep) : 1.3)) : room);
 
-const right = Math.min(Math.max(0, starts[k]! + widths[k]! - it.x - it.w), it.right ? Math.max(room, widths[k]! - (labelAside ? 0.9 : 1.3)) : room);
+const need = text !== undefined ? arialWidth(text, 8, true) * 1.05 + 0.1 : Math.min(Math.max(label.w, 2), 2.5);
 
-const at = open.filter((k) => starts[k]! <= label.x + 0.01).pop() ?? 0;
-      const inset = label.x - starts[at]!;
-      let across = 1;
-      while (at > 0 && room(0) < need && at + across < valueCol && widths.slice(at, at + across).reduce((x, y) => x + y, 0) - inset < need) across++;
-      const spans = at > 0 && room(0) < need && across > 1 && widths.slice(at, at + across).reduce((x, y) => x + y, 0) - inset >= need && slots.slice(at, at + across).every((x) => x === undefined);
-      const labelCol = spans ? at : room(0) >= need ? 0 : open.find((k) => starts[k]! + widths[k]! > label.x && room(k) >= need) ?? open.reduce((a, k) => (widths[k]! > widths[a]! ? k : a), 0);
-      place(label, labelCol);
-      labelAside = labelCol > 0;
-      if (spans) {
-        for (let k = at + 1; k < at + across; k++) slots[k] = label.t;
-        const st = childElements(label.t, 'Style')[0];
-        if (st) setChild(st, 'PaddingLeft', `${Math.max(2, Math.round(inset * 720) / 10)}pt`);
-      }
+function alignTotals(tablix: XmlElement): void {
+  const leaves = rowLeaves(tablix);
+  rowsOf(tablix).forEach((row, i) => {
+    if (leaves[i]?.kind !== 'total' && leaves[i]?.kind !== 'subtotal') return;
+    const texts = cellsOf(row).map((c) => cellItem(c)).filter((t): t is XmlElement => t?.name === 'Textbox' && !isBlank(t));
+    const totals = texts.filter((t) => TOTALLED.test(valueOf(t)));
+    if (!totals.length || totals.length === texts.length) return;
+    const tops = totals.map((t) => textOf(child(childElements(t, 'Style')[0] ?? el('x'), 'PaddingTop')));
+    const top = tops.every((v) => v === tops[0]) ? tops[0] : undefined;
+    if (!top || top.startsWith('=') || totals.some((t) => textOf(child(childElements(t, 'Style')[0] ?? el('x'), 'VerticalAlign')) !== 'Top')) return;
+    for (const t of texts) {
+      const st = childElements(t, 'Style')[0];
+      if (!st || TOTALLED.test(valueOf(t))) continue;
+      setChild(st, 'VerticalAlign', 'Top');
+      setChild(st, 'PaddingTop', top);
+    }
+  });
+}
 
-const cells = slots.map((t, k) => {
-      if (t && k > 0 && slots[k - 1] === t) return el('TablixCell');
-      if (t) {
-        const width = slots.slice(k).findIndex((x) => x !== t);
-        const span = width < 0 ? slots.length - k : width;
-        return el('TablixCell', el('CellContents', t, span > 1 ? el('ColSpan', String(span)) : null));
-      }
+

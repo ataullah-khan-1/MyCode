@@ -1,45 +1,19 @@
-if (kind === 'total' && !isBlank(tb) && across >= Math.max(2, columns - 1) && !/\b(Sum|Count|CountDistinct|Avg|RunningValue)\s*\(/i.test(valueOf(tb))) {
-            if (footerInTable) return rename(tb, 'text', { T });
+for (const tablix of tablixes) repeatTogether(tablix);
 
-} else {
-        const after = line.filter((o) => o.x > it.x && o !== label && o !== value).sort((p, q) => p.x - q.x)[0];
-        const paired = text !== undefined && /[A-Za-z]{3}/.test(text) && after && isField(after.t) && !headerCols.has(colOf(after)) ? fieldOf(after.t) : undefined;
-        summaryNames.set(it.t, paired ? `${paired}_HdrTxt` : `${snake(text ?? 'text') || 'text'}_Txt`);
-      }
-
-const above = side === 'TopBorder' && block[0]! > 0 ? cellsOf(rows[block[0]! - 1]!) : [];
-    const whole = above.length && Number(textOf(child(child(above[0]!, 'CellContents') ?? el('x'), 'ColSpan')) || 1) >= n ? cellItem(above[0]!) : undefined;
-    const inside = whole?.name === 'Rectangle' ? childElements(child(whole, 'ReportItems') ?? el('x')).filter((e) => ITEMS.has(e.name)) : [];
-    const title = whole?.name === 'Rectangle' ? (inside.length === 1 ? inside[0] : undefined) : whole;
-    if (border && title?.name === 'Textbox' && fixedText(title) !== undefined && !child(childElements(title, 'Style')[0] ?? el('x'), 'BottomBorder')) {
-      const st = childElements(title, 'Style')[0];
-      if (st) { st.children.push({ ...structuredClone(border), name: 'BottomBorder' }); continue; }
-    }
-
-holder.children.splice(where, 0, ...built.map(() => { const copy = structuredClone(member); removeChildren(copy, ['RepeatOnNewPage']); return copy; }));
-
-if (level < 0 && this.foldedGroups.has(ref.toLowerCase())) return '';
-
-return this.foldConstantGroups({
-
-});
-  }
-
-  private readonly foldedGroups = new Set<string>();
-
-  private foldConstantGroups(areas: Classified): Classified {
-    let k = 0;
-    while (k < this.groupFields.length && (this.isConstantGroup(this.groupFields[k]) || this.foldedGroups.has(this.groupFields[k]!.toLowerCase()))) k++;
-    const total = Math.max(k, ...[...areas.groupHeaders.keys(), ...areas.groupFooters.keys()].filter((l) => l <= k));
-    if (k < 2 || total < 2) return areas;
-    const shift = (map: Map<number, SectionInfo[]>, outer: SectionInfo[]) => new Map<number, SectionInfo[]>([[1, outer], ...[...map].filter(([l]) => l > k).map(([l, s]) => [l - k + 1, s] as [number, SectionInfo[]])]);
-    const heads = Array.from({ length: k }, (_, i) => areas.groupHeaders.get(i + 1) ?? []).flat();
-    const foots = Array.from({ length: k }, (_, i) => areas.groupFooters.get(k - i) ?? []).flat();
-    if (this.groupFields.length >= k && !this.foldedGroups.size) {
-      for (const f of this.groupFields.slice(1, k)) this.foldedGroups.add(f.toLowerCase());
-      this.groupFields.splice(1, k - 1);
-      this.groupNames.splice(1, k - 1);
-    }
-    return { ...areas, groupHeaders: shift(areas.groupHeaders, heads), groupFooters: shift(areas.groupFooters, foots) };
-
-
+function repeatTogether(tablix: XmlElement): void {
+  const holder = child(tablix, 'TablixRowHierarchy/TablixMembers');
+  if (!holder) return;
+  const members = childElements(holder, 'TablixMember');
+  const at = members.findIndex((m) => descendants(m).some((e) => e.name === 'Group'));
+  if (at < 1) return;
+  const repeats = (m: XmlElement) => textOf(child(m, 'RepeatOnNewPage')) === 'true';
+  const before = members.slice(0, at);
+  if (before.every(repeats) || !before.some(repeats)) return;
+  let from = at;
+  while (from > 0 && repeats(members[from - 1]!)) from--;
+  if (before.slice(0, from).some(repeats)) for (const m of before.slice(0, from)) removeChildren(m, ['RepeatOnNewPage']);
+  for (const m of before.slice(0, from)) removeChildren(m, ['KeepWithGroup']);
+  const inner = members.slice(from);
+  holder.children = holder.children.filter((c) => typeof c !== 'object' || !inner.includes(c as XmlElement));
+  holder.children.push(el('TablixMember', el('TablixMembers', ...inner)));
+}

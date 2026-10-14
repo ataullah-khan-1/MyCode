@@ -1,31 +1,14 @@
-const summaryHeights = new WeakMap<XmlElement, number>();
+const summaryPads = new WeakMap<XmlElement, [string, string]>();
 
-const lead = tablixes[0];
-  if (lead && foldLead(lead, review)) {
-    for (const row of rowsOf(lead)) {
-      const planned = summaryHeights.get(row);
-      if (planned !== undefined) setChild(row, 'Height', inch(planned));
+for (const tb of descendants(lead).filter((e) => e.name === 'Textbox' && summaryPads.has(e))) {
+      const [padLeft, padRight] = summaryPads.get(tb)!;
+      const st = childElements(tb, 'Style')[0];
+      if (st && padLeft) setChild(st, 'PaddingLeft', padLeft);
+      if (st && padRight) setChild(st, 'PaddingRight', padRight);
     }
-    setChild(lead, 'Height', inch(rowsOf(lead).reduce((sum, row) => sum + len(row, 'Height'), 0)));
-  }
 
-const built = el('TablixRow', el('Height', inch(Math.max(0.17, height))), el('TablixCells', ...cells));
-    summaryHeights.set(built, Math.max(0.17, height));
-    return built;
+if (k === 0 && !it.right && !/center/i.test(textAlignOf(it.t))) {
+        pad(it.t, { left: Math.max(0, Math.min(it.x - starts[k]!, widths[k]! / 2)) });
+        if (st) summaryPads.set(it.t, [textOf(child(st, 'PaddingLeft')), textOf(child(st, 'PaddingRight'))]);
+      }
 
-function foldLead(tablix: XmlElement, review: ReviewNote[]): boolean {
-
-if (!columnsEl || !members || descendants(child(tablix, 'TablixColumnHierarchy')!).some((e) => e.name === 'Group')) return false;
-
-if (n < 3 || childElements(members, 'TablixMember').length !== n) return false;
-
- return false;
-
-if (hc.length !== n || !empty(hc[0]!) || empty(hc[1]!)) {
-    if (hc.length !== n) review.push({ item: tablix.attributes.Name ?? 'Table', message: `its heading row has ${hc.length} cells for ${n} columns, so its first column was not folded` });
-    return false;
-  }
-
- return false;
-
- return true;

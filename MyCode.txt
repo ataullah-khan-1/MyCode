@@ -1,11 +1,15 @@
-const summaryKeys = new Map<string, string>();
-    const clash = (key: string) => colNames.some((c) => !!c && key.toLowerCase().endsWith(c.toLowerCase()));
-    for (const tb of descendants(tablix).filter((e) => e.name === 'Textbox' && /_HdrTxt$/.test(summaryNames.get(e) ?? ''))) {
-      const key = summaryNames.get(tb)!.replace(/_HdrTxt$/, '');
-      const own = /^=Fields!(\w+)\.Value$/.exec(valueOf(tb).trim())?.[1];
-      if (own && clash(key) && !clash(own)) summaryKeys.set(key, own);
-      else if (clash(key)) review.push({ item: `Table ${T}`, message: `the summary label for ${key} ends with a column's name: where reports are combined it is counted with that column's label` });
-    }
+return this.totalsInGroup(this.foldConstantGroups({
 
-const word = summaryNames.get(tb)!.replace(/^(.*)_(HdrTxt|HdrVal)$/, (all, key: string, kind: string) => (summaryKeys.has(key) ? `${summaryKeys.get(key)}_${kind}` : all));
-            const name = names.make(`${T}_${word}`);
+private totalsInGroup(areas: Classified): Classified {
+    const outer = this.groupFields[0];
+    if (!outer || !this.isConstantGroup(outer) || !areas.groupHeaders.get(1)?.length) return areas;
+    const totals = (s: SectionInfo) => !s.newPageAfter && !s.newPageBefore && !s.conditions?.newPageAfter && !s.conditions?.newPageBefore
+      && s.objects.some((o) => o.kind === 'field' && SUMMARY_NAME.test(o.field ?? '')) && s.objects.every((o) => o.kind === 'field' || o.kind === 'text' || o.kind === 'line');
+    const lead = areas.reportFooter.findIndex((s) => !totals(s));
+    const moved = areas.reportFooter.slice(0, lead < 0 ? areas.reportFooter.length : lead);
+    if (!moved.length) return areas;
+    const groupFooters = new Map(areas.groupFooters);
+    groupFooters.set(1, [...(groupFooters.get(1) ?? []), ...moved.map((s) => splitConditionalSpans(s, (o) => this.isBlankMessage(o))).flat()]);
+    return { ...areas, groupFooters, reportFooter: areas.reportFooter.slice(moved.length) };
+  }
+

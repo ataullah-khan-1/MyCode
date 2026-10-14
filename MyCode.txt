@@ -1,24 +1,31 @@
-const boxedHeads = new WeakSet<XmlElement>();
+const summaryHeights = new WeakMap<XmlElement, number>();
 
-if (item.name === 'Textbox' && cellWidth && fixedText(item) && !boxedHeads.has(item)) roomForWords(item, cellWidth, designText);
-
-setChild(st, 'PaddingLeft', `${Math.round(left * 720) / 10}pt`);
-        setChild(st, 'PaddingRight', `${Math.round(Math.max(0, widths[k]! - left - it.w) * 720) / 10}pt`);
-        boxedHeads.add(it.t);
-
-if (n < 3 || childElements(members, 'TablixMember').length !== n) return;
-  const aligned = leaves.length === rows.length;
-
-const headingLike = (row: XmlElement) => {
-    const items = cellsOf(row).map(shown).filter((t) => t && !isBlank(t));
-    return items.length >= 3 && items.every((t) => t!.name === 'Textbox' && fixedText(t!) !== undefined);
-  };
-  const valueRow = rows.findIndex((row) => cellsOf(row).map(shown).filter((t) => t?.name === 'Textbox' && /Fields!/.test(valueOf(t)) && !TOTALLED.test(valueOf(t))).length >= 3);
-  const head = aligned
-    ? rows.findIndex((row, i) => leaves[i]!.kind === 'heading' && headingLike(row))
-    : Math.max(-1, ...rows.map((row, i) => (i < (valueRow < 0 ? rows.length : valueRow) && headingLike(row) ? i : -1)));
-  if (head < 0) {
-    if (!aligned) review.push({ item: tablix.attributes.Name ?? 'Table', message: 'its first column could not be checked for a heading: no row of column headings found' });
-    return;
+const lead = tablixes[0];
+  if (lead && foldLead(lead, review)) {
+    for (const row of rowsOf(lead)) {
+      const planned = summaryHeights.get(row);
+      if (planned !== undefined) setChild(row, 'Height', inch(planned));
+    }
+    setChild(lead, 'Height', inch(rowsOf(lead).reduce((sum, row) => sum + len(row, 'Height'), 0)));
   }
 
+const built = el('TablixRow', el('Height', inch(Math.max(0.17, height))), el('TablixCells', ...cells));
+    summaryHeights.set(built, Math.max(0.17, height));
+    return built;
+
+function foldLead(tablix: XmlElement, review: ReviewNote[]): boolean {
+
+if (!columnsEl || !members || descendants(child(tablix, 'TablixColumnHierarchy')!).some((e) => e.name === 'Group')) return false;
+
+if (n < 3 || childElements(members, 'TablixMember').length !== n) return false;
+
+ return false;
+
+if (hc.length !== n || !empty(hc[0]!) || empty(hc[1]!)) {
+    if (hc.length !== n) review.push({ item: tablix.attributes.Name ?? 'Table', message: `its heading row has ${hc.length} cells for ${n} columns, so its first column was not folded` });
+    return false;
+  }
+
+ return false;
+
+ return true;

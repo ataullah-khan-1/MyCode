@@ -1,68 +1,55 @@
-for (const tablix of tablixes) trimToHeadings(tablix);
-
-function trimToHeadings(tablix: XmlElement): void {
-  const rows = rowsOf(tablix);
-  const leaves = rowLeaves(tablix);
-  if (leaves.length !== rows.length) return;
-  const fieldOfHeading = (cell: XmlElement) => {
-    const t = cellItem(cell);
-    return t?.name === 'Textbox' && /_ColTxt$/.test(t.attributes.Name ?? '') ? /^=Fields!(\w+)\.Value$/.exec(valueOf(t).trim())?.[1] : undefined;
-  };
-  const at = rows.findIndex((row) => cellsOf(row).filter(fieldOfHeading).length >= 2);
-  if (at < 0 || leaves[at]!.kind !== 'groupHeading') return;
-  const conds = cellsOf(rows[at]!).map((cell) => {
-    const f = fieldOfHeading(cell);
-    return f ? `IsNothing(Fields!${f}.Value) OrElse Trim(CStr(Fields!${f}.Value)) = ""` : undefined;
-  });
-  if (cellsOf(rows[at]!).some((cell) => Number(textOf(child(child(cell, 'CellContents') ?? el('x'), 'ColSpan')) || 1) > 1)) return;
-  let end = at + 1;
-  while (end < rows.length && leaves[end]!.kind === leaves[at]!.kind && leaves[end]!.kind !== 'detail') end++;
-  const wrap = (value: string, off: string, cond: string) => `=IIf(${cond}, "${off}", ${value.startsWith('=') ? value.slice(1) : `"${value}"`})`;
-  for (const row of rows.slice(at, end)) {
-    const cells = cellsOf(row);
-    if (cells.length !== conds.length) continue;
-    cells.forEach((cell, c) => {
-      const cond = conds[c];
-      if (!cond) return;
-      for (const t of descendants(cell).filter((e) => e.name === 'Textbox')) {
-        const st = childElements(t, 'Style')[0];
-        if (!st) continue;
-        const fill = child(st, 'BackgroundColor');
-        if (fill && textOf(fill) && !/^transparent$/i.test(textOf(fill))) setChild(st, 'BackgroundColor', wrap(textOf(fill), 'Transparent', cond));
-        for (const side of ['Border', 'TopBorder', 'BottomBorder', 'LeftBorder', 'RightBorder']) {
-          const border = child(st, side);
-          const style = border && child(border, 'Style');
-          if (style && textOf(style) && !/^none$/i.test(textOf(style))) setChild(border!, 'Style', wrap(textOf(style), 'None', cond));
-        }
-      }
+const fieldHeaded = rows.some((row, i) => {
+      const texts = descendants(row).filter((e) => e.name === 'Textbox' && !isBlank(e));
+      return kinds[i] === 'groupHeading' && kinds.indexOf('groupHeading') === i && texts.length >= 3 && !rows.some((r, j) => j !== i && headingRow(r, j))
+        && texts.every((e) => /^=Fields!\w+\.Value$/.test(valueOf(e).trim()));
     });
+    const statement = !fieldHeaded && (!rows.some((row, i) => (kinds[i] === 'heading' || headingRow(row, i)) && !descendants(row).some((e) => roles.get(e) === 'title')) || rows.some((row, i) => kinds[i] === 'detail'
+      && descendants(row).some((e) => e.name === 'Textbox' && textOf(child(childElements(e, 'Style')[0] ?? el('x'), 'PaddingLeft')).startsWith('='))));
+
+const styleOf = (cell: XmlElement) => { const t = cellItem(cell); return t?.name === 'Textbox' ? childElements(t, 'Style')[0] : undefined; };
+  const drawn = (border: XmlElement | undefined) => !!border && !/^none$/i.test(textOf(child(border, 'Style')) || 'None');
+  const headCells = cellsOf(rows[at]!);
+  const next = rows[at + 1];
+  if (next && leaves[at + 1]!.kind === leaves[at]!.kind && cellsOf(next).length === headCells.length
+    && cellsOf(next).every((cell) => { const t = cellItem(cell); return t?.name === 'Textbox' && isBlank(t) && drawn(child(styleOf(cell) ?? el('x'), 'BottomBorder')); })) {
+    cellsOf(next).forEach((cell, c) => {
+      const st = styleOf(headCells[c]!);
+      if (!st) return;
+      removeChildren(st, ['BottomBorder']);
+      st.children.push(structuredClone(child(styleOf(cell)!, 'BottomBorder')!));
+    });
+    const body = child(tablix, 'TablixBody/TablixRows')!;
+    body.children = body.children.filter((r) => r !== next);
+    const member = leaves[at + 1]!.member;
+    const holder = descendants(child(tablix, 'TablixRowHierarchy')!).find((e) => e.name === 'TablixMembers' && e.children.includes(member));
+    if (holder) holder.children = holder.children.filter((m) => m !== member);
+    rows.splice(at + 1, 1);
+    leaves.splice(at + 1, 1);
   }
-}
+  const titleRow = rows.slice(0, at).find((row) => descendants(row).some((e) => e.name === 'Textbox' && /_SchTitle_Txt$/.test(e.attributes.Name ?? '')));
+  const title = titleRow && descendants(titleRow).find((e) => e.name === 'Textbox' && /_SchTitle_Txt$/.test(e.attributes.Name ?? ''));
+  const titleStyle = title && childElements(title, 'Style')[0];
+  const tops = headCells.map((cell) => child(styleOf(cell) ?? el('x'), 'TopBorder'));
+  if (titleStyle && !drawn(child(titleStyle, 'BottomBorder')) && tops.every(drawn)) {
+    titleStyle.children.push({ ...structuredClone(tops[0]!), name: 'BottomBorder' });
+    for (const cell of headCells) { const st = styleOf(cell); if (st) removeChildren(st, ['TopBorder']); }
+  }
+  const top = child(tablix, 'TablixRowHierarchy/TablixMembers');
+  const breaking = descendants(tablix).some((e) => e.name === 'Group' && child(e, 'PageBreak'));
+  if (top && breaking && titleRow) {
+    const members = childElements(top, 'TablixMember');
+    const first = members.findIndex((m) => !!child(m, 'Group'));
+    for (const m of members.slice(0, first < 0 ? 0 : first)) {
+      setChild(m, 'RepeatOnNewPage', 'true');
+      if (!child(m, 'KeepWithGroup')) setChild(m, 'KeepWithGroup', 'After');
+    }
+  }
 
 
+const shown = new Set(descendants(report).filter((e) => e.name === 'Textbox' && /_ColVal$/i.test(e.attributes.Name ?? ''))
+    .flatMap((e) => [...valueOf(e).matchAll(/Fields!(\w+)\.Value/g)].map((m) => m[1]!.toLowerCase())));
+  for (const box of descendants(report).filter((e) => e.name === 'Textbox' && /_ColTxt$/i.test(e.attributes.Name ?? ''))) {
+    const v = valueOf(box).trim();
+    const named = /^=Fields!(\w+)\.Value$/.exec(v)?.[1];
+    if (named && !shown.has(named.toLowerCase())) continue;
 
-emptyColumnsUnruled(definition);
-
-function emptyColumnsUnruled(definition: ReportDefinition): void {
-  const heads = definition.layout.filter((a) => /^GroupHeader/i.test(a.name)).flatMap((a) => a.sections.flatMap((s) => s.objects))
-    .filter((o) => o.kind === 'field' && o.field && !o.field.startsWith('@') && o.position && o.size);
-  const texts = [...(definition.formulaTexts ?? [])];
-  let next = Math.max(texts.length, ...definition.formulas.map((f) => (f.index ?? 0) + 1));
-  const formulas = [...definition.formulas];
-  const overlap = (a: { position?: { x: number }; size?: { width: number } }, b: typeof a) => {
-    const [a0, a1, b0, b1] = [a.position!.x, a.position!.x + a.size!.width, b.position!.x, b.position!.x + b.size!.width];
-    return Math.min(a1, b1) - Math.max(a0, b0) > Math.min(a1 - a0, b1 - b0) / 2;
-  };
-  definition.layout = definition.layout.map((area) => !/^Detail/i.test(area.name) ? area : {
-    ...area,
-    sections: area.sections.map((section) => ({
-      ...section,
-      objects: section.objects.map((o) => {
-        const ref = o.conditions?.topLine;
-        const head = o.position && o.size ? heads.find((h) => overlap(h, o)) : undefined;
-        const text = ref && (texts[ref.index] ?? formulas.find((f) => f.index === ref.index)?.text);
-        if (!ref || !head || !text?.trim()) return o;
-
-        const index = next++;
-        const field = `{${head.field}}`;
-        const own = `IF IsNull(${field}) or Trim(${field}) = "" THEN crNoLine ELSE (${text.trim().replace(/;\s*$/, '')})`;

@@ -1,55 +1,16 @@
-const fieldHeaded = rows.some((row, i) => {
-      const texts = descendants(row).filter((e) => e.name === 'Textbox' && !isBlank(e));
-      return kinds[i] === 'groupHeading' && kinds.indexOf('groupHeading') === i && texts.length >= 3 && !rows.some((r, j) => j !== i && headingRow(r, j))
-        && texts.every((e) => /^=Fields!\w+\.Value$/.test(valueOf(e).trim()));
+const columns = childElements(child(tablix, 'TablixColumnHierarchy/TablixMembers') ?? el('x'), 'TablixMember');
+  if (columns.length === conds.length) {
+    columns.forEach((m, c) => {
+      if (conds[c] && !child(m, 'Visibility') && !child(m, 'TablixMembers')) m.children.push(el('Visibility', el('Hidden', `=Max(IIf(${conds[c]}, 0, 1)) = 0`)));
     });
-    const statement = !fieldHeaded && (!rows.some((row, i) => (kinds[i] === 'heading' || headingRow(row, i)) && !descendants(row).some((e) => roles.get(e) === 'title')) || rows.some((row, i) => kinds[i] === 'detail'
-      && descendants(row).some((e) => e.name === 'Textbox' && textOf(child(childElements(e, 'Style')[0] ?? el('x'), 'PaddingLeft')).startsWith('='))));
-
-const styleOf = (cell: XmlElement) => { const t = cellItem(cell); return t?.name === 'Textbox' ? childElements(t, 'Style')[0] : undefined; };
-  const drawn = (border: XmlElement | undefined) => !!border && !/^none$/i.test(textOf(child(border, 'Style')) || 'None');
-  const headCells = cellsOf(rows[at]!);
-  const next = rows[at + 1];
-  if (next && leaves[at + 1]!.kind === leaves[at]!.kind && cellsOf(next).length === headCells.length
-    && cellsOf(next).every((cell) => { const t = cellItem(cell); return t?.name === 'Textbox' && isBlank(t) && drawn(child(styleOf(cell) ?? el('x'), 'BottomBorder')); })) {
-    cellsOf(next).forEach((cell, c) => {
-      const st = styleOf(headCells[c]!);
-      if (!st) return;
-      removeChildren(st, ['BottomBorder']);
-      st.children.push(structuredClone(child(styleOf(cell)!, 'BottomBorder')!));
-    });
-    const body = child(tablix, 'TablixBody/TablixRows')!;
-    body.children = body.children.filter((r) => r !== next);
-    const member = leaves[at + 1]!.member;
-    const holder = descendants(child(tablix, 'TablixRowHierarchy')!).find((e) => e.name === 'TablixMembers' && e.children.includes(member));
-    if (holder) holder.children = holder.children.filter((m) => m !== member);
-    rows.splice(at + 1, 1);
-    leaves.splice(at + 1, 1);
   }
-  const titleRow = rows.slice(0, at).find((row) => descendants(row).some((e) => e.name === 'Textbox' && /_SchTitle_Txt$/.test(e.attributes.Name ?? '')));
-  const title = titleRow && descendants(titleRow).find((e) => e.name === 'Textbox' && /_SchTitle_Txt$/.test(e.attributes.Name ?? ''));
-  const titleStyle = title && childElements(title, 'Style')[0];
-  const tops = headCells.map((cell) => child(styleOf(cell) ?? el('x'), 'TopBorder'));
-  if (titleStyle && !drawn(child(titleStyle, 'BottomBorder')) && tops.every(drawn)) {
-    titleStyle.children.push({ ...structuredClone(tops[0]!), name: 'BottomBorder' });
-    for (const cell of headCells) { const st = styleOf(cell); if (st) removeChildren(st, ['TopBorder']); }
-  }
-  const top = child(tablix, 'TablixRowHierarchy/TablixMembers');
-  const breaking = descendants(tablix).some((e) => e.name === 'Group' && child(e, 'PageBreak'));
-  if (top && breaking && titleRow) {
-    const members = childElements(top, 'TablixMember');
-    const first = members.findIndex((m) => !!child(m, 'Group'));
-    for (const m of members.slice(0, first < 0 ? 0 : first)) {
-      setChild(m, 'RepeatOnNewPage', 'true');
-      if (!child(m, 'KeepWithGroup')) setChild(m, 'KeepWithGroup', 'After');
-    }
-  }
+  rows.slice(at).forEach((row, n) => {
+    const cells = cellsOf(row);
+    if (cells.length !== conds.length) return;
+    cells.forEach((cell, c) => {
+      const cond = conds[c];
+      if (!cond) return;
+      for (const t of descendants(cell).filter((e) => e.name === 'Textbox' || e.name === 'Rectangle')) {
 
 
-const shown = new Set(descendants(report).filter((e) => e.name === 'Textbox' && /_ColVal$/i.test(e.attributes.Name ?? ''))
-    .flatMap((e) => [...valueOf(e).matchAll(/Fields!(\w+)\.Value/g)].map((m) => m[1]!.toLowerCase())));
-  for (const box of descendants(report).filter((e) => e.name === 'Textbox' && /_ColTxt$/i.test(e.attributes.Name ?? ''))) {
-    const v = valueOf(box).trim();
-    const named = /^=Fields!(\w+)\.Value$/.exec(v)?.[1];
-    if (named && !shown.has(named.toLowerCase())) continue;
-
+if (at + n >= end || t.name !== 'Textbox') continue;

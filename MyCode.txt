@@ -1,1 +1,68 @@
-test
+for (const tablix of tablixes) trimToHeadings(tablix);
+
+function trimToHeadings(tablix: XmlElement): void {
+  const rows = rowsOf(tablix);
+  const leaves = rowLeaves(tablix);
+  if (leaves.length !== rows.length) return;
+  const fieldOfHeading = (cell: XmlElement) => {
+    const t = cellItem(cell);
+    return t?.name === 'Textbox' && /_ColTxt$/.test(t.attributes.Name ?? '') ? /^=Fields!(\w+)\.Value$/.exec(valueOf(t).trim())?.[1] : undefined;
+  };
+  const at = rows.findIndex((row) => cellsOf(row).filter(fieldOfHeading).length >= 2);
+  if (at < 0 || leaves[at]!.kind !== 'groupHeading') return;
+  const conds = cellsOf(rows[at]!).map((cell) => {
+    const f = fieldOfHeading(cell);
+    return f ? `IsNothing(Fields!${f}.Value) OrElse Trim(CStr(Fields!${f}.Value)) = ""` : undefined;
+  });
+  if (cellsOf(rows[at]!).some((cell) => Number(textOf(child(child(cell, 'CellContents') ?? el('x'), 'ColSpan')) || 1) > 1)) return;
+  let end = at + 1;
+  while (end < rows.length && leaves[end]!.kind === leaves[at]!.kind && leaves[end]!.kind !== 'detail') end++;
+  const wrap = (value: string, off: string, cond: string) => `=IIf(${cond}, "${off}", ${value.startsWith('=') ? value.slice(1) : `"${value}"`})`;
+  for (const row of rows.slice(at, end)) {
+    const cells = cellsOf(row);
+    if (cells.length !== conds.length) continue;
+    cells.forEach((cell, c) => {
+      const cond = conds[c];
+      if (!cond) return;
+      for (const t of descendants(cell).filter((e) => e.name === 'Textbox')) {
+        const st = childElements(t, 'Style')[0];
+        if (!st) continue;
+        const fill = child(st, 'BackgroundColor');
+        if (fill && textOf(fill) && !/^transparent$/i.test(textOf(fill))) setChild(st, 'BackgroundColor', wrap(textOf(fill), 'Transparent', cond));
+        for (const side of ['Border', 'TopBorder', 'BottomBorder', 'LeftBorder', 'RightBorder']) {
+          const border = child(st, side);
+          const style = border && child(border, 'Style');
+          if (style && textOf(style) && !/^none$/i.test(textOf(style))) setChild(border!, 'Style', wrap(textOf(style), 'None', cond));
+        }
+      }
+    });
+  }
+}
+
+
+
+emptyColumnsUnruled(definition);
+
+function emptyColumnsUnruled(definition: ReportDefinition): void {
+  const heads = definition.layout.filter((a) => /^GroupHeader/i.test(a.name)).flatMap((a) => a.sections.flatMap((s) => s.objects))
+    .filter((o) => o.kind === 'field' && o.field && !o.field.startsWith('@') && o.position && o.size);
+  const texts = [...(definition.formulaTexts ?? [])];
+  let next = Math.max(texts.length, ...definition.formulas.map((f) => (f.index ?? 0) + 1));
+  const formulas = [...definition.formulas];
+  const overlap = (a: { position?: { x: number }; size?: { width: number } }, b: typeof a) => {
+    const [a0, a1, b0, b1] = [a.position!.x, a.position!.x + a.size!.width, b.position!.x, b.position!.x + b.size!.width];
+    return Math.min(a1, b1) - Math.max(a0, b0) > Math.min(a1 - a0, b1 - b0) / 2;
+  };
+  definition.layout = definition.layout.map((area) => !/^Detail/i.test(area.name) ? area : {
+    ...area,
+    sections: area.sections.map((section) => ({
+      ...section,
+      objects: section.objects.map((o) => {
+        const ref = o.conditions?.topLine;
+        const head = o.position && o.size ? heads.find((h) => overlap(h, o)) : undefined;
+        const text = ref && (texts[ref.index] ?? formulas.find((f) => f.index === ref.index)?.text);
+        if (!ref || !head || !text?.trim()) return o;
+
+        const index = next++;
+        const field = `{${head.field}}`;
+        const own = `IF IsNull(${field}) or Trim(${field}) = "" THEN crNoLine ELSE (${text.trim().replace(/;\s*$/, '')})`;

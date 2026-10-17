@@ -1,8 +1,1 @@
-const breaking = descendants(child(tablix, 'TablixRowHierarchy') ?? el('x')).find((e) => e.name === 'TablixMember' && !!child(e, 'Group/PageBreak') && !!child(e, 'Group/GroupExpressions'));
-  const paging = breaking && child(breaking, 'Group');
-  const sorted = breaking && child(breaking, 'SortExpressions');
-
- el('TablixRowHierarchy', el('TablixMembers', paging ? el('TablixMember',
-      el('Group', { Name: `${base}_grp_${next(new RegExp(`^${base}_grp_(\\d+)$`)) + 1}` }, structuredClone(child(paging, 'GroupExpressions')!), structuredClone(child(paging, 'PageBreak')!)),
-      ...(sorted ? [structuredClone(sorted)] : [])) : el('TablixMember'))),
-
+for (const cell of headCells) { const st = styleOf(cell); if (st && fieldOfHeading(cell)) setChild(st, 'VerticalAlign', 'Top'); }

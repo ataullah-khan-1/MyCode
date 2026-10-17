@@ -1,1 +1,1 @@
-for (const cell of headCells) { const st = styleOf(cell); if (st && fieldOfHeading(cell)) setChild(st, 'VerticalAlign', 'Top'); }
+if (conds[c] && !child(m, 'Visibility') && !child(m, 'TablixMembers')) m.children.push(el('Visibility', el('Hidden', `=CountRows() > 0 AndAlso Max(IIf(${conds[c]}, 0, 1)) = 0`)));

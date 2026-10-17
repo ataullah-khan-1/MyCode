@@ -1,8 +1,1 @@
- `EXEC sp_getapplock ${resource}, 'Exclusive', 'Session', 600000;`,
-
-`EXEC sp_releaseapplock ${resource}, 'Session';`,
-
- `EXEC sp_getapplock ${resource}, 'Exclusive', 'Session', 600000;`,
-
- `BEGIN CATCH EXEC sp_releaseapplock ${resource}, 'Session'; THROW; END CATCH;`,
-      `EXEC sp_releaseapplock ${resource}, 'Session';`,
+ `EXEC ${called}${params.length ? ` ${params.map((n) => `${n} = ${n}`).join(', ')}` : ''};`,

@@ -25,3 +25,44 @@ for (const name of names) {
 }
 writeFileSync('rdl-hidden.txt', out.join('\n') + '\n');
 console.log(`wrote rdl-hidden.txt: ${out.length} lines`);
+
+if (a.name === 'Rectangle' && ox <= 0.02 && A.l < O.l && A.r > O.l && oy > 0.02 && !alternates(a, o)
+          && childElements(child(a, 'ReportItems') ?? el('x')).every((e) => len(e, 'Left') + len(e, 'Width') <= O.l - A.l + 0.001)) {
+          setChild(a, 'Width', inch(O.l - A.l));
+          changed = true;
+          break pairs;
+        }
+        if (a.name === 'Rectangle' && ox <= 0.02 && A.l > O.l && A.l < O.r && A.r > O.r && oy > 0.02 && !alternates(a, o)
+          && childElements(child(a, 'ReportItems') ?? el('x')).every((e) => len(e, 'Left') >= O.r - A.l - 0.001)) {
+          const d = O.r - A.l;
+          for (const e of childElements(child(a, 'ReportItems') ?? el('x')).filter((x) => child(x, 'Left'))) setChild(e, 'Left', inch(Math.max(0, len(e, 'Left') - d)));
+          setChild(a, 'Left', inch(O.r));
+          setChild(a, 'Width', inch(A.r - O.r));
+          changed = true;
+          break pairs;
+        }
+        if (a.name === 'Rectangle' && !child(a, 'ReportItems') && A.b - A.t <= 0.02 && o.name === 'Textbox' && Math.abs(A.t - O.t) < 0.02 && O.t >= A.b - A.t && !alternates(a, o)) {
+          setChild(a, 'Top', inch(O.t - (A.b - A.t)));
+          changed = true;
+          break pairs;
+        }
+
+
+const gone = (n: ReviewNote) => [...n.message.matchAll(/\bCode\.(\w+)/g)].some((m) => !new RegExp(`\\bCode\\.(\\w+_)?${m[1]}\\b`).test(out ?? ''));
+      review.splice(0, review.length, ...review.filter((n) => !settled.has(n.item) && !gone(n)), ...shaped.review);
+
+
+
+const shown = (rule: string) => {
+    const inner = negated(rule);
+    const m = /^(.+?)\s*=\s*([^=<>]+)$/.exec(inner ?? unwrap(rule));
+    return m ? { on: unwrap(m[1]!), value: unwrap(m[2]!), equal: inner !== undefined } : undefined;
+  };
+  const p = shown(x);
+  const q = shown(y);
+  if (p && q && p.on === q.on && p.value !== q.value && p.equal === q.equal) return true;
+
+
+ return `IIf(IsNumeric(${value}), FormatNumber(Val(Replace(CStr(${value}), ",", "")), 2), CStr(${value}))`;
+
+

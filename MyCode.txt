@@ -1,68 +1,86 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-const raw = readFileSync(process.argv[2]);
-const xml = (raw[0] === 0xff && raw[1] === 0xfe ? raw.toString('utf16le') : raw.toString('utf8')).replace(/^﻿/, '');
-const names = process.argv.slice(3);
-const out = [];
-for (const name of names) {
-  const start = xml.search(new RegExp(`<(Rectangle|Textbox|Tablix|Chart|Line)\\s+Name="${name}"`));
-  if (start < 0) { out.push(`${name}: not found`); continue; }
-  const tag = /<(\w+)/.exec(xml.slice(start))[1];
-  let depth = 0, i = start, end = start;
-  const re = new RegExp(`<(/?)${tag}\\b[^>]*?(/?)>`, 'g');
-  re.lastIndex = start;
-  for (let m; (m = re.exec(xml)); ) {
-    if (m[1]) depth--; else if (!m[2]) depth++;
-    if (depth === 0) { end = re.lastIndex; break; }
+import { lstat, mkdir, readdir, stat, unlink } from 'node:fs/promises';
+
+if (report.rdl && reshape) for (const ending of ['.code.vb', '.sql'].filter((e) => !(report.files ?? {})[e])) await unlink(join(targetDir, report.fileName.replace(/\.rdl$/i, ending))).catch(() => undefined);
+
+rulesAsLines(body);
+    oneOfAlternates(body);
+
+const bands = new WeakSet<XmlElement>();
+
+const sameRule = textOf(child(o, 'Visibility/Hidden')).replace(/\s+/g, '') === textOf(child(a, 'Visibility/Hidden')).replace(/\s+/g, '');
+        if (a.name === 'Rectangle' && (o.name !== 'Rectangle' || (!child(o, 'ReportItems') && sameRule && !!child(o, 'Visibility') && (A.b - A.t) > (O.b - O.t) + 0.1)) && O.l >= A.l - 0.001 && O.r <= A.r + 0.001 && O.t >= A.t - 0.001 && O.b <= A.b + 0.001) {
+
+
+if (o.name === 'Rectangle' && sameRule && child(o, 'Visibility')) {
+            removeChildren(o, ['Visibility']);
+            bands.add(o);
+          }
+
+ && (Math.abs((A.l + A.r) / 2 - (O.l + O.r) / 2) < 0.1 || (bands.has(o) && A.l >= O.l - 0.01 && A.r <= O.r + 0.01)) && A.t >= O.t - 0.05 && A.t < O.b - 0.05) {
+
+function oneOfAlternates(body: XmlElement): void {
+  const rule = (e: XmlElement) => textOf(child(e, 'Visibility/Hidden')).replace(/^\s*=\s*/, '');
+  const shape = (r: string) => r.replace(/<>\s*(-?\d+(?:\.\d+)?|"[^"]*")/g, '<> #');
+  for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
+    const items = childElements(holder).filter((e) => ITEMS.has(e.name) && child(e, 'Top') && /<>\s*(-?\d|")/.test(rule(e)) && /CountRows|IsNothing/.test(rule(e)));
+    const done = new Set<XmlElement>();
+    for (const first of items) {
+      if (done.has(first)) continue;
+      const same = items.filter((e) => e !== first && !done.has(e) && shape(rule(e)) === shape(rule(first)) && rule(e) !== rule(first)
+        && Math.abs(len(e, 'Top') - len(first, 'Top')) < 0.02 && Math.abs(len(e, 'Left') - len(first, 'Left')) < 0.02);
+      for (const later of same) {
+        const hidden = child(later, 'Visibility/Hidden')!;
+        hidden.children = [`=(${rule(later)}) OrElse Not (${rule(first)})`];
+        done.add(later);
+      }
+      if (same.length) done.add(first);
+    }
   }
-  const el = xml.slice(start, end);
-  const own = el.replace(/<(ReportItems|TablixBody|TablixColumnHierarchy|TablixRowHierarchy|Paragraphs|ChartData|ChartAreas|ChartSeriesHierarchy|ChartCategoryHierarchy)>[\s\S]*<\/\1>/g, '');
-  const pick = (t) => (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(own) || [])[1] ?? '-';
-  const kids = [...(/<ReportItems>([\s\S]*)<\/ReportItems>/.exec(el)?.[1] ?? '').matchAll(/<(Rectangle|Textbox|Tablix|Chart|Line|Image|Subreport)\s+Name="([^"]+)"/g)].map((m) => `${m[1]} ${m[2]}`);
-  out.push(`${tag} ${name} top=${pick('Top')} left=${pick('Left')} h=${pick('Height')} w=${pick('Width')}`);
-  out.push(`  hidden: ${pick('Hidden').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"')}`);
-  out.push(`  border: ${(/<Border>[\s\S]*?<Style>([^<]*)<\/Style>/.exec(own) || [])[1] ?? '-'}  background: ${pick('BackgroundColor')}`);
-  out.push(`  holds ${kids.length}: ${kids.slice(0, 12).join(', ')}${kids.length > 12 ? ' …' : ''}`);
 }
-writeFileSync('rdl-hidden.txt', out.join('\n') + '\n');
-console.log(`wrote rdl-hidden.txt: ${out.length} lines`);
 
-if (a.name === 'Rectangle' && ox <= 0.02 && A.l < O.l && A.r > O.l && oy > 0.02 && !alternates(a, o)
-          && childElements(child(a, 'ReportItems') ?? el('x')).every((e) => len(e, 'Left') + len(e, 'Width') <= O.l - A.l + 0.001)) {
-          setChild(a, 'Width', inch(O.l - A.l));
-          changed = true;
-          break pairs;
-        }
-        if (a.name === 'Rectangle' && ox <= 0.02 && A.l > O.l && A.l < O.r && A.r > O.r && oy > 0.02 && !alternates(a, o)
-          && childElements(child(a, 'ReportItems') ?? el('x')).every((e) => len(e, 'Left') >= O.r - A.l - 0.001)) {
-          const d = O.r - A.l;
-          for (const e of childElements(child(a, 'ReportItems') ?? el('x')).filter((x) => child(x, 'Left'))) setChild(e, 'Left', inch(Math.max(0, len(e, 'Left') - d)));
-          setChild(a, 'Left', inch(O.r));
-          setChild(a, 'Width', inch(A.r - O.r));
-          changed = true;
-          break pairs;
-        }
-        if (a.name === 'Rectangle' && !child(a, 'ReportItems') && A.b - A.t <= 0.02 && o.name === 'Textbox' && Math.abs(A.t - O.t) < 0.02 && O.t >= A.b - A.t && !alternates(a, o)) {
-          setChild(a, 'Top', inch(O.t - (A.b - A.t)));
-          changed = true;
-          break pairs;
-        }
-
-
-const gone = (n: ReviewNote) => [...n.message.matchAll(/\bCode\.(\w+)/g)].some((m) => !new RegExp(`\\bCode\\.(\\w+_)?${m[1]}\\b`).test(out ?? ''));
-      review.splice(0, review.length, ...review.filter((n) => !settled.has(n.item) && !gone(n)), ...shaped.review);
-
-
-
-const shown = (rule: string) => {
-    const inner = negated(rule);
-    const m = /^(.+?)\s*=\s*([^=<>]+)$/.exec(inner ?? unwrap(rule));
-    return m ? { on: unwrap(m[1]!), value: unwrap(m[2]!), equal: inner !== undefined } : undefined;
-  };
-  const p = shown(x);
-  const q = shown(y);
-  if (p && q && p.on === q.on && p.value !== q.value && p.equal === q.equal) return true;
+function rulesAsLines(body: XmlElement): void {
+  for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
+    holder.children = holder.children.filter((c) => {
+      const box = c as XmlElement;
+      if (typeof c !== 'object' || box.name !== 'Rectangle' || child(box, 'ReportItems') || !child(box, 'Top') || drawnAs(box)) return true;
+      if (descendants(childElements(box, 'Style')[0] ?? el('x')).some((e) => textOf(e).startsWith('='))) return true;
+      return Math.min(len(box, 'Height'), len(box, 'Width')) > 0.02;
+    }).map((c) => {
+      const box = c as XmlElement;
+      if (typeof c !== 'object' || box.name !== 'Rectangle' || child(box, 'ReportItems') || !child(box, 'Top')) return c;
+      const h = len(box, 'Height');
+      const w = len(box, 'Width');
+      if (Math.min(h, w) > 0.02 || Math.max(h, w) < 0.1) return c;
+      const st = childElements(box, 'Style')[0];
+      if (st && child(st, 'BackgroundColor')) return c;
+      const across = w >= h;
+      const sides = across ? ['TopBorder', 'BottomBorder', 'Border'] : ['LeftBorder', 'RightBorder', 'Border'];
+      const drawn = sides.map((side) => ({ side, border: st && child(st, side) })).find(({ border }) => border && /solid|dashed|dotted|double|=/i.test(textOf(child(border, 'Style'))));
+      if (!drawn) return c;
+      const at = drawn.side === 'BottomBorder' ? len(box, 'Top') + h : len(box, 'Top');
+      const left = drawn.side === 'RightBorder' ? len(box, 'Left') + w : len(box, 'Left');
+      const line = el('Line', { Name: box.attributes.Name ?? 'Line' },
+        el('Top', inch(across ? at : len(box, 'Top'))), el('Left', inch(across ? len(box, 'Left') : left)),
+        el('Height', inch(across ? 0 : h)), el('Width', inch(across ? w : 0)),
+        child(box, 'Visibility') ?? null,
+        el('Style', el('Border', ...childElements(drawn.border!).map((e) => structuredClone(e)))));
+      return line;
+    });
+  }
+}
 
 
- return `IIf(IsNumeric(${value}), FormatNumber(Val(Replace(CStr(${value}), ",", "")), 2), CStr(${value}))`;
+const shape = (r: string) => r.replace(/<>\s*(-?\d+(?:\.\d+)?|"[^"]*")/g, '<> #');
+  const first = (r: string) => /^\((.*)\) OrElse Not \((.*)\)$/.exec(r);
+  const fx = first(x);
+  const fy = first(y);
+  if (fx && unwrap(fx[2]!) === unwrap(y) && shape(fx[1]!) === shape(y)) return true;
+  if (fy && unwrap(fy[2]!) === unwrap(x) && shape(fy[1]!) === shape(x)) return true;
+  if (fx && fy && unwrap(fx[2]!) === unwrap(fy[2]!) && shape(fx[1]!) === shape(fy[1]!)) return true;
+
+
+
+const part = (n: string) => (/^[A-Za-z_][\w]*$/.test(n) ? n : this.quote(n));
+      const called = procedure.schema ? `${part(procedure.schema)}.${part(name)}` : part(name);
 
 

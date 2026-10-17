@@ -1,86 +1,51 @@
-import { lstat, mkdir, readdir, stat, unlink } from 'node:fs/promises';
+bandsInFrames(body);
 
-if (report.rdl && reshape) for (const ending of ['.code.vb', '.sql'].filter((e) => !(report.files ?? {})[e])) await unlink(join(targetDir, report.fileName.replace(/\.rdl$/i, ending))).catch(() => undefined);
+takeTurns(root, conv, S);
 
-rulesAsLines(body);
-    oneOfAlternates(body);
+function takeTurns(root: XmlElement, conv: Conventions, name: string): void {
+  const sets = descendants(root).filter((e) => e.name === 'DataSet' && e.attributes.Name !== conv.style?.dataset && child(e, 'Query'));
+  if (sets.length < 2) return;
+  const resource = `N'${name.replace(/'/g, "''")}'`;
+  for (const set of sets) {
+    const query = child(set, 'Query')!;
+    if (!/^StoredProcedure$/i.test(textOf(child(query, 'CommandType')))) continue;
+    const called = textOf(child(query, 'CommandText')).trim();
+    if (!called || called.startsWith('=')) continue;
+    const params = childElements(child(query, 'QueryParameters') ?? el('x'), 'QueryParameter').map((q) => q.attributes.Name ?? '').filter((n) => /^@\w+$/.test(n));
+    child(query, 'CommandType')!.children = ['Text'];
+    child(query, 'CommandText')!.children = [[
+      `EXEC sp_getapplock @Resource = ${resource}, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 600000;`,
+      `BEGIN TRY EXEC ${called}${params.length ? ` ${params.map((n) => `${n} = ${n}`).join(', ')}` : ''}; END TRY`,
+      `BEGIN CATCH EXEC sp_releaseapplock @Resource = ${resource}, @LockOwner = 'Session'; THROW; END CATCH;`,
+      `EXEC sp_releaseapplock @Resource = ${resource}, @LockOwner = 'Session';`,
+    ].join('\n')];
+  }
+}
 
-const bands = new WeakSet<XmlElement>();
-
-const sameRule = textOf(child(o, 'Visibility/Hidden')).replace(/\s+/g, '') === textOf(child(a, 'Visibility/Hidden')).replace(/\s+/g, '');
-        if (a.name === 'Rectangle' && (o.name !== 'Rectangle' || (!child(o, 'ReportItems') && sameRule && !!child(o, 'Visibility') && (A.b - A.t) > (O.b - O.t) + 0.1)) && O.l >= A.l - 0.001 && O.r <= A.r + 0.001 && O.t >= A.t - 0.001 && O.b <= A.b + 0.001) {
-
-
-if (o.name === 'Rectangle' && sameRule && child(o, 'Visibility')) {
-            removeChildren(o, ['Visibility']);
-            bands.add(o);
-          }
-
- && (Math.abs((A.l + A.r) / 2 - (O.l + O.r) / 2) < 0.1 || (bands.has(o) && A.l >= O.l - 0.01 && A.r <= O.r + 0.01)) && A.t >= O.t - 0.05 && A.t < O.b - 0.05) {
-
-function oneOfAlternates(body: XmlElement): void {
-  const rule = (e: XmlElement) => textOf(child(e, 'Visibility/Hidden')).replace(/^\s*=\s*/, '');
-  const shape = (r: string) => r.replace(/<>\s*(-?\d+(?:\.\d+)?|"[^"]*")/g, '<> #');
+function bandsInFrames(body: XmlElement): void {
+  const rule = (e: XmlElement) => textOf(child(e, 'Visibility/Hidden')).replace(/\s+/g, '');
   for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
-    const items = childElements(holder).filter((e) => ITEMS.has(e.name) && child(e, 'Top') && /<>\s*(-?\d|")/.test(rule(e)) && /CountRows|IsNothing/.test(rule(e)));
-    const done = new Set<XmlElement>();
-    for (const first of items) {
-      if (done.has(first)) continue;
-      const same = items.filter((e) => e !== first && !done.has(e) && shape(rule(e)) === shape(rule(first)) && rule(e) !== rule(first)
-        && Math.abs(len(e, 'Top') - len(first, 'Top')) < 0.02 && Math.abs(len(e, 'Left') - len(first, 'Left')) < 0.02);
-      for (const later of same) {
-        const hidden = child(later, 'Visibility/Hidden')!;
-        hidden.children = [`=(${rule(later)}) OrElse Not (${rule(first)})`];
-        done.add(later);
+    for (let moved = true; moved;) {
+      moved = false;
+      const list = childElements(holder).filter((e) => e.name === 'Rectangle' && child(e, 'Top'));
+      for (const band of list.filter((e) => !child(e, 'ReportItems') && rule(e) && drawnAs(e))) {
+        const b = { l: len(band, 'Left'), t: len(band, 'Top'), r: len(band, 'Left') + len(band, 'Width'), h: len(band, 'Height') };
+        const frame = list.find((f) => f !== band && child(f, 'ReportItems') && rule(f) === rule(band) && len(f, 'Height') > b.h + 0.1
+          && b.l >= len(f, 'Left') - 0.001 && b.r <= len(f, 'Left') + len(f, 'Width') + 0.001 && b.t >= len(f, 'Top') - 0.001 && b.t + b.h <= len(f, 'Top') + len(f, 'Height') + 0.001);
+        if (!frame) continue;
+        setChild(band, 'Top', inch(b.t - len(frame, 'Top')));
+        setChild(band, 'Left', inch(b.l - len(frame, 'Left')));
+        removeChildren(band, ['Visibility']);
+        bands.add(band);
+        holder.children = holder.children.filter((c) => c !== band);
+        const inner = child(frame, 'ReportItems')!;
+        inner.children.push(band);
+        separate(inner, []);
+        moved = true;
+        break;
       }
-      if (same.length) done.add(first);
     }
   }
 }
-
-function rulesAsLines(body: XmlElement): void {
-  for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
-    holder.children = holder.children.filter((c) => {
-      const box = c as XmlElement;
-      if (typeof c !== 'object' || box.name !== 'Rectangle' || child(box, 'ReportItems') || !child(box, 'Top') || drawnAs(box)) return true;
-      if (descendants(childElements(box, 'Style')[0] ?? el('x')).some((e) => textOf(e).startsWith('='))) return true;
-      return Math.min(len(box, 'Height'), len(box, 'Width')) > 0.02;
-    }).map((c) => {
-      const box = c as XmlElement;
-      if (typeof c !== 'object' || box.name !== 'Rectangle' || child(box, 'ReportItems') || !child(box, 'Top')) return c;
-      const h = len(box, 'Height');
-      const w = len(box, 'Width');
-      if (Math.min(h, w) > 0.02 || Math.max(h, w) < 0.1) return c;
-      const st = childElements(box, 'Style')[0];
-      if (st && child(st, 'BackgroundColor')) return c;
-      const across = w >= h;
-      const sides = across ? ['TopBorder', 'BottomBorder', 'Border'] : ['LeftBorder', 'RightBorder', 'Border'];
-      const drawn = sides.map((side) => ({ side, border: st && child(st, side) })).find(({ border }) => border && /solid|dashed|dotted|double|=/i.test(textOf(child(border, 'Style'))));
-      if (!drawn) return c;
-      const at = drawn.side === 'BottomBorder' ? len(box, 'Top') + h : len(box, 'Top');
-      const left = drawn.side === 'RightBorder' ? len(box, 'Left') + w : len(box, 'Left');
-      const line = el('Line', { Name: box.attributes.Name ?? 'Line' },
-        el('Top', inch(across ? at : len(box, 'Top'))), el('Left', inch(across ? len(box, 'Left') : left)),
-        el('Height', inch(across ? 0 : h)), el('Width', inch(across ? w : 0)),
-        child(box, 'Visibility') ?? null,
-        el('Style', el('Border', ...childElements(drawn.border!).map((e) => structuredClone(e)))));
-      return line;
-    });
-  }
-}
-
-
-const shape = (r: string) => r.replace(/<>\s*(-?\d+(?:\.\d+)?|"[^"]*")/g, '<> #');
-  const first = (r: string) => /^\((.*)\) OrElse Not \((.*)\)$/.exec(r);
-  const fx = first(x);
-  const fy = first(y);
-  if (fx && unwrap(fx[2]!) === unwrap(y) && shape(fx[1]!) === shape(y)) return true;
-  if (fy && unwrap(fy[2]!) === unwrap(x) && shape(fy[1]!) === shape(x)) return true;
-  if (fx && fy && unwrap(fx[2]!) === unwrap(fy[2]!) && shape(fx[1]!) === shape(fy[1]!)) return true;
-
-
-
-const part = (n: string) => (/^[A-Za-z_][\w]*$/.test(n) ? n : this.quote(n));
-      const called = procedure.schema ? `${part(procedure.schema)}.${part(name)}` : part(name);
 
 

@@ -1,1 +1,27 @@
-test
+import { readFileSync, writeFileSync } from 'node:fs';
+const raw = readFileSync(process.argv[2]);
+const xml = (raw[0] === 0xff && raw[1] === 0xfe ? raw.toString('utf16le') : raw.toString('utf8')).replace(/^﻿/, '');
+const names = process.argv.slice(3);
+const out = [];
+for (const name of names) {
+  const start = xml.search(new RegExp(`<(Rectangle|Textbox|Tablix|Chart|Line)\\s+Name="${name}"`));
+  if (start < 0) { out.push(`${name}: not found`); continue; }
+  const tag = /<(\w+)/.exec(xml.slice(start))[1];
+  let depth = 0, i = start, end = start;
+  const re = new RegExp(`<(/?)${tag}\\b[^>]*?(/?)>`, 'g');
+  re.lastIndex = start;
+  for (let m; (m = re.exec(xml)); ) {
+    if (m[1]) depth--; else if (!m[2]) depth++;
+    if (depth === 0) { end = re.lastIndex; break; }
+  }
+  const el = xml.slice(start, end);
+  const own = el.replace(/<(ReportItems|TablixBody|TablixColumnHierarchy|TablixRowHierarchy|Paragraphs|ChartData|ChartAreas|ChartSeriesHierarchy|ChartCategoryHierarchy)>[\s\S]*<\/\1>/g, '');
+  const pick = (t) => (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(own) || [])[1] ?? '-';
+  const kids = [...(/<ReportItems>([\s\S]*)<\/ReportItems>/.exec(el)?.[1] ?? '').matchAll(/<(Rectangle|Textbox|Tablix|Chart|Line|Image|Subreport)\s+Name="([^"]+)"/g)].map((m) => `${m[1]} ${m[2]}`);
+  out.push(`${tag} ${name} top=${pick('Top')} left=${pick('Left')} h=${pick('Height')} w=${pick('Width')}`);
+  out.push(`  hidden: ${pick('Hidden').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"')}`);
+  out.push(`  border: ${(/<Border>[\s\S]*?<Style>([^<]*)<\/Style>/.exec(own) || [])[1] ?? '-'}  background: ${pick('BackgroundColor')}`);
+  out.push(`  holds ${kids.length}: ${kids.slice(0, 12).join(', ')}${kids.length > 12 ? ' …' : ''}`);
+}
+writeFileSync('rdl-hidden.txt', out.join('\n') + '\n');
+console.log(`wrote rdl-hidden.txt: ${out.length} lines`);

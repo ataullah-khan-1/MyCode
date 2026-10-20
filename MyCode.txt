@@ -1,12 +1,6 @@
-for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
-      const frames = childElements(holder).filter((e) => e.name === 'Rectangle' && child(e, 'Top')).sort((a, b) => len(a, 'Top') - len(b, 'Top'));
-      frames.forEach((frame, i) => {
-        const before = frames[i - 1];
-        if (!before || child(frame, 'PageBreak') || !descendants(frame).some((d) => d.name === 'Chart') || descendants(frame).some((d) => d.name === 'Tablix')) return;
-        const broken = [before, ...descendants(before).filter((d) => d.name === 'Rectangle')].find((r) => /^Start/.test(textOf(child(r, 'PageBreak/BreakLocation'))));
-        if (!broken || !descendants(broken).some((d) => d.name === 'Tablix')) return;
-        const off = child(broken, 'PageBreak/Disabled');
-        const items = child(frame, 'ReportItems');
-        frame.children.splice(items ? frame.children.indexOf(items) + 1 : 0, 0, el('PageBreak', el('BreakLocation', 'Start'), off ? el('Disabled', textOf(off)) : null));
-      });
-    }
+out = out && out.replace(/<(Left|Top)>-[^<]*<\/(Left|Top)>/g, '<$1>0in</$1>');
+
+R.l = Math.min(S.l, Math.max(around ? box(around).l : S.l, ...edges.filter((x) => x <= S.l + 30)));
+      R.r = Math.max(S.r, Math.min(around ? box(around).r : S.r, ...edges.filter((x) => x >= S.r - 30)));
+
+

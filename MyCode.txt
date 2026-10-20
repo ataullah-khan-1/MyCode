@@ -1,23 +1,12 @@
-for (const box of descendants(child(body, 'ReportItems') ?? el('x')).filter((e) => e.name === 'Rectangle' && child(e, 'Top') && !child(e, 'KeepTogether')
-      && descendants(e).some((d) => d.name === 'Chart') && !descendants(e).some((d) => d.name === 'Tablix'))) {
-      const items = child(box, 'ReportItems');
-      box.children.splice(items ? box.children.indexOf(items) + 1 : 0, 0, el('KeepTogether', 'true'));
+for (const holder of descendants(body).filter((e) => e.name === 'ReportItems')) {
+      const frames = childElements(holder).filter((e) => e.name === 'Rectangle' && child(e, 'Top')).sort((a, b) => len(a, 'Top') - len(b, 'Top'));
+      frames.forEach((frame, i) => {
+        const before = frames[i - 1];
+        if (!before || child(frame, 'PageBreak') || !descendants(frame).some((d) => d.name === 'Chart') || descendants(frame).some((d) => d.name === 'Tablix')) return;
+        const broken = [before, ...descendants(before).filter((d) => d.name === 'Rectangle')].find((r) => /^Start/.test(textOf(child(r, 'PageBreak/BreakLocation'))));
+        if (!broken || !descendants(broken).some((d) => d.name === 'Tablix')) return;
+        const off = child(broken, 'PageBreak/Disabled');
+        const items = child(frame, 'ReportItems');
+        frame.children.splice(items ? frame.children.indexOf(items) + 1 : 0, 0, el('PageBreak', el('BreakLocation', 'Start'), off ? el('Disabled', textOf(off)) : null));
+      });
     }
-
-for (const [tb, chart] of chartTitles) {
-    const items = parentOf(report, tb);
-    const holder = parentOf(report, items);
-    if (roles.get(tb) !== 'chartTitle' || holder.name !== 'Rectangle' || !child(holder, 'Width') || childElements(items, 'Chart').length !== 1 || !childElements(items, 'Chart').includes(chart)) continue;
-    const t = len(tb, 'Top');
-    const b = t + len(tb, 'Height');
-    const l = len(tb, 'Left');
-    const r = l + len(tb, 'Width');
-    const beside = childElements(items).filter((e) => e !== tb && e !== chart && child(e, 'Top') && len(e, 'Top') < b - 0.001 && len(e, 'Top') + len(e, 'Height') > t + 0.001);
-    const from = Math.max(0, ...beside.map((e) => len(e, 'Left') + len(e, 'Width')).filter((x) => x <= l + 0.001));
-    const to = Math.min(len(holder, 'Width'), ...beside.map((e) => len(e, 'Left')).filter((x) => x >= r - 0.001));
-    if (beside.some((e) => len(e, 'Left') < r - 0.001 && len(e, 'Left') + len(e, 'Width') > l + 0.001) || to - from <= r - l) continue;
-    setChild(tb, 'Left', inch(from));
-    setChild(tb, 'Width', inch(to - from));
-  }
-
- if (item.name === 'Textbox' && designText && !isBlank(item) && kinds[r] !== 'detail') need = Math.max(need, textHeight(item, true, fixedText(item) && kinds[r] !== 'heading' ? cellWidth : undefined)!);
